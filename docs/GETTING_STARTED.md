@@ -280,9 +280,9 @@ Adjust the voltage settings according to the voltage of your power supply.
 | Field | Suggested first-test value |
 |---|---|
 | `range` | **900** (degrees lock-to-lock) |
-| `maxtorque` | **2.0** (Nm) — **start low!** It will pull hard, you don't want surprises |
+| `maxtorque` | **3.0** (Nm) — **start low!** It will pull hard, you don't want surprises |
 | `fxratio` | **1.0** (100%) |
-| `idlespring` | **5** (centering spring when the game isn't sending FFB) |
+
 
 **FFB Effects** tab:
 
@@ -294,11 +294,10 @@ Save → reboot.
 
 ### 9. Validate FFB
 
-1. Use a tool such as **ForceTest** (in `docs/Tools`) to exercise each effect.
-2. In Windows, `joy.cpl` → "Odrive-Wheel" → **Test Forces** tab if available.
-3. **FFB Live** tab in the web tool — you'll see `HID OUT counter` ticking up and the active effects.
+1. Use the FFB test on https://eagabriel.github.io/Odrive-Wheel/ to exercise each effect and adjust currents and voltages.
+2. In Windows, `joy.cpl` → "Odrive-Wheel" → **Test Forces** tab if available, many windows version don't have it
 
-If you feel torque proportional to the input → FFB is working. Raise `maxtorque` slowly (2 → 4 → 6 Nm) only after you've mounted the motor on the wheel shaft and verified the physical end-stop can take it.
+If you feel torque proportional to the input → FFB is working. Raise `maxtorque` slowly (2 → 4 → 6 Nm) adjust the currents imits if needed.
 
 ---
 
