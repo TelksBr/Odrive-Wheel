@@ -14,7 +14,7 @@ After the firmware is flashed, the **"First-time motor bring-up"** section is **
 
 - **MKS XDrive Mini** board (ODrive v3.6 clone, STM32F405)
 - **BLDC motor** (3-phase — no hall, no stepper driver)
-- **Incremental ABZ encoder** (Z optional but recommended for sim racing)
+- **Incremental ABZ encoder** (Z optional)
 - **12 to 48 V power supply** (mind the voltage variant of your MKS XDrive Mini)
 - **Brake resistor** wired to the AUX terminals (typically 2 Ω 50 W)
 - **USB-C cable for data** (not just for charging!)
@@ -48,8 +48,6 @@ Alternatively, hold BOOT0 and tap the reset button.
 
 On Windows, you may need to install the **WinUSB** driver once via [Zadig](https://zadig.akeo.ie/) — pick the `STM32 BOOTLOADER` device and replace its driver with `WinUSB`.
 
-Verify: `dfu-util -l` should list `[0483:df11]`.
-
 ### 4. Flash
 
 ```bash
@@ -57,6 +55,8 @@ dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D odrive-wheel.bin
 ```
 
 Expected output ends with `Done!` and the board reboots on its own. You're done — jump straight to **First-time motor bring-up**.
+
+Alternatively you can use STM32CubeProgrammer
 
 ---
 
@@ -82,13 +82,12 @@ The `tools/odrive-wheel.html` tool has a **"DFU Flash"** tab that does everythin
 
 1. Open the config tool — easiest is the hosted version at
    **<https://eagabriel.github.io/Odrive-Wheel/>** (no install). Or open
-   `Odrive-Wheel/tools/odrive-wheel.html` locally if you prefer.
-2. Connect to the board over serial (the **Connect** button in the header).
-3. Go to the **DFU Flash** tab in the sidebar (under "Tools").
-4. **Step 1 — Reboot to DFU**: click the button. The tool sends `sd` over serial and the board reboots straight into the STM32 bootloader. Wait ~2 s.
-5. **Step 2 — Find bootloader**: click "Find bootloader". The browser opens a dialog asking for permission to access `STM32 BOOTLOADER` — approve it. The badge turns green with `✓` and shows `VID:0x0483 PID:0xDF11`.
-6. **Step 3 — Choose firmware**: click "Choose file" and pick `odrive-wheel.bin` (from the Release, or from `Odrive-Wheel/build/` if you compiled it).
-7. **Step 4 — Flash firmware**: click "Flash firmware". It erases sectors S0–S9 (256 KB of application flash), writes in 1 KB chunks (~30–60 s total), and the board reboots into the new firmware automatically.
+   `Odrive-Wheel/tools/odrive-wheel.html` locally if you prefer. Do noto use the connect buttom in the top in this step.
+2. Go to the **DFU Flash** tab in the sidebar (under "Tools").
+3. **Step 1 — Reboot to DFU**: click the button. The board reboots straight into the STM32 bootloader. Wait ~2 s.
+4. **Step 2 — Find bootloader**: click "Find bootloader". The browser opens a dialog asking for permission to access `STM32 BOOTLOADER` — approve it. The badge turns green with `✓`
+5. **Step 3 — Choose firmware**: click "Choose file" and pick `odrive-wheel.bin`.
+6. **Step 4 — Flash firmware**: click "Flash firmware". It erases sectors and writes in 1 KB chunks (~30–60 s total), and the board reboots into the new firmware automatically.
 
 The operation log at the bottom of the page shows every step in real time. The progress bar runs from 0 to 100%.
 
@@ -101,11 +100,11 @@ The operation log at the bottom of the page shows every step in real time. The p
 | Board doesn't reappear as CDC after flashing | Wait 5–10 s; Windows sometimes takes a moment to re-enumerate. If it persists, unplug and replug the USB cable. |
 | WebUSB asks for permission every time | Normal — it's a Chrome safety feature. Each `.html` file under `file://` is treated as a fresh origin. |
 
-### EEPROM (settings) is preserved
+### Settings is preserved
 
 The Web Flasher only erases sectors S0–S9 (firmware). Sectors **S10 and S11** (where your saved FFB settings live — gain, filters, range, idle spring, etc.) are **not touched**. You don't lose calibration or tuning when you update.
 
-> ⚠️ However, the ODrive Save NVM (in S1) **lives within** the range we erase. Updating the firmware will reset ODrive parameters (motor, encoder, controller, brake_resistance) to defaults. Always export the JSON via the **Export** button before updating, and re-import afterwards.
+> ⚠️ Always export the JSON via the **Export** button before updating, its important have a backup if something goes wrong.
 
 ---
 
@@ -184,16 +183,17 @@ dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D build/odrive-wheel.bin
 ## First-time motor bring-up
 
 > ⚠️ **Before powering up:**
-> - **Disconnect the motor from the wheel.** The first calibration spins the motor — if it's already mounted to the wheel shaft, it will hit the physical end-stop.
+> - **Disconnect your steering wheel from the motor.**
 > - **Confirm the brake resistor is physically wired** to the AUX terminals. Without it, any regen current goes back to the PSU and will likely trip its OVP.
-
-
+> - **If something goes wrong right after you turn it on, like vibration, spinning. Turn it off and check the connections.**
 
 ### 1. Connect the configuration tool
 
 1. Open the config tool: <https://eagabriel.github.io/Odrive-Wheel/> in **Chrome or Edge** (Web Serial only works there). Local copy at `Odrive-Wheel/tools/odrive-wheel.html` works equivalently.
 2. Click **Connect** and pick the board's serial port (`Odrive-Wheel CDC` or similar).
 3. The status pill should turn green ("Connected").
+4. On the first time you flash use the erase config buttom. It will clear any trash that you can have in memory.
+5. If you have some problem with motor vibration ou spinning right after starting the board, check all the connections. 
 
 ### 2. Minimum configuration — power & protections
 
@@ -209,6 +209,8 @@ dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D build/odrive-wheel.bin
 | `dc_bus_undervoltage_trip_level` | **8** (V) | Prevents brown-outs |
 | `max_regen_current` | **0** (A) | Threshold above which the brake kicks in as a dump load (0 means *all* regen current goes to the resistor — safer to start with) |
 
+Adjust the voltage settings according to the voltage of your power supply.
+
 ### 3. Minimum configuration — motor
 
 **Motor** tab (calibrated first; conservative values):
@@ -216,8 +218,8 @@ dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D build/odrive-wheel.bin
 | Field | Suggested value |
 |---|---|
 | `motor_type` | **0** (HIGH_CURRENT) |
-| `pole_pairs` | depends on your motor — count rotor magnets and divide by 2 (typical: 7) |
-| `torque_constant` | **0.87** (Nm/A) |
+| `pole_pairs` | depends on your motor — count rotor magnets and divide by 2 (typicaly: 4 servo motors and 15 hoverboard motors) |
+| `torque_constant` | **0.87** (Nm/A) (typicaly: 0.87 for a 18Nm servo motor, 0.55 for hoverboards) |
 | `current_lim` | **10** (A) — start low! |
 | `calibration_current` | **5** (A) |
 | `resistance_calib_max_voltage` | **12.0** (V) |
@@ -267,8 +269,8 @@ dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D build/odrive-wheel.bin
 ### 7. First closed-loop test (no FFB yet)
 
 1. **Debug / Status** tab → action **Closed loop** (`w axis0.requested_state 8`).
-2. Try to spin the shaft by hand — it should **resist** (holding torque command = 0). That confirms the loop closed.
-3. If the shaft spins freely, calibration is bad. If it locks up with vibration, `pole_pairs` or `cpr` is wrong.
+2. Enter in FFB Test, use the buttom connect HID device. Starting activating spring and feel if its acting the right way.
+3. If you don't feel any force try to slide it to 100%. if nothing happen at all take a look if there is some erro in debug/status page
 4. All good → disarm with `w axis0.requested_state 1` (IDLE).
 
 ### 8. Minimum configuration — FFB
