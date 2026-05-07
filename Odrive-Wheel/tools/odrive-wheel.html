@@ -47,7 +47,7 @@
   body {
     font-family: var(--font-sans);
     background: var(--bg); color: var(--fg);
-    font-size: 14px; line-height: 1.5;
+    font-size: 21px; line-height: 1.5;
     overflow: hidden;
     display: grid;
     grid-template-columns: var(--sidebar-w) 1fr;
@@ -75,11 +75,11 @@
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: #fff;
+    font-size: 27px; color: #fff;
     box-shadow: 0 2px 8px rgba(99,102,241,.3);
   }
   .sidebar-logo .name {
-    font-weight: 700; font-size: 15px;
+    font-weight: 700; font-size: 22px;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -89,7 +89,7 @@
   }
   .sidebar-section-title {
     padding: 12px 20px 6px;
-    font-size: 11px; font-weight: 600;
+    font-size: 16px; font-weight: 600;
     text-transform: uppercase; letter-spacing: .05em;
     color: var(--fg-dim);
   }
@@ -98,7 +98,7 @@
     padding: 9px 20px;
     color: var(--fg-muted);
     cursor: pointer;
-    font-size: 13.5px;
+    font-size: 20px;
     border-left: 3px solid transparent;
     transition: var(--transition);
     user-select: none;
@@ -113,7 +113,7 @@
     border-left-color: var(--accent);
   }
   .sidebar-item .ic {
-    font-size: 15px; width: 20px; text-align: center;
+    font-size: 22px; width: 20px; text-align: center;
   }
 
   /* ============================================================
@@ -132,7 +132,7 @@
     background: var(--bg-card-2);
     border: 1px solid var(--border);
     border-radius: 999px;
-    font-size: 12.5px; font-family: var(--font-mono);
+    font-size: 19px; font-family: var(--font-mono);
     color: var(--fg-muted);
   }
   .status-pill .dot {
@@ -159,7 +159,7 @@
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    color: var(--fg); font-size: 13px;
+    color: var(--fg); font-size: 20px;
     font-family: var(--font-sans);
     transition: var(--transition);
   }
@@ -170,12 +170,12 @@
   .header-search::before {
     content: '⌕'; position: absolute;
     left: 11px; top: 50%; transform: translateY(-50%);
-    color: var(--fg-dim); font-size: 16px;
+    color: var(--fg-dim); font-size: 24px;
     pointer-events: none;
   }
   .search-count {
     position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    font-size: 11px; font-family: var(--font-mono);
+    font-size: 16px; font-family: var(--font-mono);
     color: var(--accent-2);
     background: rgba(99,102,241,.15);
     border: 1px solid rgba(99,102,241,.3);
@@ -189,7 +189,7 @@
   }
   .sidebar-item .match-count {
     margin-left: auto;
-    font-size: 10.5px; font-family: var(--font-mono);
+    font-size: 16px; font-family: var(--font-mono);
     color: var(--accent-2);
     background: rgba(99,102,241,.18);
     border: 1px solid rgba(99,102,241,.35);
@@ -214,7 +214,7 @@
     padding: 7px 14px;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 20px;
     font-family: inherit;
     font-weight: 500;
     transition: var(--transition);
@@ -243,7 +243,7 @@
     background: var(--err); color: #fff; border-color: var(--err);
   }
   button.icon {
-    padding: 7px 10px; font-size: 15px; line-height: 1;
+    padding: 7px 10px; font-size: 22px; line-height: 1;
   }
 
   select {
@@ -253,7 +253,7 @@
     padding: 7px 10px;
     border-radius: var(--radius-sm);
     font-family: inherit;
-    font-size: 13px;
+    font-size: 20px;
     cursor: pointer;
   }
 
@@ -274,7 +274,7 @@
   .group {
     grid-column: 1 / -1;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 24px;
     color: var(--fg);
     padding: 16px 0 8px;
     margin-top: 4px;
@@ -304,7 +304,7 @@
   }
   .field label {
     font-family: var(--font-mono);
-    font-size: 12.5px;
+    font-size: 19px;
     font-weight: 500;
     color: var(--fg);
     cursor: help;
@@ -312,11 +312,11 @@
     gap: 6px;
   }
   .field label .type {
-    color: var(--fg-dim); font-size: 11px;
+    color: var(--fg-dim); font-size: 16px;
     font-weight: 400;
   }
   .field label .range {
-    color: var(--accent-2); font-size: 11px;
+    color: var(--accent-2); font-size: 16px;
     background: rgba(99,102,241,.12);
     padding: 1px 6px; border-radius: 4px;
     font-style: normal; font-family: var(--font-mono);
@@ -333,7 +333,7 @@
     padding: 7px 10px;
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: 20px;
     min-width: 0;
     transition: var(--transition);
   }
@@ -351,7 +351,7 @@
   .field input[type="checkbox"].changed { accent-color: var(--err); }
   .field input[type="checkbox"].synced  { accent-color: var(--ok); }
   .field button {
-    padding: 6px 10px; font-size: 12px;
+    padding: 6px 10px; font-size: 18px;
   }
   .field button.btn-read { background: transparent; }
 
@@ -371,8 +371,12 @@
   }
   .debug-section h3 {
     margin: 0 0 12px; color: var(--fg);
-    font-size: 15px; font-weight: 600;
+    font-size: 22px; font-weight: 600;
+    /* flex-wrap: wrap permite que o poll-ctl (auto-refresh + intervalo + ler agora)
+       quebre pra próxima linha se não couber junto com o título — antes estourava
+       o card horizontalmente em fonts grandes. */
     display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
   }
   .debug-section h3::before {
     content: '';
@@ -381,11 +385,13 @@
     border-radius: 2px;
   }
   .debug-section h3 small {
-    color: var(--fg-muted); font-size: 12px;
+    color: var(--fg-muted); font-size: 18px;
     font-weight: 400;
   }
   .action-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* Após font bump, botões com label "ENCODER_OFFSET_CALIBRATION" + sub-text
+       precisam de pelo menos ~280px pra não quebrar feio. */
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 10px;
   }
   .action-grid button {
@@ -395,13 +401,400 @@
   }
   .action-grid button .sub {
     display: block; color: var(--fg-muted);
-    font-size: 11px; font-family: var(--font-mono);
+    font-size: 16px; font-family: var(--font-mono);
     margin-top: 3px;
   }
   .action-grid button.warn  { border-color: rgba(245,158,11,.4); }
   .action-grid button.danger { border-color: rgba(239,68,68,.4); }
+
+  /* ============================================================
+     Aviso TORQUE_CONTROL na aba Controller — banner + overlay
+     pros campos que o firmware ignora nesse modo.
+     ============================================================ */
+  .controller-torque-warning {
+    grid-column: 1 / -1;
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-left: 4px solid #ffa726;
+    border-radius: var(--radius);
+  }
+  .controller-torque-warning .ctrl-warn-icon {
+    font-size: 33px;
+    color: #ffa726;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .controller-torque-warning .ctrl-warn-body b {
+    display: block;
+    color: #ffa726;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-family: var(--font-mono);
+  }
+  .controller-torque-warning .ctrl-warn-body p {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  /* Field "morto" em TORQUE mode — opacidade baixa + cursor not-allowed.
+     Inputs continuam editáveis (não bloqueamos a mão do user, só sinalizamos)
+     porque pode ser que ele queira mudar pra POSITION/VELOCITY mode depois. */
+  .field.ignored-in-torque {
+    opacity: 0.45;
+    position: relative;
+  }
+  .field.ignored-in-torque label::after {
+    /* Tag i18n é injetada via JS no atributo data-inert-tag pra atualizar
+       quando trocar PT/EN. CSS só renderiza o conteúdo. */
+    content: ' [' attr(data-inert-tag) ']';
+    color: #ffa726;
+    font-style: italic;
+    font-size: 15px;
+    margin-left: 6px;
+  }
+  .field.partial-in-torque {
+    opacity: 0.7;
+    position: relative;
+  }
+  .field.partial-in-torque label::after {
+    content: ' [' attr(data-inert-tag) ']';
+    color: #ffa726;
+    font-style: italic;
+    font-size: 15px;
+    margin-left: 6px;
+  }
+
+  /* ============================================================
+     Setup wizard — passo a passo guiado (Quick Start tab)
+     ============================================================ */
+  .setup-intro {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, rgba(102,187,106,.08), rgba(79,195,247,.05));
+    border: 1px solid rgba(102,187,106,.3);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    box-shadow: var(--shadow);
+  }
+  .setup-intro h2 {
+    margin: 0 0 8px;
+    font-size: 30px;
+    color: #66bb6a;
+  }
+  .setup-intro p {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--fg-muted);
+    font-size: 20px;
+  }
+  .setup-checklist {
+    margin: 12px 0 0;
+    padding: 10px 14px;
+    background: rgba(0,0,0,.2);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid #66bb6a;
+  }
+  .setup-checklist h4 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    color: #66bb6a;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .setup-checklist ul {
+    margin: 0; padding: 0; list-style: none;
+    font-size: 18px; line-height: 1.7;
+    color: var(--fg);
+  }
+  .setup-checklist li.warn { color: #ffa726; font-weight: 500; }
+
+  .setup-step {
+    grid-column: 1 / -1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 16px 22px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+  .setup-step h3 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--fg);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .setup-step h3 .num {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    min-width: 28px; height: 28px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 20px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+  }
+  .setup-step p {
+    margin: 0 0 10px;
+    line-height: 1.55;
+    color: var(--fg-muted);
+    font-size: 20px;
+  }
+  .setup-step .params {
+    margin: 8px 0 12px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,.2);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--fg);
+    border: 1px solid var(--border);
+    white-space: pre-wrap;
+  }
+  .setup-step .params .k { color: var(--accent); }
+  .setup-step .params .v { color: #66bb6a; }
+  .setup-step .params .c { color: var(--fg-muted); font-style: italic; }
+  /* Form editável de parâmetros sugeridos (steps 4/5/10) */
+  .setup-step .params-form {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    margin: 8px 0 12px;
+    padding: 10px 14px;
+    background: rgba(0,0,0,.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  /* Cada row é flex em uma única linha: path | input | hint
+     Colunas FIXAS pra evitar wrap quando o path é longo. */
+  .setup-step .params-form .row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;
+    font-family: var(--font-mono);
+    font-size: 17px;
+  }
+  .setup-step .params-form .row code {
+    /* Largura suficiente pra paths longos no font 17px mono. word-break é
+       fallback pros muito longos (axis0.motor.config.resistance_calib_max_voltage). */
+    flex: 0 0 480px;
+    color: var(--accent);
+    font-weight: 500;
+    word-break: break-all;
+  }
+  .setup-step .params-form .row input[type="text"],
+  .setup-step .params-form .row input[type="number"] {
+    /* 80px = ~6 chars no font 18px mono (suficiente pra qualquer numérico
+       que mostramos: range, maxtorque, current_lim, etc.) */
+    flex: 0 0 80px;
+    padding: 4px 8px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: #66bb6a;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    box-sizing: border-box;
+  }
+  /* Slot do checkbox: largura igual à do input pra colunas alinharem */
+  .setup-step .params-form .row .slot {
+    flex: 0 0 80px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .setup-step .params-form .row .slot input[type="checkbox"] {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+  }
+  .setup-step .params-form .row .hint {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--fg-muted);
+    font-size: 16px;
+    font-style: italic;
+    white-space: normal;
+    line-height: 1.4;
+  }
+  /* Step 11 — controles inline do FFB Test (proxy pra aba FFB Test) */
+  .setup-step .setup-ffbtest {
+    display: flex; flex-direction: column; gap: 12px;
+    margin: 8px 0 12px;
+    padding: 12px 14px;
+    background: rgba(0,0,0,.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .setup-step .setup-ffbtest-status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 18px;
+    color: var(--fg-muted);
+  }
+  .setup-step .setup-ffbtest-status .dot {
+    width: 9px; height: 9px;
+    background: #555;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .setup-step .setup-ffbtest-status.connected { color: #66bb6a; }
+  .setup-step .setup-ffbtest-status.connected .dot { background: #66bb6a; }
+  .setup-step .setup-ffbtest-actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .setup-step .setup-ffbtest-actions button {
+    padding: 7px 14px;
+    font-size: 19px;
+  }
+  .setup-step .setup-ffbtest-spring {
+    display: flex; flex-direction: column; gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .setup-step .setup-ffbtest-spring .enable {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 20px;
+    cursor: pointer;
+  }
+  .setup-step .setup-ffbtest-spring .slider-row {
+    display: grid;
+    /* lbl 130px (cabe "Intensidade"/"Strength" no font 18px) · slider 1fr · val 70px */
+    grid-template-columns: 130px 1fr 70px;
+    align-items: center;
+    gap: 12px;
+  }
+  .setup-step .setup-ffbtest-spring .slider-row .lbl {
+    font-size: 18px;
+    color: var(--fg-muted);
+  }
+  .setup-step .setup-ffbtest-spring .slider-row input[type="range"] {
+    width: 100%;
+  }
+  .setup-step .setup-ffbtest-spring .slider-row .val {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 19px;
+    color: #66bb6a;
+  }
+
+  /* Painel de resultados do step 7 — phase R + L medidos no motor cal */
+  .setup-step .setup-step7-result {
+    margin: 8px 0 12px;
+    padding: 10px 14px;
+    background: rgba(102, 187, 106, 0.06);
+    border: 1px solid rgba(102, 187, 106, 0.4);
+    border-left: 3px solid #66bb6a;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 17px;
+  }
+  .setup-step .setup-step7-result .header {
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #66bb6a;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .setup-step .setup-step7-result .row {
+    display: grid;
+    /* lbl 280px (cabe "phase_resistance"/"phase_inductance" no font 17px) */
+    grid-template-columns: 280px 1fr;
+    gap: 10px;
+    padding: 2px 0;
+  }
+  .setup-step .setup-step7-result .row .lbl { color: var(--accent); }
+  .setup-step .setup-step7-result .row .val { color: var(--fg); font-weight: 500; }
+
+  /* Painel inline de erros (steps 7 + 8 — calibrações) */
+  .setup-step .setup-err-panel {
+    margin: 8px 0 12px;
+    padding: 10px 14px;
+    background: rgba(0,0,0,.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 17px;
+  }
+  .setup-step .setup-err-panel .header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--fg-muted);
+  }
+  .setup-step .setup-err-panel .header > span {
+    flex: 1;
+    color: var(--fg);
+    font-weight: 600;
+  }
+  .setup-step .setup-err-panel .header button {
+    padding: 3px 10px;
+    font-size: 16px;
+    font-family: inherit;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .setup-step .setup-err-panel .err-row {
+    display: grid;
+    /* lbl 280px (cabe "axis0.encoder.error" no font 17px), hex 130px (cabe "0xFFFFFFFF"), bits 1fr */
+    grid-template-columns: 280px 130px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 3px 0;
+  }
+  .setup-step .setup-err-panel .err-row .lbl {
+    color: var(--accent);
+  }
+  .setup-step .setup-err-panel .err-row .hex {
+    color: var(--fg-muted);
+  }
+  .setup-step .setup-err-panel .err-row .hex.ok  { color: #66bb6a; }
+  .setup-step .setup-err-panel .err-row .hex.err { color: #ef5350; font-weight: 600; }
+  .setup-step .setup-err-panel .err-row .bits {
+    color: #ef5350;
+    font-size: 16px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  /* Lista de "campos a configurar" (step 6 — Encoder) */
+  .setup-step .field-list {
+    margin: 8px 0 12px;
+    padding: 10px 14px;
+    background: rgba(0,0,0,.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .setup-step .field-list code { color: var(--accent); }
+  .setup-step .field-list .h { color: var(--fg-muted); font-style: italic; }
+  .setup-step .actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .setup-step .actions button {
+    padding: 8px 16px;
+    font-size: 19px;
+  }
   .live-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    /* Após font bump pra 19px, paths longos como axis0.controller.torque_setpoint
+       precisam de ~380px pra caber numa linha. Antes era 260px → overflow. */
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
     gap: 8px;
   }
   .live-kv {
@@ -411,28 +804,45 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
-    font-size: 12.5px;
+    font-size: 19px;
+    /* Permite que key+value quebrem em linhas separadas em casos muito apertados */
+    flex-wrap: wrap;
+    min-width: 0;
   }
-  .live-kv .k { color: var(--fg-muted); }
-  .live-kv .v { color: var(--fg); text-align: right; font-weight: 500; }
+  .live-kv .k {
+    color: var(--fg-muted);
+    /* Label pode quebrar pra não vazar do card */
+    word-break: break-word;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .live-kv .v {
+    color: var(--fg);
+    text-align: right;
+    font-weight: 500;
+    flex: 0 0 auto;
+    /* Garantem que value fica visível e não é comprimido pelo key longo */
+    word-break: keep-all;
+  }
   .live-kv .v.ok   { color: var(--ok); }
   .live-kv .v.err  { color: var(--err); }
   .live-kv .v.warn { color: var(--warn); }
   .err-row {
-    display: grid; grid-template-columns: 220px 140px 1fr auto;
+    /* Após font bump pra 19px, label "axis0.encoder.error" precisa ~280px */
+    display: grid; grid-template-columns: 280px 140px 1fr auto;
     gap: 10px; padding: 8px 12px;
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     margin-bottom: 4px;
-    font-family: var(--font-mono); font-size: 12.5px;
+    font-family: var(--font-mono); font-size: 19px;
     align-items: center;
   }
   .err-row .k { color: var(--fg-muted); }
   .err-row .hex { text-align: right; }
   .err-row .hex.ok { color: var(--ok); }
   .err-row .hex.err { color: var(--err); }
-  .err-row .bits { color: var(--warn); font-size: 11px; }
+  .err-row .bits { color: var(--warn); font-size: 16px; }
 
   .poll-ctl { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .poll-ctl input[type="number"] {
@@ -471,7 +881,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 14px 18px;
-    font-family: var(--font-mono); font-size: 12.5px;
+    font-family: var(--font-mono); font-size: 19px;
     min-height: 500px;
   }
   #log { margin: 0; white-space: pre-wrap; }
@@ -488,7 +898,7 @@
   .console-input-bar .prompt {
     display: flex; align-items: center; padding: 0 6px 0 2px;
     color: var(--accent-2); font-family: var(--font-mono);
-    font-size: 18px; font-weight: 700;
+    font-size: 27px; font-weight: 700;
   }
   .console-input-bar input {
     flex: 1;
@@ -496,7 +906,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 9px 12px;
-    font-family: var(--font-mono); font-size: 13px;
+    font-family: var(--font-mono); font-size: 20px;
     transition: var(--transition);
   }
   .console-input-bar input:focus {
@@ -527,7 +937,7 @@
     box-shadow: 0 0 12px var(--ok);
     animation: pulse 1.6s ease-in-out infinite;
   }
-  .fbt-status .text { color: var(--fg); font-size: 13px; flex: 1; min-width: 0; }
+  .fbt-status .text { color: var(--fg); font-size: 20px; flex: 1; min-width: 0; }
   .fbt-warn {
     grid-column: 1 / -1;
     padding: 10px 14px;
@@ -535,7 +945,7 @@
     border: 1px solid rgba(245,158,11,.4);
     border-radius: var(--radius-sm);
     color: var(--warn);
-    font-size: 12.5px;
+    font-size: 19px;
     display: none;
   }
   .fbt-warn.on { display: block; }
@@ -553,14 +963,14 @@
     background: linear-gradient(135deg, rgba(99,102,241,.05), transparent 50%);
   }
   .fbt-card h4 {
-    margin: 0; font-size: 13.5px; font-weight: 600;
+    margin: 0; font-size: 20px; font-weight: 600;
     color: var(--fg);
     display: flex; align-items: center; gap: 8px;
   }
   .fbt-card h4 .toggle {
     margin-left: auto;
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 12px; font-weight: 500; color: var(--fg-muted);
+    font-size: 18px; font-weight: 500; color: var(--fg-muted);
   }
   .fbt-card h4 .toggle input[type="checkbox"] {
     width: 18px; height: 18px;
@@ -568,11 +978,12 @@
   }
   .fbt-card .row {
     display: grid;
-    grid-template-columns: 80px 1fr 60px;
+    /* Após font bump pra 18px, labels "Intensidade"/"Limite angular" precisam ~150px */
+    grid-template-columns: 150px 1fr 70px;
     gap: 8px; align-items: center;
   }
   .fbt-card .row > label {
-    font-size: 12px; color: var(--fg-muted);
+    font-size: 18px; color: var(--fg-muted);
   }
   .fbt-card input[type="range"] {
     -webkit-appearance: none;
@@ -591,7 +1002,7 @@
   .fbt-card .val {
     text-align: right;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 18px;
     color: var(--accent-2);
   }
   .fbt-actions {
@@ -606,7 +1017,7 @@
     padding: 14px 16px;
   }
   .fbt-chart-wrap h3 {
-    margin: 0 0 8px; font-size: 13px; color: var(--fg-muted);
+    margin: 0 0 8px; font-size: 20px; color: var(--fg-muted);
     font-weight: 500;
   }
   #fbt-chart {
@@ -643,10 +1054,10 @@
   }
   .inputs-status .text {
     color: var(--fg);
-    font-size: 13px;
+    font-size: 20px;
   }
   .inputs-status .text .sub {
-    color: var(--fg-muted); font-size: 12px; margin-left: 6px;
+    color: var(--fg-muted); font-size: 18px; margin-left: 6px;
   }
   .gpio-card {
     background: var(--bg-card);
@@ -665,7 +1076,7 @@
   .gpio-card .badge {
     margin-left: auto;
     padding: 2px 9px; border-radius: 999px;
-    font-size: 11px; font-family: var(--font-mono);
+    font-size: 16px; font-family: var(--font-mono);
     background: var(--bg-card-2); color: var(--fg-muted);
     border: 1px solid var(--border);
   }
@@ -675,20 +1086,20 @@
     background: rgba(16,185,129,.1);
   }
   .gpio-card h4 {
-    margin: 0; font-size: 13.5px; font-weight: 600;
+    margin: 0; font-size: 20px; font-weight: 600;
     color: var(--fg);
     display: flex; align-items: center; gap: 8px;
     font-family: var(--font-mono);
   }
   .gpio-card h4 .pin {
-    color: var(--fg-dim); font-size: 11px;
+    color: var(--fg-dim); font-size: 16px;
     font-weight: 400; margin-left: auto;
   }
   .gpio-card .row {
     display: flex; gap: 8px; align-items: center;
   }
   .gpio-card .row > label {
-    font-size: 12px; color: var(--fg-muted);
+    font-size: 18px; color: var(--fg-muted);
     min-width: 70px;
   }
   .gpio-card select, .gpio-card input[type="number"] {
@@ -699,7 +1110,7 @@
     border-radius: var(--radius-sm);
     padding: 6px 9px;
     font-family: var(--font-mono);
-    font-size: 12.5px;
+    font-size: 19px;
     min-width: 0;
   }
   .gpio-card input[type="checkbox"] {
@@ -707,7 +1118,7 @@
     accent-color: var(--accent);
   }
   .gpio-card button.capture {
-    padding: 5px 10px; font-size: 11px;
+    padding: 5px 10px; font-size: 16px;
   }
   .gpio-card .live {
     background: var(--bg-input);
@@ -715,11 +1126,11 @@
     border-radius: var(--radius-sm);
     padding: 8px 10px;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 18px;
     display: flex; align-items: center; gap: 8px;
   }
   .gpio-card .live .label {
-    color: var(--fg-muted); font-size: 11px;
+    color: var(--fg-muted); font-size: 16px;
   }
   .gpio-card .live .value {
     color: var(--fg); flex: 1; text-align: right;
@@ -750,7 +1161,7 @@
     padding: 6px 0;
   }
   .inputs-controls .poll-info {
-    color: var(--fg-muted); font-size: 11.5px;
+    color: var(--fg-muted); font-size: 17px;
     margin-left: auto;
   }
 
@@ -776,13 +1187,13 @@
   }
   .dfu-step h3 {
     margin: 0 0 6px; color: var(--fg);
-    font-size: 15px; font-weight: 600;
+    font-size: 22px; font-weight: 600;
     display: flex; align-items: center; gap: 10px;
   }
   .dfu-step .badge {
     margin-left: auto;
     padding: 2px 10px; border-radius: 999px;
-    font-size: 11px; font-family: var(--font-mono);
+    font-size: 16px; font-family: var(--font-mono);
     background: var(--bg-card-2); color: var(--fg-muted);
     border: 1px solid var(--border);
   }
@@ -795,12 +1206,12 @@
     background: rgba(239,68,68,.1);
   }
   .dfu-step p {
-    color: var(--fg-muted); font-size: 13px; margin: 4px 0 12px;
+    color: var(--fg-muted); font-size: 20px; margin: 4px 0 12px;
     line-height: 1.5;
   }
   .dfu-step .hint {
     grid-column: unset;
-    color: var(--fg-dim); font-size: 12px;
+    color: var(--fg-dim); font-size: 18px;
     margin-top: 8px; padding: 8px 10px;
     background: var(--bg-input); border-radius: var(--radius-sm);
     border-left: 2px solid var(--border-strong);
@@ -810,7 +1221,7 @@
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
   }
   .dfu-step .file-info {
-    color: var(--fg); font-size: 12.5px;
+    color: var(--fg); font-size: 19px;
     font-family: var(--font-mono);
   }
   .dfu-step .file-info .sub {
@@ -834,7 +1245,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 14px 18px;
-    font-family: var(--font-mono); font-size: 12px;
+    font-family: var(--font-mono); font-size: 18px;
     max-height: 240px; overflow-y: auto;
     white-space: pre-wrap; line-height: 1.5;
   }
@@ -860,7 +1271,7 @@
     border-left: 3px solid var(--accent);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-lg);
-    font-size: 13px;
+    font-size: 20px;
     color: var(--fg);
     animation: toast-in .25s ease-out;
     display: flex; gap: 10px; align-items: flex-start;
@@ -868,7 +1279,7 @@
   .toast.ok   { border-left-color: var(--ok); }
   .toast.err  { border-left-color: var(--err); }
   .toast.warn { border-left-color: var(--warn); }
-  .toast .icon { font-size: 16px; line-height: 1.3; }
+  .toast .icon { font-size: 24px; line-height: 1.3; }
   @keyframes toast-in {
     from { opacity: 0; transform: translateX(100%); }
     to   { opacity: 1; transform: translateX(0); }
@@ -892,7 +1303,7 @@
     background: var(--bg-card);
     border: 1px dashed var(--border-strong);
     border-radius: var(--radius);
-    color: var(--fg-muted); font-size: 13.5px;
+    color: var(--fg-muted); font-size: 20px;
     line-height: 1.6;
   }
   .search-redirect b { color: var(--accent-2); }
@@ -915,7 +1326,7 @@
   .hint {
     grid-column: 1 / -1;
     color: var(--fg-muted);
-    font-size: 12px;
+    font-size: 18px;
     margin: 0;
   }
 </style>
@@ -988,6 +1399,7 @@ const I18N = {
     'status.disconnected': 'Desconectado',
     'status.connected': 'Conectado',
     // Sidebar groups
+    'sidebar.group.start':  'Início Rápido',
     'sidebar.group.odrive': 'ODrive',
     'sidebar.group.ffb':    'Force Feedback',
     'sidebar.group.io':     'Inputs',
@@ -1019,9 +1431,16 @@ const I18N = {
     'toast.flash_done':      'Firmware gravado e placa reiniciada',
     'toast.flash_fail':      'Flash falhou',
     'toast.save_complete':   'Save complete + re-read OK',
+    'toast.erase_complete':  '✓ Config apagada + placa reconectada + valores re-lidos',
+    'toast.reboot_complete': '✓ Placa reiniciada + reconectada + valores re-lidos',
     'toast.wheel_zeroed':    '✓ Posição do volante zerada',
     'toast.wheel_zero_fail': 'Falha ao zerar posição',
     'toast.preset_as5047_applied': '✓ Preset AS5047 aplicado — clique Salvar pra persistir',
+    // Import JSON
+    'import.confirm_apply':  '{n} campo(s) carregado(s) do JSON.\n\n[OK]       Aplicar agora — grava cada campo no device em sequência (não persiste em NVM até clicar Salvar)\n[Cancelar] Só carrega no formulário (vermelho), você revisa e Salva manualmente depois',
+    'import.loaded_only':    '✓ {n} campo(s) carregado(s) no formulário — revise e clique Salvar pra aplicar',
+    'import.applied':        '✓ Aplicados: {ok} · falhas: {fail} — clique Salvar pra persistir em NVM',
+    'import.no_match':       'Nenhum campo do JSON casa com o SCHEMA atual',
     // Status / log (PT)
     'status.error':          'Erro',
     'status.no_webserial':   'Web Serial não suportado — use Chrome/Edge',
@@ -1033,6 +1452,7 @@ const I18N = {
     'search.no_match_here': 'Nenhum resultado para "<b>{q}</b>" nesta aba, mas outras abas têm:',
     'search.no_match_anywhere': 'Nenhum parâmetro corresponde a "<b>{q}</b>". Tente um termo mais curto, ou parte do path (ex: <code>brake</code>, <code>encoder</code>, <code>vel_limit</code>).',
     // Tabs
+    'tab.setup': 'Início Rápido',
     'tab.odrv': 'ODrive',
     'tab.axis0': 'Axis 0 Geral',
     'tab.motor': 'Motor',
@@ -1199,6 +1619,121 @@ const I18N = {
     'group.ffb_filt_fr': 'Friction',
     'group.ffb_filt_da': 'Damper',
     'group.ffb_filt_in': 'Inertia',
+    // Setup wizard (PT)
+    'setup.intro_title':       'Bem-vindo ao Odrive-Wheel',
+    'setup.intro_desc':        'Esta página guia você do firmware vazio até o FFB respondendo no jogo. Cada passo abaixo lista o que fazer, qual aba do configurador resolve aquilo, e os parâmetros sugeridos pra começar com segurança. Role a página de cima pra baixo, sem pular etapa.',
+    'setup.req_title':         'Antes de começar — checklist de hardware',
+    'setup.req_l1':            '✓ MKS XDrive Mini conectada via USB-C (cabo de DADOS, não só carga)',
+    'setup.req_l2':            '✓ Motor BLDC 3-fase ligado nas saídas U/V/W',
+    'setup.req_l3':            '✓ Encoder ABZ ou AS5047 (já vem montado na MKS)',
+    'setup.req_l4':            '✓ Resistor de freio (tipicamente 2 Ω 50 W) nos terminais AUX',
+    'setup.req_l5':            '✓ Fonte 12-48 V — verifique a variante de tensão da sua placa',
+    'setup.req_l6':            '⚠ VOLANTE FÍSICO DESCONECTADO do motor durante a calibração inicial',
+
+    'setup.step1_title':       'Passo 1 — Gravar firmware (DFU)',
+    'setup.step1_desc':        'No primeiro flash, use dfu-util CLI ou STM32CubeProgrammer (precisa instalar driver WinUSB no Windows via Zadig). Em updates seguintes você usa direto pelo navegador na aba "DFU Flash" — a partir do rc5, o re-flash preserva a configuração FFB salva.',
+    'setup.step1_action':      '⇩ Abrir aba DFU Flash',
+
+    'setup.step2_title':       'Passo 2 — Conectar à placa',
+    'setup.step2_desc':        'Clique no botão "Conectar" no topo da página e selecione a porta serial da placa (aparece como "Odrive-Wheel CDC" ou similar). O badge de status fica verde "Conectado". Use Chrome ou Edge — Web Serial não funciona em outros navegadores.',
+    'setup.step2_action':      '🔌 Conectar (cabeçalho)',
+
+    'setup.step3_title':       'Passo 3 — Apagar config existente (recomendado no primeiro flash)',
+    'setup.step3_desc':        'Limpa qualquer resto de configuração da placa. Reinicia automaticamente. O tool tenta reconectar via CDC após ~5s. Pule este passo se já tem uma config funcionando que quer preservar.',
+    'setup.step3_action':      '🗑 Apagar config + reboot',
+
+    'setup.step4_title':       'Passo 4 — Alimentação e proteções',
+    'setup.step4_desc':        'Configura limites de tensão DC, resistor de freio e regen. Ajuste de acordo com sua fonte. Os valores abaixo são seguros pra fonte 24 V comum em sim racing.',
+    'setup.step4_apply':       '✓ Aplicar valores sugeridos (ODrive)',
+    'setup.step4_open':        '→ Abrir aba ODrive',
+
+    'setup.step5_title':       'Passo 5 — Configurar motor',
+    'setup.step5_desc':        'Tipo de motor, número de polos, constante de torque. Edite os valores abaixo conforme seu motor — os defaults são pra servo BLDC 18Nm; pra hoverboard use pole_pairs=15 e torque_constant≈0.55. Comece com current_lim baixo (10 A) — você sobe depois.',
+    'setup.step5_apply':       '✓ Aplicar valores acima (Motor)',
+    'setup.step5_open':        '→ Abrir aba Motor',
+
+    'setup.step6_title':       'Passo 6 — Configurar encoder',
+    'setup.step6_desc':        'Edite os campos abaixo conforme o seu encoder. Defaults são pra ABZ incremental (caso mais comum — encoder externo no eixo do motor). Se você usa o AS5047P onboard da MKS, mude apenas mode=257, cpr=16384 e abs_spi_cs_gpio_pin=7. Os hints à direita explicam cada campo.',
+    'setup.step6_apply':       '✓ Aplicar valores acima (Encoder)',
+    'setup.step6_open':        '→ Abrir aba Encoder',
+
+    'setup.step7_title':       'Passo 7 — Calibrar motor',
+    'setup.step7_desc':        'Mede resistência R e indutância L de fase. O motor NÃO gira mas FAZ UM SOM DE BEEP (injeta pulsos de tensão pra medir R e L). Demora ~5s. Antes de rodar, limpa erros automaticamente (sc) pra evitar bloqueio por estado anterior. Após terminar, axis0.motor.is_calibrated fica True e os valores medidos aparecem no painel verde abaixo.',
+    'setup.step7_action':      '▶ Rodar MOTOR_CALIBRATION (state=4)',
+    'setup.step7_result_title':'Valores medidos pós-cal',
+
+    'setup.step8_title':       'Passo 8 — Calibrar offset do encoder',
+    'setup.step8_desc':        'Alinha a fase elétrica do motor com a posição do encoder. Motor gira ~10 voltas. Antes de rodar, limpa erros automaticamente (sc). Após terminar, axis0.encoder.is_ready fica True.',
+    'setup.step8_action':      '▶ Rodar ENCODER_OFFSET_CALIBRATION (state=7)',
+
+    'setup.step9_title':       'Passo 9 — Marcar pré-calibrado e salvar',
+    'setup.step9_desc':        'Marca motor + encoder como pré-calibrados, e ativa startup_motor_calibration + startup_encoder_offset_calibration + startup_closed_loop_control (a placa faz cal e arma sozinha a cada boot). ⚠ encoder.config.pre_calibrated SÓ pode ser True se você tem index Z conectado E use_index=True, OU se está usando encoder absoluto (AS5047). Depois clica Save — persiste em NVM e reinicia (auto-reconnect em 5s).',
+    'setup.step9_apply':       '✓ Marcar pre_calibrated + ativar startup',
+    'setup.step9_save':        'Save',
+
+    'setup.step10_title':      'Passo 10 — Configurar FFB',
+    'setup.step10_desc':       'Range total do volante em graus, torque máximo entregue ao motor (em Nm), multiplicador final. Comece conservador (3 Nm) — você sobe depois de testar.',
+    'setup.step10_apply':      '✓ Aplicar preset FFB (range=900, maxtorque=3, fxratio=1)',
+    'setup.step10_open':       '→ Abrir aba FFB Wheel',
+
+    'setup.step11_title':      'Passo 11 — Testar FFB (Spring)',
+    'setup.step11_desc':       'Conecte o dispositivo HID via WebHID e ative o efeito Spring (mola centralizadora). Mexa o volante e ajuste a intensidade no slider — você deve sentir torque proporcional puxando pro centro. Pra testar Constant Force, Damper e Friction, use a aba FFB Test completa.',
+    'setup.step11_action':     '→ Abrir aba FFB Test (controles completos)',
+
+    'setup.step12_title':      'Passo 12 — Pronto!',
+    'setup.step12_desc':       'Se chegou até aqui sem erros, sua placa está operacional. Próximos passos opcionais: configurar GPIOs como botões/eixos extra (aba Inputs), abrir o overlay PiP pra acompanhar telemetria durante corrida, ou ajustar curvas/filtros do FFB nas abas FFB Effects/Filters. Pra problemas, abra a aba Debug e cole o conteúdo de "axis0.motor.error" + "axis0.encoder.error".',
+    'setup.step12_open_inputs':'→ Configurar entradas (Inputs)',
+    'setup.step12_open_overlay':'→ Abrir overlay (Tools)',
+    'setup.step12_open_debug': '→ Abrir Debug / Status',
+
+    'setup.toast_preset':      '✓ Preset aplicado — campos em vermelho. Revise e clique Salvar.',
+    'setup.toast_written':     '✓ Aplicado: {ok} · falhas: {fail}',
+    'setup.toast_state_running':'⏳ Estado em execução, aguarde…',
+    'setup.toast_state_done':   '✓ Estado executado',
+    'setup.toast_state_fail':   '✕ Estado falhou — verifique axis0.motor.error e axis0.encoder.error',
+    'setup.toast_erasing':      '⏳ Apagando config + reboot (5s)…',
+    'setup.toast_erased_reconnected': '✓ Config apagada e placa reconectada',
+    'setup.toast_erased_no_reconnect':'⚠ Config apagada mas reconnect falhou — clique Conectar manualmente',
+    // Painel de erros inline (steps 7/8)
+    'setup.err_title':         'Erros após procedimento',
+    'setup.err_refresh':       '↻ Atualizar',
+    'setup.err_clear':         '🗑 Limpar erros (sc)',
+
+    // Hints inline dos forms editáveis (PT) — Power
+    'setup.hint.brake_resistance':       'Ω — bate com o resistor físico',
+    'setup.hint.enable_brake_resistor':  'sempre true se você tem brake resistor',
+    'setup.hint.dc_undervoltage':        'V — abaixo disso ODrive desarma',
+    'setup.hint.dc_overvoltage':         'V — fonte 24V → 28; fonte 12V → 14',
+    'setup.hint.dc_max_pos':             'A — limite de consumo da fonte',
+    'setup.hint.dc_max_neg':             'A — limite de regen (negativo!)',
+    'setup.hint.max_regen':              '0 = brake sempre ativa',
+    // Motor
+    'setup.hint.motor_type':             '0 = HIGH_CURRENT (BLDC normal)',
+    'setup.hint.pole_pairs':             '4 servo · 7 outrunner · 15 hoverboard',
+    'setup.hint.torque_constant':        '0.87 servo 18Nm · 0.55 hoverboard · ou 8.27/Kv',
+    'setup.hint.current_lim':            'A — comece baixo!',
+    'setup.hint.calibration_current':    'A — durante motor calibration',
+    'setup.hint.resistance_calib_v':     'V — limita ruído na cal de R',
+    'setup.hint.requested_current_range':'A — ≥ current_lim + margin',
+    'setup.hint.current_control_bandwidth':'rad/s — banda do PI de corrente. 200 = suave/seguro · 1000 = agressivo (servo industrial)',
+    // Encoder
+    'setup.hint.enc_mode':               '0 INCREMENTAL · 1 HALL · 257 SPI_ABS_AMS (AS5047) · 258 AEAT · 259 RLS',
+    'setup.hint.enc_cpr':                'ABZ ×4 (datasheet) · AS5047 = 16384 (14 bits)',
+    'setup.hint.enc_direction':          '1 ou -1 — use ENCODER_DIR_FIND (state=10) pra detectar',
+    'setup.hint.enc_bandwidth':          'Hz do PLL — ABZ típico 100-500',
+    'setup.hint.enc_use_index':          'true só se tem pulso Z (incremental ABZ)',
+    'setup.hint.enc_cs_pin':             'GPIO do CS quando mode é SPI_ABS_* — AS5047 onboard MKS = 7',
+    'setup.hint.enc_pre_calibrated':     'false até calibrar (passo 8) · true depois (passo 9)',
+    // FFB
+    'setup.hint.ffb_range':              'graus lock-to-lock — 900 default sim racing',
+    'setup.hint.ffb_maxtorque':          'Nm — comece baixo, sobe depois',
+    'setup.hint.ffb_fxratio':            '0..1 — multiplicador final',
+
+    // Controller tab — aviso TORQUE mode
+    'ctrl.warn_torque_title':  'control_mode = TORQUE_CONTROL (FFB mode)',
+    'ctrl.warn_torque_desc':   'Vários campos abaixo são IGNORADOS pelo firmware quando control_mode = TORQUE: PID gains (pos_gain, vel_gain, vel_integrator_*), inertia, gain scheduling, posição circular, homing/mirror. Em TORQUE mode o input_torque_ vai direto pro current controller sem passar por nenhum loop PID. Os campos cinzentos abaixo refletem o que está inerte.',
+    'ctrl.tag_ignored':        'ignorado em TORQUE',
+    'ctrl.tag_partial':        'usado só como vel-clamp',
     // Encoder tab actions
     'encoder.zero_btn':        '⊙ Zerar posição do volante',
     'encoder.zero_label':      'Zerar posição:',
@@ -1315,6 +1850,7 @@ const I18N = {
     'btn.import': 'Import JSON',
     'status.disconnected': 'Disconnected',
     'status.connected': 'Connected',
+    'sidebar.group.start':  'Quick Start',
     'sidebar.group.odrive': 'ODrive',
     'sidebar.group.ffb':    'Force Feedback',
     'sidebar.group.io':     'Inputs',
@@ -1346,9 +1882,16 @@ const I18N = {
     'toast.flash_done':      'Firmware flashed, board rebooted',
     'toast.flash_fail':      'Flash failed',
     'toast.save_complete':   'Save complete + re-read OK',
+    'toast.erase_complete':  '✓ Config erased + board reconnected + values re-read',
+    'toast.reboot_complete': '✓ Board rebooted + reconnected + values re-read',
     'toast.wheel_zeroed':    '✓ Wheel position zeroed',
     'toast.wheel_zero_fail': 'Failed to zero wheel position',
     'toast.preset_as5047_applied': '✓ AS5047 preset applied — click Save to persist',
+    // Import JSON
+    'import.confirm_apply':  '{n} field(s) loaded from JSON.\n\n[OK]     Apply now — write each field to the device in sequence (does NOT persist to NVM until you click Save)\n[Cancel] Just load into the form (red), review and Save manually later',
+    'import.loaded_only':    '✓ {n} field(s) loaded into the form — review and click Save to apply',
+    'import.applied':        '✓ Applied: {ok} · failures: {fail} — click Save to persist to NVM',
+    'import.no_match':       'No fields in the JSON match the current SCHEMA',
     // Status / log (EN)
     'status.error':          'Error',
     'status.no_webserial':   'Web Serial not supported — use Chrome/Edge',
@@ -1359,6 +1902,7 @@ const I18N = {
     'search.placeholder':   'Search parameter (e.g. pole_pairs, brake, encoder)…',
     'search.no_match_here': 'Nothing matches "<b>{q}</b>" in this tab, but other tabs have results:',
     'search.no_match_anywhere': 'No parameters match "<b>{q}</b>". Try a shorter term, or part of the path (e.g. <code>brake</code>, <code>encoder</code>, <code>vel_limit</code>).',
+    'tab.setup': 'Quick Start',
     'tab.odrv': 'ODrive',
     'tab.axis0': 'Axis 0 General',
     'tab.motor': 'Motor',
@@ -1517,6 +2061,121 @@ const I18N = {
     'group.ffb_filt_fr': 'Friction',
     'group.ffb_filt_da': 'Damper',
     'group.ffb_filt_in': 'Inertia',
+    // Setup wizard (EN)
+    'setup.intro_title':       'Welcome to Odrive-Wheel',
+    'setup.intro_desc':        'This page walks you from blank firmware to FFB responding in-game. Each step below tells you what to do, which configurator tab handles it, and the suggested parameters to start safely. Scroll top to bottom; do not skip steps.',
+    'setup.req_title':         'Before you start — hardware checklist',
+    'setup.req_l1':            '✓ MKS XDrive Mini connected via USB-C (DATA cable, not charge-only)',
+    'setup.req_l2':            '✓ 3-phase BLDC motor wired to U/V/W outputs',
+    'setup.req_l3':            '✓ ABZ or AS5047 encoder (already mounted on the MKS)',
+    'setup.req_l4':            '✓ Brake resistor (typically 2 Ω 50 W) on AUX terminals',
+    'setup.req_l5':            '✓ 12-48 V power supply — match the voltage variant of your board',
+    'setup.req_l6':            '⚠ PHYSICAL WHEEL DISCONNECTED from the motor during initial calibration',
+
+    'setup.step1_title':       'Step 1 — Flash the firmware (DFU)',
+    'setup.step1_desc':        'For the first flash, use dfu-util CLI or STM32CubeProgrammer (Windows needs the WinUSB driver via Zadig). For later updates, use the in-browser DFU Flash tab — since rc5 it preserves your saved FFB config across re-flashes.',
+    'setup.step1_action':      '⇩ Open DFU Flash tab',
+
+    'setup.step2_title':       'Step 2 — Connect to the board',
+    'setup.step2_desc':        'Click "Connect" at the top and pick the board\'s serial port (shows up as "Odrive-Wheel CDC" or similar). Status pill turns green "Connected". Use Chrome or Edge — Web Serial does not work elsewhere.',
+    'setup.step2_action':      '🔌 Connect (header)',
+
+    'setup.step3_title':       'Step 3 — Erase existing config (recommended on first flash)',
+    'setup.step3_desc':        'Wipes any leftover settings on the board. Auto-reboots. The tool tries to reconnect via CDC after ~5s. Skip this if you already have a working config you want to preserve.',
+    'setup.step3_action':      '🗑 Erase config + reboot',
+
+    'setup.step4_title':       'Step 4 — Power and protections',
+    'setup.step4_desc':        'Sets DC voltage limits, brake resistor, regen. Adjust to your power supply. The values below are safe for the 24 V supply common in sim racing.',
+    'setup.step4_apply':       '✓ Apply suggested values (ODrive)',
+    'setup.step4_open':        '→ Open ODrive tab',
+
+    'setup.step5_title':       'Step 5 — Motor configuration',
+    'setup.step5_desc':        'Motor type, pole pairs, torque constant. Edit the values below to match your motor — defaults are for a servo BLDC 18Nm; for hoverboards use pole_pairs=15 and torque_constant≈0.55. Start with low current_lim (10 A) — raise later.',
+    'setup.step5_apply':       '✓ Apply values above (Motor)',
+    'setup.step5_open':        '→ Open Motor tab',
+
+    'setup.step6_title':       'Step 6 — Encoder configuration',
+    'setup.step6_desc':        'Edit the fields below to match your encoder. Defaults are for incremental ABZ (most common — external encoder on the motor shaft). If you use the onboard MKS AS5047P, just change mode=257, cpr=16384 and abs_spi_cs_gpio_pin=7. Hints on the right explain each field.',
+    'setup.step6_apply':       '✓ Apply values above (Encoder)',
+    'setup.step6_open':        '→ Open Encoder tab',
+
+    'setup.step7_title':       'Step 7 — Motor calibration',
+    'setup.step7_desc':        'Measures phase resistance R and inductance L. The motor does NOT spin but DOES make a beep sound (injects voltage pulses to measure R and L). Takes ~5 s. Before running, errors are auto-cleared (sc) to avoid blocking from a previous state. When done, axis0.motor.is_calibrated turns True and the measured values appear in the green panel below.',
+    'setup.step7_action':      '▶ Run MOTOR_CALIBRATION (state=4)',
+    'setup.step7_result_title':'Measured post-cal values',
+
+    'setup.step8_title':       'Step 8 — Encoder offset calibration',
+    'setup.step8_desc':        'Aligns the motor\'s electrical phase with the encoder position. Motor spins ~10 turns. Before running, errors are auto-cleared (sc). When done, axis0.encoder.is_ready turns True.',
+    'setup.step8_action':      '▶ Run ENCODER_OFFSET_CALIBRATION (state=7)',
+
+    'setup.step9_title':       'Step 9 — Mark pre-calibrated and save',
+    'setup.step9_desc':        'Marks motor + encoder as pre-calibrated, and enables startup_motor_calibration + startup_encoder_offset_calibration + startup_closed_loop_control (the board calibrates and arms itself on every boot). ⚠ encoder.config.pre_calibrated can ONLY be True if you have Z index wired AND use_index=True, OR if using an absolute encoder (AS5047). Then click Save — persists to NVM and reboots (auto-reconnect in 5s).',
+    'setup.step9_apply':       '✓ Mark pre_calibrated + enable startup',
+    'setup.step9_save':        'Save',
+
+    'setup.step10_title':      'Step 10 — Configure FFB',
+    'setup.step10_desc':       'Total wheel range in degrees, max torque delivered to the motor (Nm), final multiplier. Start conservative (3 Nm) — raise after testing.',
+    'setup.step10_apply':      '✓ Apply FFB preset (range=900, maxtorque=3, fxratio=1)',
+    'setup.step10_open':       '→ Open FFB Wheel tab',
+
+    'setup.step11_title':      'Step 11 — Test FFB (Spring)',
+    'setup.step11_desc':       'Connect the HID device via WebHID and enable the Spring effect (auto-centering). Move the wheel and adjust the slider — you should feel torque proportional pulling toward center. To test Constant Force, Damper and Friction, use the full FFB Test tab.',
+    'setup.step11_action':     '→ Open full FFB Test tab',
+
+    'setup.step12_title':      'Step 12 — Done!',
+    'setup.step12_desc':       'If you got here without errors, your board is operational. Optional next steps: configure GPIOs as extra buttons/axes (Inputs tab), open the PiP overlay to track telemetry during a race, or tune the FFB curves/filters in the FFB Effects/Filters tabs. For trouble, open the Debug tab and grab "axis0.motor.error" + "axis0.encoder.error".',
+    'setup.step12_open_inputs':'→ Configure inputs',
+    'setup.step12_open_overlay':'→ Open overlay (Tools)',
+    'setup.step12_open_debug': '→ Open Debug / Status',
+
+    'setup.toast_preset':      '✓ Preset applied — fields turn red. Review and click Save.',
+    'setup.toast_written':     '✓ Applied: {ok} · failures: {fail}',
+    'setup.toast_state_running':'⏳ State running, please wait…',
+    'setup.toast_state_done':   '✓ State done',
+    'setup.toast_state_fail':   '✕ State failed — check axis0.motor.error and axis0.encoder.error',
+    'setup.toast_erasing':      '⏳ Erasing config + reboot (5s)…',
+    'setup.toast_erased_reconnected': '✓ Config erased and board reconnected',
+    'setup.toast_erased_no_reconnect':'⚠ Config erased but reconnect failed — click Connect manually',
+    // Inline error panel (steps 7/8)
+    'setup.err_title':         'Errors after procedure',
+    'setup.err_refresh':       '↻ Refresh',
+    'setup.err_clear':         '🗑 Clear errors (sc)',
+
+    // Inline hints for editable forms (EN) — Power
+    'setup.hint.brake_resistance':       'Ω — match the physical brake resistor',
+    'setup.hint.enable_brake_resistor':  'always true if you have a brake resistor',
+    'setup.hint.dc_undervoltage':        'V — below this ODrive disarms',
+    'setup.hint.dc_overvoltage':         'V — 24V supply → 28; 12V supply → 14',
+    'setup.hint.dc_max_pos':             'A — limit on PSU draw',
+    'setup.hint.dc_max_neg':             'A — regen limit (negative!)',
+    'setup.hint.max_regen':              '0 = brake always engages',
+    // Motor
+    'setup.hint.motor_type':             '0 = HIGH_CURRENT (regular BLDC)',
+    'setup.hint.pole_pairs':             '4 servo · 7 outrunner · 15 hoverboard',
+    'setup.hint.torque_constant':        '0.87 servo 18Nm · 0.55 hoverboard · or 8.27/Kv',
+    'setup.hint.current_lim':            'A — start low!',
+    'setup.hint.calibration_current':    'A — during motor calibration',
+    'setup.hint.resistance_calib_v':     'V — limits noise during R cal',
+    'setup.hint.requested_current_range':'A — ≥ current_lim + margin',
+    'setup.hint.current_control_bandwidth':'rad/s — current PI loop bandwidth. 200 = smooth/safe · 1000 = aggressive (industrial servo)',
+    // Encoder
+    'setup.hint.enc_mode':               '0 INCREMENTAL · 1 HALL · 257 SPI_ABS_AMS (AS5047) · 258 AEAT · 259 RLS',
+    'setup.hint.enc_cpr':                'ABZ ×4 (datasheet) · AS5047 = 16384 (14 bits)',
+    'setup.hint.enc_direction':          '1 or -1 — use ENCODER_DIR_FIND (state=10) to detect',
+    'setup.hint.enc_bandwidth':          'PLL Hz — ABZ typical 100-500',
+    'setup.hint.enc_use_index':          'true only if you have a Z pulse (incremental ABZ)',
+    'setup.hint.enc_cs_pin':             'CS GPIO when mode is SPI_ABS_* — AS5047 onboard MKS = 7',
+    'setup.hint.enc_pre_calibrated':     'false until calibrated (step 8) · true after (step 9)',
+    // FFB
+    'setup.hint.ffb_range':              'degrees lock-to-lock — 900 default sim racing',
+    'setup.hint.ffb_maxtorque':          'Nm — start low, raise later',
+    'setup.hint.ffb_fxratio':            '0..1 — final multiplier',
+
+    // Controller tab — TORQUE mode warning
+    'ctrl.warn_torque_title':  'control_mode = TORQUE_CONTROL (FFB mode)',
+    'ctrl.warn_torque_desc':   'Several fields below are IGNORED by the firmware when control_mode = TORQUE: PID gains (pos_gain, vel_gain, vel_integrator_*), inertia, gain scheduling, circular setpoints, homing/mirror. In TORQUE mode input_torque_ goes straight to the current controller without any PID loop. Greyed-out fields below show what is inert.',
+    'ctrl.tag_ignored':        'ignored in TORQUE',
+    'ctrl.tag_partial':        'used only as vel-clamp',
     // Encoder tab actions
     'encoder.zero_btn':        '⊙ Zero wheel position',
     'encoder.zero_label':      'Zero position:',
@@ -1744,11 +2403,11 @@ const FIELD_DESC = {
     'axis.fxratio':       'Multiplicador final 0..1. Reduz force overall preservando dinâmicas. Default 0.80.',
     'axis.invert':        'Inverte direção lógica do volante (sem mexer em fios). Quando ON, HID position + FFB torque do jogo são negados juntos — útil quando o motor está cabeado no sentido oposto. Persiste em EE.',
     'sys.vbusdiv':        'Divisor de tensão do VBUS sense (R1+R2)/R2. Default 19 (MKS XDrive Mini, 18k+1k). ODrive v3.6 oficial = 11. Valor errado afeta proteção de overvoltage e cálculo do brake — confira com multímetro depois de ajustar.',
-    'axis.idlespring':    'Mola centralizadora SÓ quando jogo desligado (FFB inativo). 0=desativado.',
-    'axis.axisdamper':    'Damper SEMPRE ativo, somado ao FFB do jogo. Adiciona "peso" ao volante.',
-    'axis.axisinertia':   'Inertia SEMPRE ativa, baseada em aceleração. Sensação de "massa".',
-    'axis.axisfriction':  'Friction SEMPRE ativa. Atrito constante quando volante gira.',
-    'axis.esgain':        'Batente eletrônico (0-255). Aplica torque crescente quando volante passa ±range/2. 0=desativado, 127=médio, 255=duro como bumper.',
+    'axis.idlespring':    'Mola centralizadora SÓ quando jogo está OFF (FFB inativo). Volta a 0 quando jogo conecta. 0=desativado.',
+    'axis.axisdamper':    'Damper SEMPRE ativo (com ou sem jogo conectado), somado ao FFB. Adiciona "peso" ao volante.',
+    'axis.axisinertia':   'Inertia SEMPRE ativa (com ou sem jogo), proporcional à aceleração. Sensação de "massa".',
+    'axis.axisfriction':  'Friction SEMPRE ativa (com ou sem jogo). Atrito constante quando volante gira.',
+    'axis.esgain':        'Batente eletrônico (0-255). Aplica torque crescente quando volante passa ±range/2. SEMPRE ativo (com ou sem jogo). 0=desativado, 127=médio, 255=duro como bumper.',
     'axis.maxtorquerate': 'Slew limiter em counts/ms. 0=off. Sobe pra suavizar transientes; CUIDADO mata dinâmicas.',
     'axis.expo':          'Curva exponencial de resposta. 0=linear. Positivo=centro morto, negativo=centro sensível.',
     'axis.exposcale':     'Divisor pro expo. Default 100.',
@@ -1877,11 +2536,11 @@ const FIELD_DESC = {
     'axis.fxratio':       'Final multiplier 0..1. Scales force overall while preserving dynamics. Default 0.80.',
     'axis.invert':        'Reverses wheel logical direction (no rewiring needed). When ON, HID position + game FFB torque are negated together — useful when motor is wired the opposite way. Persists to EEPROM.',
     'sys.vbusdiv':        'VBUS sense voltage divider (R1+R2)/R2. Default 19 (MKS XDrive Mini, 18k+1k). Official ODrive v3.6 = 11. Wrong value affects overvoltage protection and brake calculation — verify with a multimeter after changing.',
-    'axis.idlespring':    'Centering spring ONLY when game is off (FFB inactive). 0=disabled.',
-    'axis.axisdamper':    'Damper ALWAYS active, added to game FFB. Adds "weight" to wheel.',
-    'axis.axisinertia':   'Inertia ALWAYS active, based on acceleration. "Mass" feel.',
-    'axis.axisfriction':  'Friction ALWAYS active. Constant friction when wheel turns.',
-    'axis.esgain':        'Electronic endstop (0-255). Applies growing torque when wheel passes ±range/2. 0=disabled, 127=medium, 255=hard bumper.',
+    'axis.idlespring':    'Centering spring ONLY when game is OFF (FFB inactive). Returns to 0 when game connects. 0=disabled.',
+    'axis.axisdamper':    'Damper ALWAYS active (with or without game connected), added to game FFB. Adds "weight" to wheel.',
+    'axis.axisinertia':   'Inertia ALWAYS active (with or without game), based on acceleration. "Mass" feel.',
+    'axis.axisfriction':  'Friction ALWAYS active (with or without game). Constant friction when wheel turns.',
+    'axis.esgain':        'Electronic endstop (0-255). Applies growing torque when wheel passes ±range/2. ALWAYS active (with or without game). 0=disabled, 127=medium, 255=hard bumper.',
     'axis.maxtorquerate': 'Slew limiter in counts/ms. 0=off. Raise to smooth transients; CAREFUL kills dynamics.',
     'axis.expo':          'Exponential response curve. 0=linear. Positive=dead center, negative=sensitive center.',
     'axis.exposcale':     'Expo divisor. Default 100.',
@@ -2082,6 +2741,12 @@ function applyI18n() {
                    btnConn.textContent.toLowerCase().includes('disconn');
     btnConn.textContent = t(isConn ? 'btn.disconnect' : 'btn.connect');
   }
+  // Re-aplica tags i18n nos labels inertes da aba Controller (CSS lê
+  // do data-inert-tag, que precisa ser regravado em mudança de idioma)
+  if (typeof _updateControllerInert === 'function') {
+    const cm = document.getElementById('in-axis0.controller.config.control_mode');
+    if (cm) _updateControllerInert(cm.value);
+  }
 }
 function setLang(lang) {
   if (lang !== 'pt' && lang !== 'en') return;
@@ -2182,6 +2847,8 @@ const RO = (name, type) => ({ name, type, readonly: true });
 // Sidebar visual grouping. Items must reference SCHEMA tab IDs.
 // Order here defines order in the sidebar (independent of SCHEMA order).
 const SIDEBAR_GROUPS = [
+  { titleKey: 'sidebar.group.start',  title: 'Quick Start',
+    items: ['setup'] },
   { titleKey: 'sidebar.group.odrive', title: 'ODrive',
     items: ['odrv', 'axis0', 'motor', 'encoder', 'controller'] },
   { titleKey: 'sidebar.group.ffb',    title: 'Force Feedback',
@@ -2192,6 +2859,7 @@ const SIDEBAR_GROUPS = [
     items: ['debug', 'console-tab', 'dfu', 'overlay'] },
 ];
 const TAB_ICONS = {
+  'setup':        '🚀',
   'odrv':         '⚙',
   'axis0':        '◎',
   'motor':        '↯',
@@ -2210,6 +2878,9 @@ const TAB_ICONS = {
 };
 
 const SCHEMA = [
+  {
+    id: 'setup', label: 'Quick Start', prefix: '', custom: true,
+  },
   {
     id: 'odrv', label: 'ODrive', prefix: 'config.',
     fields: [
@@ -2813,7 +3484,7 @@ function buildDFUHTML() {
   return `
     <div class="debug-section" style="grid-column:1/-1;">
       <h3 data-i18n="dfu.title">Atualização de Firmware via DFU</h3>
-      <p style="color:var(--fg-muted);font-size:13px;margin:0 0 4px;" data-i18n="dfu.subtitle">
+      <p style="color:var(--fg-muted);font-size:20px;margin:0 0 4px;" data-i18n="dfu.subtitle">
         Reboota a placa pro bootloader STM32 e grava o .bin pelo navegador (sem dfu-util).
       </p>
     </div>
@@ -2957,7 +3628,7 @@ function buildInputsHTML() {
   return `
     <div class="debug-section" style="grid-column:1/-1;">
       <h3 data-i18n="inputs.title">Entradas digitais e analógicas</h3>
-      <p style="color:var(--fg-muted);font-size:13px;margin:0;" data-i18n="inputs.subtitle">
+      <p style="color:var(--fg-muted);font-size:20px;margin:0;" data-i18n="inputs.subtitle">
         GPIOs 1-4 da MKS XDrive Mini configuráveis como botões ou eixos do joystick HID.
       </p>
     </div>
@@ -3241,7 +3912,7 @@ function buildFFBTestHTML() {
   return `
     <div class="debug-section" style="grid-column:1/-1;">
       <h3 data-i18n="fbt.title">Teste de FFB via WebHID</h3>
-      <p style="color:var(--fg-muted);font-size:13px;margin:0;" data-i18n="fbt.subtitle">
+      <p style="color:var(--fg-muted);font-size:20px;margin:0;" data-i18n="fbt.subtitle">
         Envia comandos PID HID direto pelo navegador, simulando um jogo.
       </p>
     </div>
@@ -3328,7 +3999,7 @@ function buildFFBTestHTML() {
 
     <div class="fbt-actions">
       <button id="fbt-panic" class="danger" data-i18n="fbt.panic">🛑 Parar tudo</button>
-      <span style="color:var(--fg-dim);font-size:11.5px;flex:1" data-i18n="fbt.note">
+      <span style="color:var(--fg-dim);font-size:17px;flex:1" data-i18n="fbt.note">
         Forças aqui são reais — segure o volante.
       </span>
     </div>
@@ -3342,13 +4013,13 @@ function buildFFBTestHTML() {
         <input type="number" id="fbt-poll-interval" value="200" min="50" max="2000" step="50" style="width:80px"> ms
         <button id="fbt-poll-once" data-i18n="fbt.chart_once">Ler agora</button>
         <button id="fbt-chart-clear" data-i18n="fbt.chart_clear">Limpar</button>
-        <span style="color:var(--fg-dim);font-size:11px;margin-left:auto" data-i18n="fbt.chart_hint">
+        <span style="color:var(--fg-dim);font-size:16px;margin-left:auto" data-i18n="fbt.chart_hint">
           Lê axis.curpos? + axis.curtorque? via Web Serial.
         </span>
       </div>
       <canvas id="fbt-chart" width="800" height="220"
               style="width:100%;height:220px;background:#0a0a0a;border:1px solid var(--border);border-radius:4px"></canvas>
-      <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:16px;flex-wrap:wrap;align-items:center">
         <span style="color:#ab47bc">━ <span data-i18n="legend.position">posição (graus)</span> <span id="fbt-chart-leg-pos">—</span></span>
         <span style="color:#ef5350">━ <span data-i18n="legend.torque">torque (Nm)</span> <span id="fbt-chart-leg-trq">—</span></span>
         <span style="margin-left:auto;color:var(--fg-muted)" id="fbt-chart-stats">—</span>
@@ -3770,12 +4441,689 @@ function wireFFBTestTab() {
           if (warn) warn.classList.toggle('on', v !== 8);
         } catch(e) {}
       } else {
-        // Saiu da aba — para tudo: poll + efeitos HID
+        // Saiu da aba — para apenas o auto-poll do chart (consumo de serial).
+        // Mantém os efeitos HID rodando: o usuário pode ativar Spring no FFB Test
+        // e ir pra aba Debug ver telemetria sem que os efeitos sejam desligados.
+        // Pra parar os efeitos manualmente, botão "Parar tudo" dentro do FFB Test
+        // ou desconectar o HID.
         stopPoll();
         if (pollEnable) pollEnable.checked = false;
-        if (fbtConnected) await stopAll();
       }
     });
+  });
+}
+
+/* =========================================================================
+   Setup wizard — aba "Quick Start" guiando do firmware vazio até FFB no jogo.
+   Estrutura: 12 passos numerados, cada um é uma "card" (.setup-step) com
+   título, descrição, parâmetros sugeridos (quando aplicável) e botões de
+   ação. Persiste estado de "done" por passo em localStorage pra usuário não
+   perder progresso ao recarregar.
+
+   Padrões de ação:
+   - jump-to-tab: chama selectTab(id) — pra passos que dependem de aba dedicada
+   - apply-preset: escreve nos inputs da aba target + markDirty (vermelho).
+     User revisa e clica Salvar global. NÃO escreve direto no device aqui.
+   - run-state: w axis0.requested_state N + polling do current_state até IDLE
+   ========================================================================= */
+
+// Helper: monta uma row editável do form de parâmetros sugeridos.
+// type = 'number' | 'text' | 'bool'. hintKey = chave i18n; o span do hint
+// recebe data-i18n pra que applyI18n() atualize automaticamente quando
+// o usuário troca PT↔EN.
+//
+// Layout: 3 slots flex em UMA linha — code (path) | input/checkbox-slot | hint
+// Bool inputs ficam dentro de um <span class="slot"> com largura fixa
+// pro alinhamento bater com as rows de input number.
+function _setupFormRow(path, defaultValue, type, hintKey) {
+  const id = 'sp-' + path.replace(/[\.\[\]]/g, '-');
+  const hintHTML = hintKey
+    ? '<span class="hint" data-i18n="' + hintKey + '">' + escapeHtml(t(hintKey)) + '</span>'
+    : '<span class="hint"></span>';
+  let inputHTML;
+  if (type === 'bool') {
+    inputHTML = '<span class="slot"><input type="checkbox" id="' + id + '"' +
+                (defaultValue ? ' checked' : '') + '></span>';
+  } else {
+    inputHTML = '<input type="text" id="' + id + '" value="' +
+                escapeHtml(String(defaultValue)) + '">';
+  }
+  return '<div class="row">' +
+    '<code>' + escapeHtml(path) + '</code>' +
+    inputHTML + hintHTML + '</div>';
+}
+
+// Lê o valor atual de uma row editável do form.
+function _setupReadFormRow(path, type) {
+  const id = 'sp-' + path.replace(/[\.\[\]]/g, '-');
+  const inp = document.getElementById(id);
+  if (!inp) return null;
+  if (type === 'bool') return inp.checked;
+  return inp.value.trim();
+}
+
+// Combina readFormRow + applyFields. Aceita lista de specs:
+//   { path, type: 'number'|'text'|'bool' }
+// Retorna o número de campos efetivamente aplicados.
+function _setupApplyFromForm(specs) {
+  const writes = specs.map(s => ({
+    path: s.path,
+    value: _setupReadFormRow(s.path, s.type),
+    bool: s.type === 'bool',
+  })).filter(w => w.value !== null && w.value !== '');
+  return _setupApplyFields(writes);
+}
+
+// Versão NEW: escreve direto no device em vez de só marcar dirty no DOM.
+// Mantém o usuário no Quick Start (não muda de aba) e atualiza o input do
+// SCHEMA com o valor de readback (verde sync).
+//
+// Detecta protocolo (offb vs odrv) procurando o input no SCHEMA — todos os
+// nossos paths (config.*, axis0.*, axis.*, fx.*, sys.*) estão registrados
+// no SCHEMA com dataset.protocol setado correto.
+async function _setupWriteFromForm(specs) {
+  if (!writer) {
+    toast(t('toast.connect_first_board'), 'err');
+    return { ok: 0, fail: 0 };
+  }
+  const writes = specs.map(s => ({
+    path: s.path,
+    value: _setupReadFormRow(s.path, s.type),
+    bool: s.type === 'bool',
+    type: s.type,
+  })).filter(w => w.value !== null && w.value !== '');
+  let ok = 0, fail = 0;
+  for (const w of writes) {
+    const inp = document.getElementById('in-' + w.path);
+    if (!inp) {
+      logLine('setup write: input não achado: ' + w.path, 'err');
+      fail++;
+      continue;
+    }
+    // Atualiza valor no SCHEMA input (espelha pra UX consistente quando user
+    // visitar a aba target depois)
+    if (w.bool) inp.checked = !!w.value;
+    else inp.value = String(w.value);
+    try {
+      await writeOne(inp);   // escreve + readback + marca synced (verde)
+      ok++;
+    } catch (e) {
+      logLine('setup write fail: ' + w.path + ' → ' + e.message, 'err');
+      fail++;
+    }
+  }
+  return { ok, fail };
+}
+
+// Helper: monta painel de erros compacto pros passos 7/8 (cal motor/encoder).
+// stepNum vai no id pra cada passo ter seu próprio painel separado.
+// fields[] = [{id, label, path, mapName}]  — mapName é nome do mapa global.
+function _setupErrorPanelHTML(stepNum, fields) {
+  const idP = 'setup-err-' + stepNum;
+  const rows = fields.map(f =>
+    '<div class="err-row" id="' + idP + '-' + f.id + '">' +
+      '<span class="lbl">' + escapeHtml(f.label) + '</span>' +
+      '<span class="hex" id="' + idP + '-' + f.id + '-hex">—</span>' +
+      '<span class="bits" id="' + idP + '-' + f.id + '-bits"></span>' +
+    '</div>'
+  ).join('');
+  return '<div class="setup-err-panel" id="' + idP + '" style="display:none">' +
+    '<div class="header">' +
+      '<span data-i18n="setup.err_title">' + escapeHtml(t('setup.err_title')) + '</span>' +
+      '<button class="refresh" data-step-err="' + stepNum + '" data-action="refresh" data-i18n="setup.err_refresh">' +
+        escapeHtml(t('setup.err_refresh')) + '</button>' +
+      '<button class="clear" data-step-err="' + stepNum + '" data-action="clear" data-i18n="setup.err_clear">' +
+        escapeHtml(t('setup.err_clear')) + '</button>' +
+    '</div>' +
+    rows +
+  '</div>';
+}
+
+// Lista de erros relevante por passo. Step 7 (motor cal) → axis + motor.
+// Step 8 (encoder cal) → axis + encoder. Mantemos axis sempre porque é
+// onde o ERROR_MOTOR_FAILED / ENCODER_FAILED wrapper aparece.
+const SETUP_ERR_FIELDS = {
+  7: [
+    { id: 'axis',  label: 'axis0.error',         path: 'axis0.error',         map: 'AXIS' },
+    { id: 'motor', label: 'axis0.motor.error',   path: 'axis0.motor.error',   map: 'MOTOR' },
+  ],
+  8: [
+    { id: 'axis', label: 'axis0.error',          path: 'axis0.error',         map: 'AXIS' },
+    { id: 'enc',  label: 'axis0.encoder.error',  path: 'axis0.encoder.error', map: 'ENCODER' },
+  ],
+};
+const SETUP_ERR_MAPS = {
+  AXIS:    () => ERR_BITS_AXIS,
+  MOTOR:   () => ERR_BITS_MOTOR,
+  ENCODER: () => ERR_BITS_ENCODER,
+};
+
+async function _setupRefreshErrPanel(stepNum) {
+  const fields = SETUP_ERR_FIELDS[stepNum];
+  if (!fields || !writer) return;
+  const idP = 'setup-err-' + stepNum;
+  for (const f of fields) {
+    const raw = await readProp(f.path).catch(() => null);
+    const v = parseInt(raw, 10);
+    const hex = '0x' + (isNaN(v) ? 0 : v).toString(16).toUpperCase().padStart(8, '0');
+    const hexEl  = document.getElementById(idP + '-' + f.id + '-hex');
+    const bitsEl = document.getElementById(idP + '-' + f.id + '-bits');
+    if (hexEl) {
+      hexEl.textContent = hex;
+      hexEl.className = 'hex ' + (v === 0 ? 'ok' : 'err');
+    }
+    if (bitsEl) {
+      const map = SETUP_ERR_MAPS[f.map]();
+      bitsEl.textContent = v === 0 ? '' : decodeErr(v.toString(16), map);
+    }
+  }
+}
+
+function _setupShowErrPanel(stepNum) {
+  const el = document.getElementById('setup-err-' + stepNum);
+  if (el) el.style.display = '';
+}
+
+// Painel de resultados pro step 7 — mostra R e L medidos após motor cal.
+// Só atualiza quando o handler de step 7 lê os valores depois de state=4 OK.
+function _setupStep7ResultHTML() {
+  return '<div class="setup-step7-result">' +
+    '<div class="header" data-i18n="setup.step7_result_title">Valores medidos</div>' +
+    '<div class="row">' +
+      '<span class="lbl">phase_resistance</span>' +
+      '<span class="val" id="setup-step7-result-R">—</span>' +
+    '</div>' +
+    '<div class="row">' +
+      '<span class="lbl">phase_inductance</span>' +
+      '<span class="val" id="setup-step7-result-L">—</span>' +
+    '</div>' +
+  '</div>';
+}
+
+// Helper genérico: aplica uma lista de campos no DOM da aba correspondente
+// e marca cada um como dirty pra ficar vermelho.
+function _setupApplyFields(fields) {
+  let n = 0;
+  for (const f of fields) {
+    const inp = document.getElementById('in-' + f.path);
+    if (!inp) {
+      logLine('setup: campo não encontrado: ' + f.path, 'err');
+      continue;
+    }
+    if (f.bool) inp.checked = !!f.value;
+    else inp.value = String(f.value);
+    markDirty(inp);
+    n++;
+  }
+  return n;
+}
+
+// Roda um requested_state e espera o axis voltar pra IDLE (state=1).
+// Retorna {ok: bool, finalState: int, motorErr: int, encErr: int}.
+async function _setupRunState(stateNum, timeoutMs = 30000) {
+  if (!writer) return { ok: false, reason: 'not_connected' };
+  await writeProp('axis0.requested_state', String(stateNum));
+  // Aguarda transição
+  await new Promise(r => setTimeout(r, 500));
+  const tStart = Date.now();
+  while (Date.now() - tStart < timeoutMs) {
+    const cs = await readProp('axis0.current_state').catch(() => null);
+    const v = parseInt((cs || '').trim(), 10);
+    if (v === 1) break; // de volta a IDLE
+    await new Promise(r => setTimeout(r, 500));
+  }
+  const motorErr = parseInt((await readProp('axis0.motor.error') || '0'), 10);
+  const encErr   = parseInt((await readProp('axis0.encoder.error') || '0'), 10);
+  const axisErr  = parseInt((await readProp('axis0.error') || '0'), 10);
+  return { ok: motorErr === 0 && encErr === 0 && axisErr === 0,
+           motorErr, encErr, axisErr };
+}
+
+function buildSetupHTML() {
+  // Forms editáveis — usuário ajusta antes de clicar Apply. Hints i18n
+  // explicam contexto (unidades, alternativas comuns) — atualizam quando
+  // troca PT↔EN.
+  const FORM_POWER = '<div class="params-form">' +
+    _setupFormRow('config.brake_resistance',                2.0,  'number', 'setup.hint.brake_resistance') +
+    _setupFormRow('config.enable_brake_resistor',           true, 'bool',   'setup.hint.enable_brake_resistor') +
+    _setupFormRow('config.dc_bus_undervoltage_trip_level',  8,    'number', 'setup.hint.dc_undervoltage') +
+    _setupFormRow('config.dc_bus_overvoltage_trip_level',   28,   'number', 'setup.hint.dc_overvoltage') +
+    _setupFormRow('config.dc_max_positive_current',         15,   'number', 'setup.hint.dc_max_pos') +
+    _setupFormRow('config.dc_max_negative_current',         -15,  'number', 'setup.hint.dc_max_neg') +
+    _setupFormRow('config.max_regen_current',               0,    'number', 'setup.hint.max_regen') +
+    '</div>';
+
+  const FORM_MOTOR = '<div class="params-form">' +
+    _setupFormRow('axis0.motor.config.motor_type',                  0,    'number', 'setup.hint.motor_type') +
+    _setupFormRow('axis0.motor.config.pole_pairs',                  4,    'number', 'setup.hint.pole_pairs') +
+    _setupFormRow('axis0.motor.config.torque_constant',             0.87, 'number', 'setup.hint.torque_constant') +
+    _setupFormRow('axis0.motor.config.current_lim',                 10,   'number', 'setup.hint.current_lim') +
+    _setupFormRow('axis0.motor.config.calibration_current',         5,    'number', 'setup.hint.calibration_current') +
+    _setupFormRow('axis0.motor.config.resistance_calib_max_voltage', 12.0, 'number', 'setup.hint.resistance_calib_v') +
+    _setupFormRow('axis0.motor.config.requested_current_range',     25,   'number', 'setup.hint.requested_current_range') +
+    _setupFormRow('axis0.motor.config.current_control_bandwidth',   200,  'number', 'setup.hint.current_control_bandwidth') +
+    '</div>';
+
+  // Encoder editável inline — defaults pra incremental ABZ (caso mais comum).
+  // Quem tem AS5047 onboard ajusta os 3 campos relevantes (mode, cpr, cs_pin).
+  const FORM_ENC = '<div class="params-form">' +
+    _setupFormRow('axis0.encoder.config.mode',                0,     'number', 'setup.hint.enc_mode') +
+    _setupFormRow('axis0.encoder.config.cpr',                 8192,  'number', 'setup.hint.enc_cpr') +
+    _setupFormRow('axis0.encoder.config.direction',           1,     'number', 'setup.hint.enc_direction') +
+    _setupFormRow('axis0.encoder.config.bandwidth',           200,   'number', 'setup.hint.enc_bandwidth') +
+    _setupFormRow('axis0.encoder.config.use_index',           false, 'bool',   'setup.hint.enc_use_index') +
+    _setupFormRow('axis0.encoder.config.abs_spi_cs_gpio_pin', 7,     'number', 'setup.hint.enc_cs_pin') +
+    _setupFormRow('axis0.encoder.config.pre_calibrated',      false, 'bool',   'setup.hint.enc_pre_calibrated') +
+    '</div>';
+
+  const FORM_FFB = '<div class="params-form">' +
+    _setupFormRow('axis.range',      900, 'number', 'setup.hint.ffb_range') +
+    _setupFormRow('axis.maxtorque',  3.0, 'number', 'setup.hint.ffb_maxtorque') +
+    _setupFormRow('axis.fxratio',    1.0, 'number', 'setup.hint.ffb_fxratio') +
+    '</div>';
+
+  // Step 11 — controles inline do FFB Test. Não duplica a lógica HID; faz
+  // proxy pros elementos da aba FFB Test via dispatchEvent. Status reflete
+  // o badge da aba via MutationObserver.
+  const INLINE_FFBTEST = `
+    <div class="setup-ffbtest">
+      <div class="setup-ffbtest-status" id="setup-ffbtest-status">
+        <span class="dot"></span>
+        <span id="setup-ffbtest-status-text" data-i18n="fbt.status_no">${escapeHtml(t('fbt.status_no'))}</span>
+      </div>
+      <div class="setup-ffbtest-actions">
+        <button id="setup-ffbtest-connect" class="primary" data-i18n="fbt.connect">${escapeHtml(t('fbt.connect'))}</button>
+        <button id="setup-ffbtest-disconnect" style="display:none" data-i18n="fbt.disconnect">${escapeHtml(t('fbt.disconnect'))}</button>
+        <button id="setup-ffbtest-panic" class="danger" data-i18n="fbt.panic">${escapeHtml(t('fbt.panic'))}</button>
+      </div>
+      <div class="setup-ffbtest-spring">
+        <label class="enable">
+          <input type="checkbox" id="setup-ffbtest-sp-enable">
+          <span data-i18n="fbt.sp_title">${escapeHtml(t('fbt.sp_title'))}</span>
+        </label>
+        <div class="slider-row">
+          <span class="lbl" data-i18n="fbt.strength">${escapeHtml(t('fbt.strength'))}</span>
+          <input type="range" id="setup-ffbtest-sp-str" min="0" max="100" step="1" value="50">
+          <span class="val" id="setup-ffbtest-sp-val">50%</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return `
+    <div class="setup-intro">
+      <h2 data-i18n="setup.intro_title">Bem-vindo ao Odrive-Wheel</h2>
+      <p data-i18n="setup.intro_desc">Esta página guia você do firmware vazio até o FFB respondendo no jogo. Cada passo abaixo lista o que fazer, qual aba do configurador resolve aquilo, e os parâmetros sugeridos pra começar com segurança. Role a página de cima pra baixo, sem pular etapa.</p>
+      <div class="setup-checklist">
+        <h4 data-i18n="setup.req_title">Antes de começar — checklist de hardware</h4>
+        <ul>
+          <li data-i18n="setup.req_l1">✓ MKS XDrive Mini conectada via USB-C (cabo de DADOS)</li>
+          <li data-i18n="setup.req_l2">✓ Motor BLDC 3-fase ligado nas saídas U/V/W</li>
+          <li data-i18n="setup.req_l3">✓ Encoder ABZ ou AS5047 (já vem montado na MKS)</li>
+          <li data-i18n="setup.req_l4">✓ Resistor de freio (2 Ω 50 W) nos terminais AUX</li>
+          <li data-i18n="setup.req_l5">✓ Fonte 12-48 V — verifique a variante de tensão da sua placa</li>
+          <li class="warn" data-i18n="setup.req_l6">⚠ VOLANTE FÍSICO DESCONECTADO durante a calibração inicial</li>
+        </ul>
+      </div>
+    </div>
+
+    ${_setupStepCard(1, 'setup.step1_title', 'setup.step1_desc', null, [
+      { id: 'btn-setup-go-dfu', i18n: 'setup.step1_action' }
+    ])}
+    ${_setupStepCard(2, 'setup.step2_title', 'setup.step2_desc', null, [
+      { id: 'btn-setup-connect', i18n: 'setup.step2_action', cls: 'primary' }
+    ])}
+    ${_setupStepCard(3, 'setup.step3_title', 'setup.step3_desc', null, [
+      { id: 'btn-setup-erase', i18n: 'setup.step3_action', cls: 'danger' }
+    ])}
+    ${_setupStepCard(4, 'setup.step4_title', 'setup.step4_desc', FORM_POWER, [
+      { id: 'btn-setup-apply-power', i18n: 'setup.step4_apply', cls: 'primary' },
+      { id: 'btn-setup-go-odrv', i18n: 'setup.step4_open' }
+    ], 'form')}
+    ${_setupStepCard(5, 'setup.step5_title', 'setup.step5_desc', FORM_MOTOR, [
+      { id: 'btn-setup-apply-motor', i18n: 'setup.step5_apply', cls: 'primary' },
+      { id: 'btn-setup-go-motor', i18n: 'setup.step5_open' }
+    ], 'form')}
+    ${_setupStepCard(6, 'setup.step6_title', 'setup.step6_desc', FORM_ENC, [
+      { id: 'btn-setup-apply-enc', i18n: 'setup.step6_apply', cls: 'primary' },
+      { id: 'btn-setup-go-enc', i18n: 'setup.step6_open' }
+    ], 'form')}
+    ${_setupStepCard(7, 'setup.step7_title', 'setup.step7_desc',
+      _setupStep7ResultHTML() + _setupErrorPanelHTML(7, SETUP_ERR_FIELDS[7]), [
+      { id: 'btn-setup-run-motorcal', i18n: 'setup.step7_action', cls: 'warn' }
+    ], 'inline')}
+    ${_setupStepCard(8, 'setup.step8_title', 'setup.step8_desc',
+      _setupErrorPanelHTML(8, SETUP_ERR_FIELDS[8]), [
+      { id: 'btn-setup-run-enccal', i18n: 'setup.step8_action', cls: 'warn' }
+    ], 'inline')}
+    ${_setupStepCard(9, 'setup.step9_title', 'setup.step9_desc', null, [
+      { id: 'btn-setup-mark-precal', i18n: 'setup.step9_apply', cls: 'primary' },
+      { id: 'btn-setup-trigger-save', i18n: 'setup.step9_save', cls: 'ok' }
+    ])}
+    ${_setupStepCard(10, 'setup.step10_title', 'setup.step10_desc', FORM_FFB, [
+      { id: 'btn-setup-apply-ffb', i18n: 'setup.step10_apply', cls: 'primary' },
+      { id: 'btn-setup-go-ffb', i18n: 'setup.step10_open' }
+    ], 'form')}
+    ${_setupStepCard(11, 'setup.step11_title', 'setup.step11_desc', INLINE_FFBTEST, [
+      { id: 'btn-setup-go-ffbtest', i18n: 'setup.step11_action' }
+    ], 'inline')}
+    ${_setupStepCard(12, 'setup.step12_title', 'setup.step12_desc', null, [
+      { id: 'btn-setup-go-inputs', i18n: 'setup.step12_open_inputs' },
+      { id: 'btn-setup-go-overlay', i18n: 'setup.step12_open_overlay' },
+      { id: 'btn-setup-go-debug', i18n: 'setup.step12_open_debug' }
+    ])}
+  `;
+}
+
+// Template de uma card de passo.
+// params: string HTML opcional com parâmetros sugeridos (legado <pre>) OU já
+// um wrapper completo (form/list/inline) — paramKind controla:
+//   - 'pre' (default): wrappa em <pre class="params"> (preset estático colorido)
+//   - 'form': já é um <div class="params-form">, insere direto
+//   - 'list': já é um <div class="field-list">, insere direto
+//   - 'inline': HTML arbitrário (controles inline do passo 11), insere direto
+function _setupStepCard(num, titleKey, descKey, params, actions, paramKind) {
+  const actionsHTML = actions.map(a =>
+    '<button id="' + a.id + '"' +
+    (a.cls ? ' class="' + a.cls + '"' : '') +
+    ' data-i18n="' + a.i18n + '">' + escapeHtml(t(a.i18n)) + '</button>'
+  ).join('');
+  let paramsBlock = '';
+  if (params) {
+    if (paramKind === 'form' || paramKind === 'list' || paramKind === 'inline') paramsBlock = params;
+    else paramsBlock = '<pre class="params">' + params + '</pre>';
+  }
+  return `
+    <div class="setup-step" data-step="${num}">
+      <h3>
+        <span class="num">${num}</span>
+        <span data-i18n="${titleKey}">${escapeHtml(t(titleKey))}</span>
+      </h3>
+      <p data-i18n="${descKey}">${escapeHtml(t(descKey))}</p>
+      ${paramsBlock}
+      <div class="actions">${actionsHTML}</div>
+    </div>
+  `;
+}
+
+function wireSetupTab() {
+  // ---- Step 1: ir pra DFU
+  document.getElementById('btn-setup-go-dfu')?.addEventListener('click', () => {
+    selectTab('dfu');
+  });
+
+  // ---- Step 2: dispara Connect (mesmo handler do header)
+  document.getElementById('btn-setup-connect')?.addEventListener('click', () => {
+    document.getElementById('btn-connect')?.click();
+  });
+
+  // ---- Step 3: erase config (envia 'se') + auto-reconnect após reboot
+  document.getElementById('btn-setup-erase')?.addEventListener('click', async () => {
+    if (!writer) { toast(t('toast.connect_first_board'), 'err'); return; }
+    if (!confirm(t('act.erase_confirm'))) return;
+    const btn = document.getElementById('btn-setup-erase');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ ' + t('setup.toast_erasing');
+    toast(t('setup.toast_erasing'), 'warn');
+    await sendCmdAndAutoReconnect('se', 'Erase', /*readBack=*/true, (state) => {
+      if (state === 'rebooting')    btn.textContent = '⏳ ' + t('save.rebooting');
+      if (state === 'reconnecting') btn.textContent = '⏳ ' + t('save.reconnecting');
+      if (state === 'reading')      btn.textContent = '⏳ ' + t('save.reading_back');
+    });
+    btn.textContent = orig;
+    btn.disabled = false;
+    if (port) toast(t('setup.toast_erased_reconnected'), 'ok');
+    else toast(t('setup.toast_erased_no_reconnect'), 'warn');
+  });
+
+  // ---- Step 4: aplica power/brake direto no device (NÃO marca dirty,
+  // NÃO muda de aba — fica no Quick Start e mostra resultado em toast)
+  document.getElementById('btn-setup-apply-power')?.addEventListener('click', async () => {
+    const r = await _setupWriteFromForm([
+      { path: 'config.brake_resistance',                type: 'number' },
+      { path: 'config.enable_brake_resistor',           type: 'bool' },
+      { path: 'config.dc_bus_undervoltage_trip_level',  type: 'number' },
+      { path: 'config.dc_bus_overvoltage_trip_level',   type: 'number' },
+      { path: 'config.dc_max_positive_current',         type: 'number' },
+      { path: 'config.dc_max_negative_current',         type: 'number' },
+      { path: 'config.max_regen_current',               type: 'number' },
+    ]);
+    toast(t('setup.toast_written').replace('{ok}', r.ok).replace('{fail}', r.fail),
+          r.fail === 0 ? 'ok' : 'warn');
+  });
+  document.getElementById('btn-setup-go-odrv')?.addEventListener('click', () => {
+    selectTab('odrv');
+  });
+
+  // ---- Step 5: aplica motor direto no device
+  document.getElementById('btn-setup-apply-motor')?.addEventListener('click', async () => {
+    const r = await _setupWriteFromForm([
+      { path: 'axis0.motor.config.motor_type',                 type: 'number' },
+      { path: 'axis0.motor.config.pole_pairs',                 type: 'number' },
+      { path: 'axis0.motor.config.torque_constant',            type: 'number' },
+      { path: 'axis0.motor.config.current_lim',                type: 'number' },
+      { path: 'axis0.motor.config.calibration_current',        type: 'number' },
+      { path: 'axis0.motor.config.resistance_calib_max_voltage', type: 'number' },
+      { path: 'axis0.motor.config.requested_current_range',    type: 'number' },
+      { path: 'axis0.motor.config.current_control_bandwidth',  type: 'number' },
+    ]);
+    toast(t('setup.toast_written').replace('{ok}', r.ok).replace('{fail}', r.fail),
+          r.fail === 0 ? 'ok' : 'warn');
+  });
+  document.getElementById('btn-setup-go-motor')?.addEventListener('click', () => {
+    selectTab('motor');
+  });
+
+  // ---- Step 6: aplica encoder direto no device
+  document.getElementById('btn-setup-apply-enc')?.addEventListener('click', async () => {
+    const r = await _setupWriteFromForm([
+      { path: 'axis0.encoder.config.mode',                type: 'number' },
+      { path: 'axis0.encoder.config.cpr',                 type: 'number' },
+      { path: 'axis0.encoder.config.direction',           type: 'number' },
+      { path: 'axis0.encoder.config.bandwidth',           type: 'number' },
+      { path: 'axis0.encoder.config.use_index',           type: 'bool' },
+      { path: 'axis0.encoder.config.abs_spi_cs_gpio_pin', type: 'number' },
+      { path: 'axis0.encoder.config.pre_calibrated',      type: 'bool' },
+    ]);
+    toast(t('setup.toast_written').replace('{ok}', r.ok).replace('{fail}', r.fail),
+          r.fail === 0 ? 'ok' : 'warn');
+  });
+  document.getElementById('btn-setup-go-enc')?.addEventListener('click', () => {
+    selectTab('encoder');
+  });
+
+  // Helper compartilhado: limpa erros, roda um state, exibe painel de erros,
+  // faz auto-refresh em 5s, e mantém o painel aberto pra refresh manual.
+  // Pra step 7 (motor cal) também lê phase_resistance + phase_inductance no
+  // fim e popula os campos de resultado.
+  const runStepWithErrors = async (stepNum, btnId, stateNum, timeoutMs) => {
+    if (!writer) { toast(t('toast.connect_first_board'), 'err'); return; }
+    const btn = document.getElementById(btnId);
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ ' + t('setup.toast_state_running');
+    toast(t('setup.toast_state_running'), 'warn');
+
+    // Limpa erros antes de rodar — caso contrário, erros stale de operações
+    // anteriores travam motor.run_calibration() (via do_checks).
+    await sendCmd('sc', false);
+    logLine('--- sc (clear errors) antes de state=' + stateNum + ' ---', 'tx');
+    await new Promise(r => setTimeout(r, 200));
+
+    // Mostra painel de erros já — começa vazio, vai sendo populado
+    _setupShowErrPanel(stepNum);
+    setTimeout(() => _setupRefreshErrPanel(stepNum), 5000);
+
+    const r = await _setupRunState(stateNum, timeoutMs);
+    btn.textContent = orig;
+    btn.disabled = false;
+    await _setupRefreshErrPanel(stepNum);
+
+    // Step 7 specific: lê R e L medidos e popula os campos de resultado.
+    if (stepNum === 7 && r.ok) {
+      const R = await readProp('axis0.motor.config.phase_resistance').catch(() => null);
+      const L = await readProp('axis0.motor.config.phase_inductance').catch(() => null);
+      const elR = document.getElementById('setup-step7-result-R');
+      const elL = document.getElementById('setup-step7-result-L');
+      if (elR) elR.textContent = R !== null ? parseFloat(R).toFixed(4) + ' Ω' : '—';
+      if (elL) elL.textContent = L !== null ? (parseFloat(L) * 1e6).toFixed(2) + ' µH' : '—';
+    }
+
+    if (r.ok) toast(t('setup.toast_state_done'), 'ok');
+    else {
+      toast(t('setup.toast_state_fail'), 'err');
+      logLine('cal fail (step ' + stepNum + '): axis.error=0x' + r.axisErr.toString(16) +
+              ' motor.error=0x' + r.motorErr.toString(16) +
+              ' enc.error=0x' + r.encErr.toString(16), 'err');
+    }
+  };
+
+  // ---- Step 7: motor calibration (state=4)
+  document.getElementById('btn-setup-run-motorcal')?.addEventListener('click', () =>
+    runStepWithErrors(7, 'btn-setup-run-motorcal', 4, 30000));
+
+  // ---- Step 8: encoder offset cal (state=7)
+  document.getElementById('btn-setup-run-enccal')?.addEventListener('click', () =>
+    runStepWithErrors(8, 'btn-setup-run-enccal', 7, 60000));
+
+  // ---- Botões refresh / clear dentro de cada painel de erros
+  document.querySelectorAll('.setup-err-panel button[data-step-err]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const stepNum = parseInt(btn.dataset.stepErr, 10);
+      const action  = btn.dataset.action;
+      if (!writer) { toast(t('toast.connect_first_board'), 'err'); return; }
+      if (action === 'clear') {
+        await sendCmd('sc', false);
+        logLine('--- sc (clear errors + rearm brake) ---', 'tx');
+        await new Promise(r => setTimeout(r, 200));
+      }
+      await _setupRefreshErrPanel(stepNum);
+    });
+  });
+
+  // ---- Step 9: marcar pre_calibrated + ativar startup flags (motor cal,
+  // encoder cal, closed loop) — escreve direto no device (sem red/dirty).
+  document.getElementById('btn-setup-mark-precal')?.addEventListener('click', async () => {
+    if (!writer) { toast(t('toast.connect_first_board'), 'err'); return; }
+    const fields = [
+      { path: 'axis0.motor.config.pre_calibrated',         value: true, type: 'bool' },
+      { path: 'axis0.encoder.config.pre_calibrated',       value: true, type: 'bool' },
+      { path: 'axis0.config.startup_motor_calibration',           value: true, type: 'bool' },
+      { path: 'axis0.config.startup_encoder_offset_calibration',  value: true, type: 'bool' },
+      { path: 'axis0.config.startup_closed_loop_control',         value: true, type: 'bool' },
+    ];
+    let ok = 0, fail = 0;
+    for (const f of fields) {
+      const inp = document.getElementById('in-' + f.path);
+      if (!inp) { fail++; logLine('mark-precal: input não achado: ' + f.path, 'err'); continue; }
+      inp.checked = !!f.value;
+      try { await writeOne(inp); ok++; }
+      catch (e) { fail++; logLine('mark-precal write fail: ' + f.path, 'err'); }
+    }
+    toast(t('setup.toast_written').replace('{ok}', ok).replace('{fail}', fail),
+          fail === 0 ? 'ok' : 'warn');
+  });
+  document.getElementById('btn-setup-trigger-save')?.addEventListener('click', () => {
+    document.getElementById('btn-save')?.click();
+  });
+
+  // ---- Step 10: aplica FFB direto no device (não muda de aba, não fica vermelho)
+  document.getElementById('btn-setup-apply-ffb')?.addEventListener('click', async () => {
+    const r = await _setupWriteFromForm([
+      { path: 'axis.range',      type: 'number' },
+      { path: 'axis.maxtorque',  type: 'number' },
+      { path: 'axis.fxratio',    type: 'number' },
+    ]);
+    toast(t('setup.toast_written').replace('{ok}', r.ok).replace('{fail}', r.fail),
+          r.fail === 0 ? 'ok' : 'warn');
+  });
+  document.getElementById('btn-setup-go-ffb')?.addEventListener('click', () => {
+    selectTab('ffb-wheel');
+  });
+
+  // ---- Step 11: ir pra FFB Test (link opcional)
+  document.getElementById('btn-setup-go-ffbtest')?.addEventListener('click', () => {
+    selectTab('ffb-test');
+  });
+
+  // ---- Step 11 inline: controles HID via proxy pros elementos da aba FFB Test.
+  // Toda a lógica WebHID vive em wireFFBTestTab; aqui só refletimos cliques e
+  // mantemos os sliders sincronizados via dispatchEvent.
+  const proxyConn   = document.getElementById('setup-ffbtest-connect');
+  const proxyDisc   = document.getElementById('setup-ffbtest-disconnect');
+  const proxyPanic  = document.getElementById('setup-ffbtest-panic');
+  const proxySpEn   = document.getElementById('setup-ffbtest-sp-enable');
+  const proxySpStr  = document.getElementById('setup-ffbtest-sp-str');
+  const proxySpVal  = document.getElementById('setup-ffbtest-sp-val');
+  const proxyStTxt  = document.getElementById('setup-ffbtest-status-text');
+  const proxyStBox  = document.getElementById('setup-ffbtest-status');
+
+  if (proxyConn) {
+    proxyConn.addEventListener('click', () => {
+      document.getElementById('fbt-btn-connect')?.click();
+    });
+  }
+  if (proxyDisc) {
+    proxyDisc.addEventListener('click', () => {
+      document.getElementById('fbt-btn-disconnect')?.click();
+    });
+  }
+  if (proxyPanic) {
+    proxyPanic.addEventListener('click', () => {
+      // O botão de panic está dentro do card de cada effect na aba FFB Test —
+      // procura o id correto. Fallback: limpa o checkbox spring proxy.
+      const fbtPanic = document.getElementById('fbt-panic');
+      if (fbtPanic) fbtPanic.click();
+      if (proxySpEn) proxySpEn.checked = false;
+    });
+  }
+  if (proxySpEn) {
+    proxySpEn.addEventListener('change', () => {
+      const target = document.getElementById('fbt-sp-enable');
+      if (target) {
+        target.checked = proxySpEn.checked;
+        target.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+  if (proxySpStr && proxySpVal) {
+    proxySpStr.addEventListener('input', () => {
+      proxySpVal.textContent = proxySpStr.value + '%';
+      const target = document.getElementById('fbt-sp-str');
+      if (target) {
+        target.value = proxySpStr.value;
+        target.dispatchEvent(new Event('input'));
+      }
+    });
+  }
+
+  // Sincroniza estado de conexão lendo a classe .connected do badge da aba
+  // FFB Test. MutationObserver dispara quando wireFFBTestTab faz setConnState.
+  const fbtStatusBox = document.getElementById('fbt-status');
+  const syncConnState = () => {
+    if (!proxyStBox || !proxyStTxt) return;
+    const connected = !!fbtStatusBox?.classList.contains('connected');
+    proxyStBox.classList.toggle('connected', connected);
+    proxyStTxt.textContent = t(connected ? 'fbt.status_yes' : 'fbt.status_no');
+    if (proxyConn) proxyConn.style.display = connected ? 'none' : '';
+    if (proxyDisc) proxyDisc.style.display = connected ? '' : 'none';
+  };
+  if (fbtStatusBox) {
+    new MutationObserver(syncConnState).observe(fbtStatusBox,
+      { attributes: true, attributeFilter: ['class'] });
+    syncConnState();
+  }
+
+  // ---- Step 12: links opcionais
+  document.getElementById('btn-setup-go-inputs')?.addEventListener('click', () => {
+    selectTab('inputs');
+  });
+  document.getElementById('btn-setup-go-overlay')?.addEventListener('click', () => {
+    selectTab('overlay');
+  });
+  document.getElementById('btn-setup-go-debug')?.addEventListener('click', () => {
+    selectTab('debug');
   });
 }
 
@@ -3833,11 +5181,11 @@ function buildOverlayHTML() {
   return `
     <div class="debug-section">
       <h3 data-i18n="ovl.title">Overlay de telemetria do volante</h3>
-      <p style="color:var(--muted);font-size:12px;margin:0 0 10px;line-height:1.5"
+      <p style="color:var(--muted);font-size:18px;margin:0 0 10px;line-height:1.5"
          data-i18n="ovl.subtitle">Abre uma janela "always-on-top" via Document Picture-in-Picture com dois gráficos vivos: barramento DC (vbus/ibus/Iq/I-brake) e dinâmica do volante (torque + posição). Útil pra monitorar a placa enquanto o iRacing (ou qualquer jogo) roda em fullscreen.</p>
-      <p style="color:var(--muted);font-size:11px;margin:0 0 10px"
+      <p style="color:var(--muted);font-size:16px;margin:0 0 10px"
          data-i18n="ovl.requirements">Requisitos: Chrome/Edge ≥ 116 (Document Picture-in-Picture API). Conexão serial com a placa precisa estar aberta.</p>
-      <p style="color:#ffa726;font-size:11px;margin:0 0 6px"
+      <p style="color:#ffa726;font-size:16px;margin:0 0 6px"
          data-i18n="ovl.tip_iracing">Dica iRacing: rode o jogo em modo Borderless ou Windowed. Em Fullscreen exclusivo o Windows oculta janelas always-on-top.</p>
     </div>
 
@@ -3850,14 +5198,14 @@ function buildOverlayHTML() {
         <div style="display:flex;align-items:center;gap:8px">
           <input type="number" id="ovl-poll-interval" value="200"
                  min="50" max="2000" step="50" style="width:90px"> ms
-          <span style="color:var(--muted);font-size:11px"
+          <span style="color:var(--muted);font-size:16px"
                 data-i18n="ovl.poll_hint">Intervalos curtos (~50ms) saturam a CDC e atrasam outras leituras. 100-300ms é o sweet spot pra um overlay fluido.</span>
         </div>
 
         <div class="live-kv" style="background:transparent;border:none;padding:0;justify-content:flex-start">
           <span class="k" data-i18n="ovl.window_label">Janela do gráfico</span>
         </div>
-        <div style="color:var(--muted);font-size:12px"
+        <div style="color:var(--muted);font-size:18px"
              data-i18n="ovl.window_value">60 segundos (fixo)</div>
 
         <div class="live-kv" style="background:transparent;border:none;padding:0;justify-content:flex-start">
@@ -3885,9 +5233,9 @@ function buildOverlayHTML() {
 
     <div class="debug-section">
       <h3 data-i18n="ovl.panels_title">Painéis do overlay</h3>
-      <p style="color:var(--muted);font-size:11px;margin:0 0 8px"
+      <p style="color:var(--muted);font-size:16px;margin:0 0 8px"
          data-i18n="ovl.panels_hint">Desligue o painel que não interessa pra dar todo o espaço pro outro.</p>
-      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px">
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:20px">
         <label style="cursor:pointer;display:flex;align-items:center;gap:8px">
           <input type="checkbox" id="ovl-enable-bus" checked>
           <span data-i18n="ovl.enable_bus">Mostrar gráfico de barramento DC (vbus / ibus / Iq / I-brake)</span>
@@ -3901,9 +5249,9 @@ function buildOverlayHTML() {
 
     <div class="debug-section">
       <h3 data-i18n="ovl.series_title">Séries do gráfico de barramento</h3>
-      <p style="color:var(--muted);font-size:11px;margin:0 0 8px"
+      <p style="color:var(--muted);font-size:16px;margin:0 0 8px"
          data-i18n="ovl.series_hint">Marque o que quer ver. As preferências são salvas no navegador.</p>
-      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px">
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:20px">
         <label style="color:#4fc3f7;cursor:pointer;display:flex;align-items:center;gap:8px">
           <input type="checkbox" id="ovl-show-vbus" checked>
           <span data-i18n="ovl.series_vbus">vbus (V) — tensão do bus DC</span>
@@ -3925,11 +5273,11 @@ function buildOverlayHTML() {
 
     <div class="debug-section">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <button id="btn-ovl-open" class="primary" style="padding:10px 20px;font-size:14px"
+        <button id="btn-ovl-open" class="primary" style="padding:10px 20px;font-size:21px"
                 data-i18n="ovl.btn_open">⧉ Abrir overlay</button>
-        <button id="btn-ovl-close" style="padding:10px 20px;font-size:14px;display:none"
+        <button id="btn-ovl-close" style="padding:10px 20px;font-size:21px;display:none"
                 data-i18n="ovl.btn_close">✕ Fechar overlay</button>
-        <span id="ovl-status" style="color:var(--muted);font-size:12px"
+        <span id="ovl-status" style="color:var(--muted);font-size:18px"
               data-i18n="ovl.status_closed">Overlay fechado.</span>
       </div>
     </div>
@@ -3949,7 +5297,7 @@ function _ovlPipStyles() {
     html, body {
       margin: 0; padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 11px;
+      font-size: 16px;
       overflow: hidden;
     }
     /* Tema escuro (default) */
@@ -3998,7 +5346,7 @@ function _ovlPipStyles() {
     .ovl-conn {
       position: absolute;
       top: 4px; right: 6px;
-      font-size: 9px;
+      font-size: 14px;
       padding: 1px 5px;
       background: rgba(0, 0, 0, 0.45);
       border-radius: 2px;
@@ -5043,6 +6391,12 @@ function buildTabs() {
     panel.className = 'tab-panel';
     panel.id = tabId(tab.id);
 
+    // Setup wizard — Quick Start (passo a passo guiado, primeiro do sidebar)
+    if (tab.custom && tab.id === 'setup') {
+      panel.innerHTML = buildSetupHTML();
+      content.appendChild(panel);
+      return;
+    }
     // Debug tab — custom UI (actions, live monitor, errors, setpoints)
     if (tab.custom && tab.id === 'debug') {
       panel.innerHTML = buildDebugHTML();
@@ -5061,7 +6415,7 @@ function buildTabs() {
         <div class="console-toolbar">
           <button id="btn-console-clear" data-i18n="console.clear">Limpar</button>
           <button id="btn-console-pause" data-paused="0" data-i18n="console.pause">⏸ Pausar</button>
-          <span style="color:var(--muted);font-size:11px;margin-left:auto">
+          <span style="color:var(--muted);font-size:16px;margin-left:auto">
             <span class="k" style="color:var(--accent)">→</span> TX
             &nbsp;<span class="k" style="color:var(--ok)">←</span> RX
             &nbsp;<span class="k" style="color:var(--err)">!</span> <span data-i18n="console.legend_err">erro</span>
@@ -5076,7 +6430,7 @@ function buildTabs() {
                  autocomplete="off" spellcheck="false">
           <button id="btn-console-send" class="primary" data-i18n="console.send">Enviar</button>
         </div>
-        <p class="hint" style="grid-column:1/-1;color:var(--fg-dim);font-size:11.5px;margin:4px 0 0">
+        <p class="hint" style="grid-column:1/-1;color:var(--fg-dim);font-size:17px;margin:4px 0 0">
           <span data-i18n="console.input_hint">Exemplos: <code>r vbus_voltage</code> · <code>w axis0.requested_state 1</code> · <code>ss</code> · <code>sys.save?</code> · <code>sys.eedump?</code></span>
         </p>
       `;
@@ -5117,13 +6471,13 @@ function buildTabs() {
       actionBar.innerHTML = `
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button id="btn-zero-wheel" class="primary"
-                  style="padding:8px 16px;font-size:13px"
+                  style="padding:8px 16px;font-size:20px"
                   data-i18n="encoder.zero_btn">⊙ Zerar posição do volante</button>
           <button id="btn-preset-as5047" class="warn"
-                  style="padding:8px 16px;font-size:13px"
+                  style="padding:8px 16px;font-size:20px"
                   data-i18n="encoder.preset_as5047_btn">⚙ Ativar AS5047 (preset)</button>
         </div>
-        <div style="color:var(--muted);font-size:11px;line-height:1.5">
+        <div style="color:var(--muted);font-size:16px;line-height:1.5">
           <p style="margin:2px 0">
             <b data-i18n="encoder.zero_label">Zerar posição:</b>
             <span data-i18n="encoder.zero_hint">Captura a posição atual como o novo zero (centro lógico). HID position passa a reportar 0 imediatamente. Não toca no encoder do ODrive — só no offset virtual da camada FFB. NÃO persiste após reboot; pra centro permanente use phase_offset + index search.</span>
@@ -5135,6 +6489,25 @@ function buildTabs() {
         </div>
       `;
       panel.appendChild(actionBar);
+    }
+
+    // Controller tab: aviso amarelo no topo quando control_mode = TORQUE_CONTROL
+    // (FFB mode), porque PID gains e vários outros campos são IGNORADOS
+    // pelo firmware nesse modo. Banner é toggle dinamicamente em
+    // _updateControllerInert() conforme o valor lido/escrito de control_mode.
+    if (tab.id === 'controller') {
+      const banner = document.createElement('div');
+      banner.className = 'controller-torque-warning';
+      banner.id = 'controller-torque-warning';
+      banner.style.display = 'none';  // visível só quando control_mode=TORQUE
+      banner.innerHTML = `
+        <div class="ctrl-warn-icon">⚠</div>
+        <div class="ctrl-warn-body">
+          <b data-i18n="ctrl.warn_torque_title">control_mode = TORQUE_CONTROL (FFB mode)</b>
+          <p data-i18n="ctrl.warn_torque_desc">Vários campos abaixo são IGNORADOS pelo firmware quando control_mode = TORQUE: PID gains (pos_gain, vel_gain, vel_integrator_*), inertia, gain scheduling, posição circular, homing/mirror. Em TORQUE mode o input_torque_ vai direto pro current controller sem passar por nenhum loop PID. Os campos cinzentos abaixo refletem o que está inerte.</p>
+        </div>
+      `;
+      panel.appendChild(banner);
     }
 
     tab.fields.forEach(fld => {
@@ -5207,13 +6580,33 @@ function buildTabs() {
       valWrap.appendChild(input);
       valWrap.appendChild(btnRead);
       valWrap.appendChild(btnWrite);
-      panel.appendChild(labelEl);
-      panel.appendChild(valWrap);
+      // Cada par label+value vai num <div class="field"> — isso faz cada
+      // par virar um único item do grid #content (repeat auto-fit minmax 440px).
+      // Sem wrapper, em monitor wide com 3 colunas, label e value de fields
+      // diferentes ficam desalinhados (label1, value1, label2 / value2, label3...).
+      const fieldWrap = document.createElement('div');
+      fieldWrap.className = 'field';
+      fieldWrap.dataset.fieldPath = path;
+      fieldWrap.appendChild(labelEl);
+      fieldWrap.appendChild(valWrap);
+      panel.appendChild(fieldWrap);
     });
 
     content.appendChild(panel);
   });
   selectTab(SCHEMA[0].id);
+
+  // Wire-up do control_mode select: dispara nosso update visual em mudança
+  // pelo usuário. setInputValue() já chama _updateControllerInert() em reads.
+  const ctrlModeSel = document.getElementById('in-axis0.controller.config.control_mode');
+  if (ctrlModeSel) {
+    ctrlModeSel.addEventListener('change', () => _updateControllerInert(ctrlModeSel.value));
+    // Estado inicial — o select renderiza com o primeiro option (value=0) por
+    // default, mas o firmware tipicamente já está em TORQUE (1). Forçamos a
+    // atualização logo após init pra refletir o que VAI ser lido em readAll.
+    // Se o user nunca der read, banner fica oculto até ele clicar Connect.
+    _updateControllerInert(ctrlModeSel.value);
+  }
 
   // Wire-up "Zerar posição" — vive aqui (não em init de tab dedicado) porque
   // o botão é injetado dentro do panel da aba encoder em buildTabs.
@@ -5299,7 +6692,7 @@ function buildFFBLiveHTML() {
              style="width:80px"> ms
       <button id="btn-ffb-poll-once" data-i18n="ffb.update_now">Atualizar agora</button>
       <button id="btn-ffb-reset-peaks" class="warn" data-i18n="ffb.reset_peaks">Reset peaks</button>
-      <span style="color:var(--muted);font-size:11px" data-i18n="ffb.poll_hint">Intervalos &lt; 100ms podem sobrecarregar a CDC. 200-500ms é o sweet spot.</span>
+      <span style="color:var(--muted);font-size:16px" data-i18n="ffb.poll_hint">Intervalos &lt; 100ms podem sobrecarregar a CDC. 200-500ms é o sweet spot.</span>
     </div>
 
     <div class="debug-section">
@@ -5321,7 +6714,7 @@ function buildFFBLiveHTML() {
         <div class="live-kv"><span class="k" data-i18n="ffb.rate_setef">Force updates (setEffect)</span><span class="v" id="ffb-kv-rate-setef">—</span></div>
         <div class="live-kv"><span class="k" data-i18n="ffb.rate_efop">Effect ops (start/stop)</span><span class="v" id="ffb-kv-rate-efop">—</span></div>
       </div>
-      <p style="color:var(--fg-dim);font-size:11.5px;margin:8px 0 0;line-height:1.5" data-i18n="ffb.rate_hint">
+      <p style="color:var(--fg-dim);font-size:17px;margin:8px 0 0;line-height:1.5" data-i18n="ffb.rate_hint">
         Tipicamente: 60 Hz (jogos casuais) · 100–250 Hz (sim racing) · 500 Hz+ (rigs com USB polling alto). Se ficar abaixo de 30 Hz com FFB ativo, o jogo provavelmente está limitando.
       </p>
     </div>
@@ -5346,7 +6739,7 @@ function buildFFBLiveHTML() {
       <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px">
         ${[0,1,2].map(n => `
           <div style="background:#1a1a1a;border:1px solid var(--border);border-radius:4px;padding:8px">
-            <div style="color:var(--accent);font-weight:bold;margin-bottom:6px;font-size:12px">Effect ${n}</div>
+            <div style="color:var(--accent);font-weight:bold;margin-bottom:6px;font-size:18px">Effect ${n}</div>
             <div class="live-kv"><span class="k" data-i18n="ffb.kv_slot">slot</span><span class="v" id="ffb-kv-eidx-${n}">—</span></div>
             <div class="live-kv"><span class="k" data-i18n="ffb.kv_state">state</span><span class="v" id="ffb-kv-est-${n}">—</span></div>
             <div class="live-kv"><span class="k" data-i18n="ffb.kv_type">type</span><span class="v" id="ffb-kv-etype-${n}">—</span></div>
@@ -5359,9 +6752,9 @@ function buildFFBLiveHTML() {
       <div class="live-kv" style="margin-top:8px"><span class="k" data-i18n="ffb.kv_egg">global gain (master)</span><span class="v" id="ffb-kv-egg">—</span></div>
 
       <div style="margin-top:12px;padding:8px;background:#1a1a1a;border:1px solid var(--border);border-radius:4px">
-        <div style="color:var(--accent);font-weight:bold;margin-bottom:6px;font-size:12px">
+        <div style="color:var(--accent);font-weight:bold;margin-bottom:6px;font-size:18px">
           <span data-i18n="ffb.mag_title">Effect 0 magnitude — análise de dinâmica</span>
-          <button id="btn-ffb-mag-reset" style="margin-left:12px;padding:2px 8px;font-size:10px" data-i18n="ffb.mag_reset">Reset janela</button>
+          <button id="btn-ffb-mag-reset" style="margin-left:12px;padding:2px 8px;font-size:15px" data-i18n="ffb.mag_reset">Reset janela</button>
         </div>
         <div class="live-grid">
           <div class="live-kv"><span class="k" data-i18n="ffb.kv_mag_n">samples na janela</span><span class="v" id="ffb-kv-mag-n">—</span></div>
@@ -5371,7 +6764,7 @@ function buildFFBLiveHTML() {
           <div class="live-kv"><span class="k" data-i18n="ffb.kv_mag_avg">média</span><span class="v" id="ffb-kv-mag-avg">—</span></div>
           <div class="live-kv"><span class="k" data-i18n="ffb.kv_mag_jump">delta máximo (entre samples)</span><span class="v" id="ffb-kv-mag-jump">—</span></div>
         </div>
-        <div style="color:var(--muted);font-size:10px;margin-top:4px" data-i18n="ffb.mag_hint">Range pequeno (&lt; 1000) com média alta = mola constante. Range grande (&gt; 10000) = dinâmicas chegando. Delta máximo alto = transientes (curbs/slip) chegam. Delta consistentemente baixo = tudo suave / filtrado.</div>
+        <div style="color:var(--muted);font-size:15px;margin-top:4px" data-i18n="ffb.mag_hint">Range pequeno (&lt; 1000) com média alta = mola constante. Range grande (&gt; 10000) = dinâmicas chegando. Delta máximo alto = transientes (curbs/slip) chegam. Delta consistentemente baixo = tudo suave / filtrado.</div>
       </div>
     </div>
 
@@ -5390,12 +6783,12 @@ function buildFFBLiveHTML() {
     <div class="debug-section">
       <h3><span data-i18n="ffb.chart_title">Gráfico ao vivo</span>
         <small style="color:var(--muted)" data-i18n="ffb.chart_subtitle">(janela 60s — torque pendente / posição encoder)</small>
-        <button id="btn-ffb-chart-clear" style="margin-left:12px;padding:2px 8px;font-size:10px" data-i18n="dbg.clear_history">Limpar histórico</button>
+        <button id="btn-ffb-chart-clear" style="margin-left:12px;padding:2px 8px;font-size:15px" data-i18n="dbg.clear_history">Limpar histórico</button>
       </h3>
-      <p style="color:var(--muted);font-size:11px;margin:0 0 8px" data-i18n="ffb.chart_hint">Capacidade da janela = 60s ÷ intervalo do auto-poll FFB. Ex: 200ms → 300 pontos. Eixos auto-escalam baseado no min/max amostrados.</p>
+      <p style="color:var(--muted);font-size:16px;margin:0 0 8px" data-i18n="ffb.chart_hint">Capacidade da janela = 60s ÷ intervalo do auto-poll FFB. Ex: 200ms → 300 pontos. Eixos auto-escalam baseado no min/max amostrados.</p>
       <canvas id="ffb-chart" width="800" height="280"
               style="width:100%;height:280px;background:#0a0a0a;border:1px solid var(--border);border-radius:4px"></canvas>
-      <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:16px;flex-wrap:wrap;align-items:center">
         <label style="color:#ef5350;cursor:pointer">
           <input type="checkbox" id="ffb-chart-show-trq" checked style="vertical-align:middle">
           ━ <span data-i18n="legend.torque">torque (Nm)</span> <span id="ffb-chart-leg-trq">—</span>
@@ -5783,8 +7176,8 @@ function wireFFBLive() {
 function buildDebugHTML() {
   return `
     <div class="debug-section" style="display:flex;align-items:center;gap:12px;background:transparent;border:none;padding:0">
-      <button id="btn-refresh-all" class="primary" style="padding:10px 20px;font-size:14px" data-i18n="dbg.refresh_all">↻ Atualizar tudo</button>
-      <span style="color:var(--muted);font-size:11px" data-i18n="dbg.refresh_all_hint">Lê info + erros + monitor live de uma vez. Atalho: tecla R quando aba Debug ativa.</span>
+      <button id="btn-refresh-all" class="primary" style="padding:10px 20px;font-size:21px" data-i18n="dbg.refresh_all">↻ Atualizar tudo</button>
+      <span style="color:var(--muted);font-size:16px" data-i18n="dbg.refresh_all_hint">Lê info + erros + monitor live de uma vez. Atalho: tecla R quando aba Debug ativa.</span>
     </div>
 
     <div class="debug-section">
@@ -5824,7 +7217,7 @@ function buildDebugHTML() {
 
     <div class="debug-section">
       <h3><span data-i18n="dbg.live_monitor">Monitor ao vivo</span>
-        <span class="poll-ctl" style="margin-left:16px;font-size:12px;font-weight:normal">
+        <span class="poll-ctl" style="margin-left:16px;font-size:18px;font-weight:normal">
           <span class="poll-dot" id="poll-dot"></span>
           <label><input type="checkbox" id="poll-enable"> <span data-i18n="dbg.auto_refresh">Auto-refresh</span></label>
           <input type="number" id="poll-interval" value="500" min="100" max="5000" step="100"> ms
@@ -5860,12 +7253,12 @@ function buildDebugHTML() {
     <div class="debug-section">
       <h3><span data-i18n="dbg.chart_title">Gráfico ao vivo</span>
         <small style="color:var(--muted)" data-i18n="dbg.chart_subtitle">(janela 60s — vbus / ibus / motor.Iq)</small>
-        <button id="btn-chart-clear" style="margin-left:12px;padding:2px 8px;font-size:10px" data-i18n="dbg.clear_history">Limpar histórico</button>
+        <button id="btn-chart-clear" style="margin-left:12px;padding:2px 8px;font-size:15px" data-i18n="dbg.clear_history">Limpar histórico</button>
       </h3>
-      <p style="color:var(--muted);font-size:11px;margin:0 0 8px" data-i18n="dbg.chart_hint">Capacidade da janela = 60s ÷ intervalo de auto-refresh. Ex: 500ms → 120 pontos. Eixos auto-escalam baseado no min/max amostrados.</p>
+      <p style="color:var(--muted);font-size:16px;margin:0 0 8px" data-i18n="dbg.chart_hint">Capacidade da janela = 60s ÷ intervalo de auto-refresh. Ex: 500ms → 120 pontos. Eixos auto-escalam baseado no min/max amostrados.</p>
       <canvas id="dbg-chart" width="800" height="280"
               style="width:100%;height:280px;background:#0a0a0a;border:1px solid var(--border);border-radius:4px"></canvas>
-      <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:16px;flex-wrap:wrap;align-items:center">
         <label style="color:#4fc3f7;cursor:pointer">
           <input type="checkbox" id="chart-show-vbus" checked style="vertical-align:middle">
           ━ <span data-i18n="legend.vbus">vbus (V)</span> <span id="chart-leg-vbus">—</span>
@@ -5924,9 +7317,31 @@ function initDebugTab() {
         await new Promise(r => setTimeout(r, 300));
         await refreshLive();   // atualiza state + errors + tudo mais
       } else if (act === 'raw') {
-        await sendCmd(btn.dataset.val, false);
-        await new Promise(r => setTimeout(r, 200));
-        await refreshLive();
+        const cmd = btn.dataset.val;
+        // ss/se/sr reiniciam a placa — precisam do flow completo de auto-
+        // reconnect + readAll. Sem isto, a serial cai no reboot e refreshLive
+        // falha silenciosamente, deixando UI dessincronizada.
+        if (cmd === 'ss' || cmd === 'se' || cmd === 'sr') {
+          const orig = btn.textContent;
+          btn.disabled = true;
+          try {
+            const prefix = cmd === 'ss' ? 'Save NVM'
+                         : cmd === 'se' ? 'Erase' : 'Reboot';
+            await sendCmdAndAutoReconnect(cmd, prefix, /*readBack=*/true, (state) => {
+              if (state === 'rebooting')    btn.textContent = '⏳ ' + t('save.rebooting');
+              if (state === 'reconnecting') btn.textContent = '⏳ ' + t('save.reconnecting');
+              if (state === 'reading')      btn.textContent = '⏳ ' + t('save.reading_back');
+            });
+          } finally {
+            btn.textContent = orig;
+            btn.disabled = false;
+          }
+        } else {
+          // Comandos raw que NÃO reiniciam — fluxo simples: envia + refresh.
+          await sendCmd(cmd, false);
+          await new Promise(r => setTimeout(r, 200));
+          await refreshLive();
+        }
       } else if (act === 'clear-errors') {
         // ODrive v0.5.6 ASCII: comando 'sc' chama odrv.clear_errors() que
         // (1) zera todos os error fields E (2) re-arma o brake_resistor
@@ -6310,6 +7725,74 @@ function _applyFieldState(input, state) {
   // 'neutral' — só removemos os estilos acima, deixa como default do CSS base
 }
 
+// Lista de paths que o firmware IGNORA quando control_mode = TORQUE_CONTROL.
+// Quando ativos, esses fields ganham .ignored-in-torque (overlay cinza +
+// strikethrough) pra deixar visualmente claro que mexer ali não tem efeito
+// no FFB. Confirmação no firmware:
+//   - pos_gain          → controller.cpp:296 (só roda se mode >= POSITION)
+//   - vel_*_gain/limit  → controller.cpp:374 (só roda se mode >= VELOCITY)
+//   - inertia           → controller.cpp:198/219 (só em VEL_RAMP/POS_FILTER input)
+//   - gain_scheduling_* → controller.cpp:320 (dentro do bloco POSITION)
+//   - circular_*        → só fazem sentido com pos_setpoint
+//   - homing/mirror     → não usados em torque mode
+const CONTROLLER_INERT_IN_TORQUE = [
+  'axis0.controller.config.pos_gain',
+  'axis0.controller.config.vel_integrator_gain',
+  'axis0.controller.config.vel_integrator_limit',
+  'axis0.controller.config.inertia',
+  'axis0.controller.config.enable_gain_scheduling',
+  'axis0.controller.config.gain_scheduling_width',
+  'axis0.controller.config.circular_setpoints',
+  'axis0.controller.config.circular_setpoint_range',
+  'axis0.controller.config.steps_per_circular_range',
+  'axis0.controller.config.homing_speed',
+  'axis0.controller.config.load_encoder_axis',
+  'axis0.controller.config.axis_to_mirror',
+  'axis0.controller.config.mirror_ratio',
+  'axis0.controller.config.torque_mirror_ratio',
+];
+
+// vel_gain é caso à parte: ignorado como ganho do PID, mas USADO como fator
+// de clamp se enable_torque_mode_vel_limit=True (controller.cpp:393). Fica
+// numa lista separada com aviso diferente.
+const CONTROLLER_PARTIAL_IN_TORQUE = [
+  'axis0.controller.config.vel_gain',
+];
+
+function _updateControllerInert(controlModeVal) {
+  // ENUM_CTRL_MODE: 1 = TORQUE_CONTROL. Aceita string ou number.
+  const v = String(controlModeVal).trim();
+  const isTorque = (v === '1' || v === 'CONTROL_MODE_TORQUE_CONTROL' || v === 'TORQUE');
+  // Banner
+  const banner = document.getElementById('controller-torque-warning');
+  if (banner) banner.style.display = isTorque ? '' : 'none';
+  // Tags traduzíveis pra label::after (CSS lê via attr(data-inert-tag))
+  const ignoredTag = t('ctrl.tag_ignored');
+  const partialTag = t('ctrl.tag_partial');
+  // .ignored-in-torque em campos completamente inertes
+  for (const path of CONTROLLER_INERT_IN_TORQUE) {
+    const f = document.querySelector('.field[data-field-path="' + path + '"]');
+    if (!f) continue;
+    f.classList.toggle('ignored-in-torque', isTorque);
+    const lbl = f.querySelector('label');
+    if (lbl) {
+      if (isTorque) lbl.dataset.inertTag = ignoredTag;
+      else delete lbl.dataset.inertTag;
+    }
+  }
+  // .partial-in-torque em vel_gain (só usado se enable_torque_mode_vel_limit)
+  for (const path of CONTROLLER_PARTIAL_IN_TORQUE) {
+    const f = document.querySelector('.field[data-field-path="' + path + '"]');
+    if (!f) continue;
+    f.classList.toggle('partial-in-torque', isTorque);
+    const lbl = f.querySelector('label');
+    if (lbl) {
+      if (isTorque) lbl.dataset.inertTag = partialTag;
+      else delete lbl.dataset.inertTag;
+    }
+  }
+}
+
 function setInputValue(input, raw, markSynced) {
   if (input.dataset.type === 'bool') {
     input.checked = raw === 'True' || raw === 'true' || raw === '1';
@@ -6318,6 +7801,11 @@ function setInputValue(input, raw, markSynced) {
   }
   input.dataset.currentServerValue = raw;
   _applyFieldState(input, markSynced ? 'synced' : 'neutral');
+  // Hook: se foi o control_mode que acabou de ser lido/setado, atualiza o
+  // estado visual dos fields que ficam inertes em TORQUE mode.
+  if (input.dataset.path === 'axis0.controller.config.control_mode') {
+    _updateControllerInert(raw);
+  }
 }
 
 // Disparado em cada keystroke / change.
@@ -6366,7 +7854,11 @@ async function writeOne(input) {
 }
 
 async function readAll() {
-  const inputs = document.querySelectorAll('#content input, #content select');
+  // Apenas inputs com dataset.path são SCHEMA fields mapeados pra device.
+  // Quick Start, FFB Test inline, overlay controls etc. NÃO têm path e
+  // não devem ser lidos do device (caso contrário viram "invalid property").
+  const inputs = document.querySelectorAll(
+    '#content input[data-path], #content select[data-path]');
   let n = 0;
   for (const inp of inputs) {
     await readOne(inp);
@@ -6377,7 +7869,8 @@ async function readAll() {
 
 function exportJSON() {
   const obj = {};
-  document.querySelectorAll('#content input, #content select').forEach(inp => {
+  document.querySelectorAll(
+    '#content input[data-path], #content select[data-path]').forEach(inp => {
     const v = inp.dataset.currentServerValue;
     if (v !== undefined && v !== '') obj[inp.dataset.path] = v;
   });
@@ -6395,20 +7888,72 @@ function importJSON() {
 }
 
 async function doImport(file) {
-  const text = await file.text();
-  const obj = JSON.parse(text);
+  let text, obj;
+  try {
+    text = await file.text();
+    obj = JSON.parse(text);
+  } catch (e) {
+    logLine('import: JSON inválido — ' + e.message, 'err');
+    toast('JSON inválido: ' + e.message, 'err');
+    return;
+  }
+
   let n = 0;
-  document.querySelectorAll('#content input, #content select').forEach(inp => {
+  const loaded = [];
+  // Apenas SCHEMA fields (com dataset.path) — caso contrário pegaríamos
+  // inputs do Quick Start, overlay, FFB Test inline etc., gerando lixo.
+  document.querySelectorAll(
+    '#content input[data-path], #content select[data-path]').forEach(inp => {
     const v = obj[inp.dataset.path];
     if (v !== undefined) {
-      if (inp.dataset.type === 'bool')
-        inp.checked = (v === 'True' || v === '1' || v === true);
-      else inp.value = v;
-      markDirty(inp);
-      n++;
+      try {
+        if (inp.dataset.type === 'bool')
+          inp.checked = (v === 'True' || v === '1' || v === true);
+        else inp.value = v;
+        markDirty(inp);
+        loaded.push(inp);
+        n++;
+      } catch (e) {
+        logLine('import field skip: ' + inp.dataset.path + ' → ' + e.message, 'err');
+      }
     }
   });
-  logLine('--- import: ' + n + ' fields loaded (não gravados ainda) ---');
+  logLine('--- import: ' + n + ' campos carregados (vermelho) ---');
+
+  if (n === 0) {
+    toast(t('import.no_match'), 'warn');
+    return;
+  }
+
+  // Pergunta ao usuário: aplica agora (write em cada field) ou só carrega?
+  // OK = aplica todos no device runtime. Cancelar = mantém no formulário
+  // pra revisar antes de Salvar manualmente.
+  const apply = confirm(t('import.confirm_apply').replace('{n}', n));
+  if (!apply) {
+    toast(t('import.loaded_only').replace('{n}', n), 'ok');
+    return;
+  }
+
+  if (!writer) {
+    toast(t('toast.connect_first_board'), 'err');
+    return;
+  }
+
+  // Aplica: writeOne em cada field alterado. NÃO persiste em NVM —
+  // user clica Salvar manualmente depois pra fazer ss + sys.save!.
+  let ok = 0, fail = 0;
+  for (const inp of loaded) {
+    try {
+      await writeOne(inp);
+      ok++;
+    } catch (e) {
+      fail++;
+      logLine('import write fail: ' + inp.dataset.path + ' → ' + e.message, 'err');
+    }
+  }
+  toast(t('import.applied').replace('{ok}', ok).replace('{fail}', fail),
+        fail === 0 ? 'ok' : 'warn');
+  logLine('--- import apply: ' + ok + ' ok, ' + fail + ' falhas ---');
 }
 
 /* =========================================================================
@@ -6429,6 +7974,46 @@ document.getElementById('btn-read-all').onclick = readAll;
 /* Tenta reabrir a serial usando uma porta já autorizada (getPorts não pede
    permissão de novo, ao contrário do requestPort). Usado após save: a placa
    reboota, USB cai, OS re-enumera, esta função pega o handle de volta. */
+// Helper compartilhado: dispara um comando que reboota a placa (ss / se / sr),
+// fecha a porta serial atual, espera 5s, tenta auto-reconnect, e opcionalmente
+// roda readAll(). Reutilizado por saveAll, erase, sr (reboot manual).
+//
+// Args:
+//   cmd            — string ASCII a enviar antes do reboot ('ss', 'se', 'sr', etc.)
+//   logPrefix      — prefixo das mensagens de log ('Save', 'Erase', 'Reboot')
+//   readBackAfter  — true = chama readAll() depois de reconectar
+//   onProgress     — callback opcional (state) → atualiza UI ('rebooting', 'reconnecting', 'reading')
+async function sendCmdAndAutoReconnect(cmd, logPrefix, readBackAfter = false, onProgress = null) {
+  await sendCmd(cmd, false);
+  logLine('--- ' + logPrefix + ': ' + cmd + ' enviado, aguardando placa rebootar (5s) ---');
+
+  // Limpa state de serial antigo (a porta vai morrer com o reboot do device)
+  try { if (reader) { await reader.cancel(); reader.releaseLock(); reader = null; } } catch(e) {}
+  try { if (writer) { writer.releaseLock(); writer = null; } } catch(e) {}
+  try { if (port) { await port.close(); } } catch(e) {}
+  port = null;
+  setStatus(t('status.disconnected'));
+  toggleControls(false);
+
+  if (onProgress) onProgress('rebooting');
+  await new Promise(r => setTimeout(r, 5000));
+
+  if (onProgress) onProgress('reconnecting');
+  logLine('--- ' + logPrefix + ': tentando auto-reconnect ---');
+  const reconnected = await tryAutoReconnect();
+
+  if (reconnected && readBackAfter) {
+    await new Promise(r => setTimeout(r, 500));
+    if (onProgress) onProgress('reading');
+    logLine('--- ' + logPrefix + ': re-lendo todos os campos ---');
+    try { await readAll(); } catch (e) {
+      logLine('readAll após reconnect falhou: ' + e.message, 'err');
+    }
+  }
+
+  return reconnected;
+}
+
 async function tryAutoReconnect(maxAttempts = 8, delayMs = 1000) {
   if (port) return false; // já conectado
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -6466,8 +8051,12 @@ async function saveAll() {
   btn.disabled = true;
   try {
     // 1. Grava alterações pendentes (UI → device RAM)
+    // Filtra por dataset.path: setup form inputs e outros controles inline
+    // não-SCHEMA podem ter ganhado .changed se o user editou (ex: campos
+    // do Quick Start), mas não devem ser writados no device.
     btn.textContent = t('save.writing_changes');
-    const changed = document.querySelectorAll('#content .changed');
+    const changed = document.querySelectorAll(
+      '#content input[data-path].changed, #content select[data-path].changed');
     if (changed.length > 0) {
       logLine('--- Save: ' + changed.length + ' fields to write ---');
       for (const inp of changed) await writeOne(inp);
@@ -6535,11 +8124,50 @@ async function saveAll() {
   }
 }
 document.getElementById('btn-save').onclick = saveAll;
-document.getElementById('btn-erase').onclick = () => {
-  if (confirm('Apaga config persistida + reboota. Confirma?'))
-    sendCmd('se', false);
+// Erase global — apaga NVM + reboot + auto-reconnect + readAll (refresh visual
+// pra mostrar os defaults que foram restaurados). Mesma sequência usada no
+// passo 3 do wizard.
+document.getElementById('btn-erase').onclick = async () => {
+  if (!confirm(t('act.erase_confirm'))) return;
+  const btn = document.getElementById('btn-erase');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ ' + t('save.rebooting');
+  try {
+    await sendCmdAndAutoReconnect('se', 'Erase', /*readBack=*/true, (state) => {
+      if (state === 'rebooting')    btn.textContent = '⏳ ' + t('save.rebooting');
+      if (state === 'reconnecting') btn.textContent = '⏳ ' + t('save.reconnecting');
+      if (state === 'reading')      btn.textContent = '⏳ ' + t('save.reading_back');
+    });
+    if (port) toast(t('toast.erase_complete'), 'ok');
+  } catch (e) {
+    logLine('erase erro: ' + e.message, 'err');
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
 };
-document.getElementById('btn-reboot').onclick = () => sendCmd('sr', false);
+
+// Reboot global — não apaga config, só reinicia + auto-reconnect + readAll.
+document.getElementById('btn-reboot').onclick = async () => {
+  const btn = document.getElementById('btn-reboot');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ ' + t('save.rebooting');
+  try {
+    await sendCmdAndAutoReconnect('sr', 'Reboot', /*readBack=*/true, (state) => {
+      if (state === 'rebooting')    btn.textContent = '⏳ ' + t('save.rebooting');
+      if (state === 'reconnecting') btn.textContent = '⏳ ' + t('save.reconnecting');
+      if (state === 'reading')      btn.textContent = '⏳ ' + t('save.reading_back');
+    });
+    if (port) toast(t('toast.reboot_complete'), 'ok');
+  } catch (e) {
+    logLine('reboot erro: ' + e.message, 'err');
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+};
 document.getElementById('btn-export').onclick = exportJSON;
 document.getElementById('btn-import').onclick = importJSON;
 document.getElementById('file-import').onchange = (e) => {
@@ -6554,6 +8182,7 @@ wireDFUTab();
 wireInputsTab();
 wireFFBTestTab();
 wireOverlayTab();
+wireSetupTab();
 
 // i18n — wirar select de idioma e aplicar idioma persistido
 const langSelect = document.getElementById('lang-select');
