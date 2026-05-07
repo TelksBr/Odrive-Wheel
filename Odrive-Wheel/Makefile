@@ -340,9 +340,21 @@ flash-dfu: $(BUILD_DIR)/$(TARGET).bin
 	dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D $<
 
 # --- Clean -------------------------------------------------------------------
+# Apaga tanto BUILD_DIR (objetos do src/ nosso) quanto os objetos espelhados
+# fora do BUILD_DIR — necessário porque OBJECTS usa addprefix $(BUILD_DIR)/
+# em SOURCES com paths "../ODrive-fw-v0.5.6/...", o que coloca os .o do ODrive
+# em "Odrive-Wheel/ODrive-fw-v0.5.6/..." (fora do BUILD_DIR). Sem este 2º rm,
+# uma mudança em motor.hpp NÃO recompila motor.cpp em build incremental.
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -f $(OBJECTS) $(OBJECTS:.o=.d)
 
--include $(wildcard $(BUILD_DIR)/**/*.d)
+# Inclui dependency files (-MMD gera um .d ao lado de cada .o com a lista de
+# headers). Antes era $(wildcard $(BUILD_DIR)/**/*.d) — bug duplo: (a) ** não
+# é recursivo no $(wildcard) do GNU make; (b) só procurava em BUILD_DIR mas os
+# .d do ODrive vivem fora dele. Derivamos a lista de OBJECTS pra cobrir
+# todos os caminhos possíveis. O `-` em -include ignora .d ainda inexistentes
+# no primeiro build.
+-include $(OBJECTS:.o=.d)
 
 .PHONY: all clean flash-dfu
