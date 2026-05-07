@@ -29,6 +29,14 @@ step-by-step guide covering:
 - **Minimum safe configuration** to bring the motor up the first time without
   blowing the brake resistor or tripping the PSU
 
+## 📐 How torque control works
+
+For a deep dive into how the FFB pipeline turns a torque demand (in Nm) into
+actual motor current — and which parameters affect each stage — see
+**[docs/TORQUE_CONTROL.md](docs/TORQUE_CONTROL.md)**. Useful when tuning
+`current_control_bandwidth`, `torque_constant`, feed-forward, and understanding
+why PID gains (`pos_gain`, `vel_gain`, etc.) are inert in TORQUE mode.
+
 ## Repository structure
 
 ```
