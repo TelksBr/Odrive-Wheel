@@ -225,10 +225,19 @@ public:
         metrics_.speed = new_speed;
         metrics_.accel = new_accel;
 
-        // Ownership do input_torque é determinado pelo HID FFB control flag.
-        if (s_hidffb && s_hidffb->getFfbActive()) {
-            odrive_bridge_set_input_torque(pending_torque_);
-        }
+        // Aplica pending_torque_ no motor SEMPRE (não condicionado ao FFB do
+        // jogo estar ativo). Razão: EffectsCalculator::calculateEffects() chama
+        // setEffectTorque(0) a cada tick antes de processar efeitos do jogo,
+        // o que faz pending_torque_ conter `0 + axisEffectTorque_` (em Nm,
+        // com slew + clip aplicados) mesmo quando o jogo está OFF. Esse valor
+        // representa o torque dos axis effects sempre-ativos (endstop, damper,
+        // inertia, friction, idle_spring) — todos devem atuar mesmo sem jogo
+        // conectado, comportamento idêntico ao OpenFFBoard original.
+        // Quando há jogo ativo, setEffectTorque(force) é chamado depois e
+        // pending_torque_ vira `force + axisEffectTorque_`.
+        // Segurança: input_torque_ só é consumido pelo motor em CLOSED_LOOP_CONTROL
+        // (state=8); em IDLE é no-op. Sem risco de pulso ao chamar incondicionalmente.
+        odrive_bridge_set_input_torque(pending_torque_);
     }
 
     void zeroEncoder() {

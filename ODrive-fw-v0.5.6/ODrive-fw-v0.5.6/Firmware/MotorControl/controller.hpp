@@ -29,7 +29,7 @@ public:
         float vel_gain = 1.0f / 6.0f;            // [Nm/(turn/s)]
         // float vel_gain = 0.2f / 200.0f,       // [Nm/(rad/s)] <sensorless example>
         float vel_integrator_gain = 2.0f / 6.0f; // [Nm/(turn/s * s)]
-        float vel_limit = 2.0f;                  // [turn/s] Infinity to disable.
+        float vel_limit = 5.0f;                  // [turn/s] (era 2.0f stock; subimos pra wheel sim racing — passar de 5 turn/s = 300 rpm é raro)
         float vel_limit_tolerance = 1.2f;        // ratio to vel_lim. Infinity to disable.
         float vel_integrator_limit = INFINITY;   // Vel. integrator clamping value. Infinity to disable.
         float vel_ramp_rate = 1.0f;              // [(turn/s) / s]
@@ -45,7 +45,7 @@ public:
         bool enable_gain_scheduling = false;
         bool enable_vel_limit = true;
         bool enable_overspeed_error = true;
-        bool enable_torque_mode_vel_limit = true;  // enable velocity limit in current control mode (requires a valid velocity estimator)
+        bool enable_torque_mode_vel_limit = false; // (era true stock) DESLIGADO pra wheel: o clamp `Tmax = (vel_limit - vel_estimate) * vel_gain` ficava cortando torque em modo TORQUE mesmo com motor parado (default ~0.83 Nm). Pra wheel sim racing, queremos torque livre e usamos vel_limit só como sensor de OVERSPEED.
         uint8_t axis_to_mirror = -1;
         float mirror_ratio = 1.0f;
         float torque_mirror_ratio = 0.0f;

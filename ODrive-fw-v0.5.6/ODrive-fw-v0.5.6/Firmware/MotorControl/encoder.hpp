@@ -23,7 +23,7 @@ public:
         float calib_range = 0.02f; // Accuracy required to pass encoder cpr check
         float calib_scan_distance = 16.0f * M_PI; // rad electrical
         float calib_scan_omega = 4.0f * M_PI; // rad/s electrical
-        float bandwidth = 1000.0f;
+        float bandwidth = 200.0f;
         int32_t phase_offset = -10059;              // user's measured offset
         float phase_offset_float = 0.174459f;       // user's measured fractional offset
         int32_t cpr = 10000;                        // user's ABZ encoder (stock default was 8192)
