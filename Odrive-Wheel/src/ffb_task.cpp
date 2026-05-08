@@ -346,32 +346,41 @@ extern "C" {
 // Captura o return code do EE_Init de boot pra debug via sys.eedump
 static volatile uint16_t s_boot_ee_init_rc = 0xFFFF;
 
-extern "C" void ffb_task_init(void) {
-    odrive_bridge_init();   // no-op em v56-stock (motor.setup já rodou no odrive_main())
+// Flag estático pra ffb_init_storage_early() ser idempotente — pode ser
+// chamado por main.cpp antes do ADC começar E também por ffb_task_init()
+// como fallback se o early call não rodou.
+static bool s_storage_initialized = false;
 
-    // Phase 3.5 — inicializa EEPROM emulada ANTES do EffectsCalculator.
-    // Construtor do EffectsCalculator chama restoreFlash() pra carregar gains
-    // e filtros — sem EE_Init prévio, leituras retornam erro e tudo cai em
-    // defaults. Pages em S1+S2 (movidas na Phase 4.x — antes em S10+S11
-    // que colidia com ODrive NVM).
+// Inicialização CRÍTICA da EEPROM emulada + carga do vbus_divider.
+// Esta função PRECISA ser chamada ANTES de start_general_purpose_adc() em
+// main.cpp — caso contrário, a IRQ vbus_sense_adc_cb roda com o
+// g_vbus_voltage_scale default (divider 19) escalando ADC errado.
+//
+// Bug clássico: placa real com divider 11 (ODrive v3.6 oficial), real vbus=24V,
+// ADC=2718. Antes do early init: vbus_voltage = 2718 * (3.3*19/4096) = 41.5V.
+// Se dc_bus_overvoltage_trip_level = 28V, do_fast_checks() dispara
+// ERROR_DC_BUS_OVER_VOLTAGE imediatamente, antes mesmo do ffb_task_init
+// rodar pra corrigir g_vbus_voltage_scale. Erro fica latched.
+//
+// Solução: rodar EE_Init + carregar divider antes do ADC iniciar. main.cpp
+// chama isto explicitamente antes de start_general_purpose_adc().
+extern "C" void ffb_init_storage_early(void) {
+    if (s_storage_initialized) return;
+
     HAL_FLASH_Unlock();
-    // Phase 4.x — STM32F4 latch nas flags de erro de flash (PGAERR/PGSERR/
-    // WRPERR/PGPERR). Se ODrive (ou qualquer outro código antes de nós)
-    // deixou alguma seteada, FLASH_WaitForLastOperation retorna HAL_ERROR
-    // em CASCATA pra todas as próximas ops, mesmo as válidas. ClearError
-    // resolve. ODrive's stm32_nvm.c faz isso, nossa EE não fazia → bug.
+    // STM32F4 latch nas flags de erro de flash (PGAERR/PGSERR/WRPERR/PGPERR).
+    // Se ODrive (ou qualquer outro código antes de nós) deixou alguma seteada,
+    // FLASH_WaitForLastOperation retorna HAL_ERROR em CASCATA pra todas as
+    // próximas ops, mesmo as válidas. ClearError resolve.
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP    | FLASH_FLAG_OPERR  |
                            FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
                            FLASH_FLAG_PGSERR | FLASH_FLAG_PGPERR);
     s_boot_ee_init_rc = EE_Init();
 
-    // Phase 4.x — cookie de versão de layout. Se EE foi formatada por uma
-    // versão antiga do firmware com layout diferente (ex: outras posições
-    // de bits, outros endereços virtuais), os dados velhos NÃO devem ser
+    // Cookie de versão de layout. Se EE foi formatada por uma versão antiga
+    // do firmware com layout diferente, os dados velhos NÃO devem ser
     // interpretados como válidos. Lê ADR_FLASH_VERSION; se não bater com
-    // EE_LAYOUT_VERSION, formata. Após formatar, escreve a versão atual
-    // pra próximos boots passarem direto. Também trata o caso de EE_Init
-    // ter falhado (s_boot_ee_init_rc != 0) — força format pra recuperar.
+    // EE_LAYOUT_VERSION, formata. Também trata EE_Init failed.
     {
         uint16_t stored_version = 0;
         uint16_t rc = EE_ReadVariable(ADR_FLASH_VERSION, &stored_version);
@@ -388,15 +397,27 @@ extern "C" void ffb_task_init(void) {
     }
     HAL_FLASH_Lock();
 
-    // Phase 4.x — VBUS divider configurável. Carrega da EE (se válido) e
-    // recalcula g_vbus_voltage_scale que é lido pelo IRQ de leitura do ADC.
-    // Default 19 (MKS XDrive Mini); ODrive v3.6 oficial = 11.
+    // VBUS divider configurável. Carrega da EE (se válido) e recalcula
+    // g_vbus_voltage_scale ANTES do ADC começar a rodar. Default 19 (MKS
+    // XDrive Mini); ODrive v3.6 oficial = 11.
     {
         uint16_t v;
         if (Flash_Read(ADR_VBUS_DIVIDER, &v, false) && v != 0xFFFF && v >= 1 && v <= 50) {
             ffb_set_vbus_divider((int)v);
         }
     }
+
+    s_storage_initialized = true;
+}
+
+extern "C" void ffb_task_init(void) {
+    odrive_bridge_init();   // no-op em v56-stock (motor.setup já rodou no odrive_main())
+
+    // Idempotente: se main.cpp já chamou ffb_init_storage_early() antes do
+    // ADC iniciar (que é o caminho correto), esta chamada é no-op. Caso
+    // contrário (build antiga sem o early hook), faz como fallback — mas
+    // o overvoltage transiente pode ter disparado entre boot e este ponto.
+    ffb_init_storage_early();
 
     // Phase 4.x — GPIO inputs (botões/eixos via GPIOs 1-4). Carrega cfg da EE
     // e configura cada pino conforme modo (button/axis/disabled).

@@ -19,6 +19,14 @@ osSemaphoreId sem_can;
 // Phase 2c — FFB task entrypoint (defined in src/ffb_task.cpp, extern "C")
 extern "C" void ffb_task_init(void);
 
+// Phase 4.x — early EE init + vbus_divider load. PRECISA rodar antes de
+// start_general_purpose_adc() — caso contrário a IRQ vbus_sense_adc_cb
+// roda com g_vbus_voltage_scale default (divider 19) escalando ADC errado
+// pra placas com divider diferente (ODrive v3.6 oficial = 11), e
+// do_fast_checks() pode disparar OVER_VOLTAGE transiente antes do
+// ffb_task_init corrigir o scale.
+extern "C" void ffb_init_storage_early(void);
+
 #if defined(STM32F405xx)
 // Place FreeRTOS heap in core coupled memory for better performance
 __attribute__((section(".ccmram")))
@@ -525,6 +533,15 @@ static void rtos_main(void*) {
     // Init USB device
     MX_USB_DEVICE_Init();
 
+    // Phase 4.x — Inicializa EEPROM emulada e CARREGA vbus_divider ANTES
+    // do ADC começar a samplear. Sem isto, vbus_sense_adc_cb roda usando
+    // o g_vbus_voltage_scale default (divisor 19, MKS XDrive Mini), o que
+    // dá leituras vbus_voltage 1.7x maiores em placas que tem divisor 11
+    // (ODrive v3.6 oficial). Resultado: do_fast_checks() dispara
+    // ERROR_DC_BUS_OVER_VOLTAGE transiente se trip estiver setado próximo
+    // do real vbus (ex: 28V pra fonte 24V), antes do ffb_task_init ter
+    // chance de corrigir o scale.
+    ffb_init_storage_early();
 
     // Start ADC for temperature measurements and user measurements
     start_general_purpose_adc();
