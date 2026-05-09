@@ -34,3 +34,22 @@ extern "C" float odrive_bridge_get_ibus(void)        { return odrv.ibus_; }
 extern "C" float odrive_bridge_get_vbus(void)        { return odrv.vbus_voltage_; }
 extern "C" float odrive_bridge_get_motor_ibus(void)  { return axes[0].motor_.I_bus_; }
 extern "C" int   odrive_bridge_motor_is_armed(void)  { return axes[0].motor_.is_armed_ ? 1 : 0; }
+
+// Anticogging calibration trigger — equivalente a chamar a função RPC
+// `start_anticogging_calibration()` via Fibre. Necessário porque o campo
+// `axis0.controller.config.anticogging.calib_anticogging` é marcado como
+// readonly bool no YAML do ODrive (Property<const bool> no autogen), o
+// que faz `w` via ASCII responder "not implemented". O cmdparser
+// OpenFFBoard expõe isto via `axis.anticogcal!`.
+//
+// Pré-requisito: motor já calibrado, encoder pronto, control_mode setado
+// pra POSITION_CONTROL, axis em CLOSED_LOOP_CONTROL. start_anticogging
+// força mode=POSITION durante o procedimento (controller.cpp:86,94).
+extern "C" int odrive_bridge_start_anticogcal(void) {
+    // Reflete o axis.error_ check feito em start_anticogging_calibration:
+    // se há erros, a função simplesmente não inicia (axis_->error_ ==
+    // ERROR_NONE é a guarda).
+    if (axes[0].error_ != Axis::ERROR_NONE) return 0;
+    axes[0].controller_.start_anticogging_calibration();
+    return 1;
+}

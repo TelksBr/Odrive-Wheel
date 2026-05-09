@@ -413,6 +413,7 @@ extern "C" void ffb_set_axis_expo(int v);
 extern "C" int  ffb_get_axis_exposcale(void);
 extern "C" void ffb_set_axis_exposcale(int v);
 extern "C" void ffb_axis_zeroenc(void);
+extern "C" int  odrive_bridge_start_anticogcal(void);
 extern "C" int   ffb_get_axis_curtorque(void);
 extern "C" float ffb_get_axis_curpos(void);
 extern "C" float ffb_get_axis_curspd(void);
@@ -487,6 +488,28 @@ static int h_axis_zeroenc(uint8_t, CmdType t, const char*, char *r, size_t s) {
     if (t == CMD_TYPE_EXEC || t == CMD_TYPE_GET) ffb_axis_zeroenc();
     strncpy(r, "OK", s);
     return 0;
+}
+
+// Anticogging calibration trigger via cmdparser OpenFFBoard.
+// Workaround pra `calib_anticogging` ser readonly no YAML do ODrive (write
+// via ASCII responde "not implemented"). Síntaxe: axis.anticogcal!
+//
+// Pré-requisitos pra cal funcionar (firmware checa internamente):
+//   - axis sem erros (axis0.error == 0)
+//   - motor calibrado + encoder pronto
+//   - control_mode = POSITION_CONTROL (3) — start_anticogging_calibration
+//     força isso, mas vel_gain/pos_gain precisam estar razoáveis pro servo
+//     manter posição em cada um dos 3600 pontos
+//   - axis em CLOSED_LOOP_CONTROL (state=8)
+//   - motor LIVRE (sem volante físico)
+//
+// Retorna OK se disparou, FAIL se axis tem erros ou se start não pôde
+// rodar (controller.cpp:50 só seta a flag se axis.error == ERROR_NONE).
+static int h_axis_anticogcal(uint8_t, CmdType t, const char*, char *r, size_t s) {
+    if (t != CMD_TYPE_EXEC && t != CMD_TYPE_GET) return -1;
+    int ok = odrive_bridge_start_anticogcal();
+    strncpy(r, ok ? "OK" : "FAIL (verifique axis0.error e estado closed_loop)", s);
+    return ok ? 0 : -1;
 }
 
 // Live readouts (read-only)
@@ -752,6 +775,7 @@ const CmdEntry cmdtable[] = {
     { "axis",  "expo",          h_axis_expo },           // curva exponencial (-32767..32767)
     { "axis",  "exposcale",     h_axis_exposcale },      // divisor pro expo (1-255)
     { "axis",  "zeroenc",       h_axis_zeroenc },        // zera posição atual
+    { "axis",  "anticogcal",    h_axis_anticogcal },     // dispara anticogging calibration
     // Live readouts (read-only)
     { "axis",  "curtorque",     h_axis_curtorque },
     { "axis",  "curpos",        h_axis_curpos },

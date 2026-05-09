@@ -1734,6 +1734,15 @@ const I18N = {
     'ctrl.warn_torque_desc':   'Vários campos abaixo são IGNORADOS pelo firmware quando control_mode = TORQUE: PID gains (pos_gain, vel_gain, vel_integrator_*), inertia, gain scheduling, posição circular, homing/mirror. Em TORQUE mode o input_torque_ vai direto pro current controller sem passar por nenhum loop PID. Os campos cinzentos abaixo refletem o que está inerte.',
     'ctrl.tag_ignored':        'ignorado em TORQUE',
     'ctrl.tag_partial':        'usado só como vel-clamp',
+    'ctrl.anticog_btn':        '⚙ Rodar Anticogging Calibration',
+    'ctrl.anticog_label':      'Anticogging:',
+    'ctrl.anticog_hint':       'Mapeia o torque parasita de cogging por posição (3600 pontos × ~100ms = 3-10 min). Pré-requisitos: motor LIVRE (sem volante), motor calibrado, encoder pronto, control_mode=POSITION (3), state=CLOSED_LOOP_CONTROL (8). Ao final, anticogging_valid=True. Pra persistir, marque pre_calibrated=True e Save.',
+    'ctrl.anticog_confirm':    'Disparar anticogging calibration?\n\nMotor PRECISA estar livre (sem volante físico) e em CLOSED_LOOP_CONTROL (state=8). O tool muda control_mode pra POSITION (3) automaticamente. Demora 3-10 min.\n\nAo final: pre_calibrated é marcado e control_mode volta pra TORQUE — só falta Save.\n\nCancela com sc se algo der errado.',
+    'ctrl.anticog_running':    'Calibrando…',
+    'ctrl.anticog_finalizing': 'Finalizando — marcando pre_calibrated + voltando pra TORQUE…',
+    'ctrl.anticog_started':    '✓ Anticogging cal iniciada — acompanhe o progresso',
+    'ctrl.anticog_done':       '✓ Anticogging completa — pre_calibrated marcado e modo voltou pra TORQUE. Clique Save pra persistir.',
+    'ctrl.anticog_fail':       '✕ Anticogging falhou',
     // Encoder tab actions
     'encoder.zero_btn':        '⊙ Zerar posição do volante',
     'encoder.zero_label':      'Zerar posição:',
@@ -2176,6 +2185,15 @@ const I18N = {
     'ctrl.warn_torque_desc':   'Several fields below are IGNORED by the firmware when control_mode = TORQUE: PID gains (pos_gain, vel_gain, vel_integrator_*), inertia, gain scheduling, circular setpoints, homing/mirror. In TORQUE mode input_torque_ goes straight to the current controller without any PID loop. Greyed-out fields below show what is inert.',
     'ctrl.tag_ignored':        'ignored in TORQUE',
     'ctrl.tag_partial':        'used only as vel-clamp',
+    'ctrl.anticog_btn':        '⚙ Run Anticogging Calibration',
+    'ctrl.anticog_label':      'Anticogging:',
+    'ctrl.anticog_hint':       'Maps the parasitic cogging torque per position (3600 points × ~100ms = 3-10 min). Prerequisites: motor FREE (no wheel), motor calibrated, encoder ready, control_mode=POSITION (3), state=CLOSED_LOOP_CONTROL (8). When done, anticogging_valid=True. To persist, set pre_calibrated=True and Save.',
+    'ctrl.anticog_confirm':    'Trigger anticogging calibration?\n\nMotor MUST be free (no physical wheel) and in CLOSED_LOOP_CONTROL (state=8). The tool switches control_mode to POSITION (3) automatically. Takes 3-10 min.\n\nWhen done: pre_calibrated is set and control_mode returns to TORQUE — only Save is left.\n\nSend sc to abort if something goes wrong.',
+    'ctrl.anticog_running':    'Calibrating…',
+    'ctrl.anticog_finalizing': 'Finalizing — setting pre_calibrated + restoring TORQUE…',
+    'ctrl.anticog_started':    '✓ Anticogging cal started — watch the progress',
+    'ctrl.anticog_done':       '✓ Anticogging done — pre_calibrated set and mode returned to TORQUE. Click Save to persist.',
+    'ctrl.anticog_fail':       '✕ Anticogging failed',
     // Encoder tab actions
     'encoder.zero_btn':        '⊙ Zero wheel position',
     'encoder.zero_label':      'Zero position:',
@@ -3095,7 +3113,10 @@ const SCHEMA = [
 
       { group: 'Anticogging' },
       B('anticogging.anticogging_enabled'),
-      B('anticogging.calib_anticogging'),
+      // anticogging.calib_anticogging — REMOVIDO da SCHEMA porque o YAML
+      // do ODrive marca como readonly, daí `w` via ASCII responde
+      // "not implemented". Pra disparar a cal, usar o botão acima
+      // (que envia `axis.anticogcal!` via cmdparser OpenFFBoard).
       B('anticogging.pre_calibrated'),
       F('anticogging.cogging_ratio'),
       F('anticogging.calib_pos_threshold'),
@@ -6523,6 +6544,33 @@ function buildTabs() {
           g.textContent = fld.group;
         }
         panel.appendChild(g);
+
+        // Controller / Anticogging — injeta action bar com botão de cal logo
+        // após o header da seção. Fica dentro da seção visualmente, mas com
+        // destaque (background + border) pra deixar claro que é uma ação,
+        // não um campo de config.
+        if (tab.id === 'controller' && fld.group === 'Anticogging') {
+          const actionBar = document.createElement('div');
+          actionBar.className = 'controller-actions';
+          actionBar.style.cssText = 'grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin-bottom:12px;padding:10px 12px;background:#1a1a1a;border:1px solid var(--border);border-radius:6px';
+          actionBar.innerHTML = `
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button id="btn-anticog-cal" class="warn"
+                      style="padding:8px 16px;font-size:13px"
+                      data-i18n="ctrl.anticog_btn">⚙ Rodar Anticogging Calibration</button>
+              <span id="anticog-progress" style="color:var(--fg-muted);font-size:12px;font-family:monospace">—</span>
+              <span id="anticog-valid" style="color:var(--fg-muted);font-size:12px;font-family:monospace">—</span>
+            </div>
+            <div style="color:var(--muted);font-size:11px;line-height:1.5">
+              <p style="margin:2px 0">
+                <b data-i18n="ctrl.anticog_label">Anticogging:</b>
+                <span data-i18n="ctrl.anticog_hint">Mede o torque parasita por posição. Demora 3-10 min. Veja descrição completa no tooltip via i18n.</span>
+              </p>
+            </div>
+          `;
+          panel.appendChild(actionBar);
+        }
+
         return;
       }
       // Phase 4.x — fld._path/_protocol override (ICMD helper) permite encaixar
@@ -6671,6 +6719,109 @@ function buildTabs() {
       // Pula pra aba Encoder pra usuário ver o que mudou (caso tenha clicado de outra)
       selectTab('encoder');
       toast(t('toast.preset_as5047_applied'), 'ok');
+    });
+  }
+
+  // Wire-up "Rodar Anticogging Calibration" — fluxo automatizado:
+  //   1. Click → muda control_mode pra POSITION_CONTROL (3) automaticamente
+  //   2. Dispara axis.anticogcal! (cmdparser OpenFFBoard)
+  //   3. Polling 1s do progresso (index 0→3600 → anticogging_valid=True)
+  //   4. Ao detectar valid=True: marca anticogging.pre_calibrated=True
+  //      AUTOMATICAMENTE e volta control_mode pra TORQUE_CONTROL (1)
+  //   5. Toast final pedindo Save manual pra persistir em NVM
+  //
+  // Usuário pode navegar entre abas durante a cal — não bloqueia UI.
+  const btnAnticog = document.getElementById('btn-anticog-cal');
+  if (btnAnticog) {
+    let anticogPollTimer = null;
+
+    const stopAnticogPoll = () => {
+      if (anticogPollTimer) { clearInterval(anticogPollTimer); anticogPollTimer = null; }
+    };
+
+    // Helper: escreve via DOM input (passa por writeOne pra UI ficar synced
+    // verde quando user navegar pro tab). Cai pra writeProp direto se input
+    // não existe (não deve acontecer — esses paths estão na SCHEMA).
+    const writeViaSchemaInput = async (path, value, isBool) => {
+      const inp = document.getElementById('in-' + path);
+      if (inp) {
+        if (isBool) inp.checked = !!value;
+        else inp.value = String(value);
+        try { await writeOne(inp); return true; }
+        catch (e) { logLine('writeViaSchemaInput fail: ' + path, 'err'); return false; }
+      }
+      // Fallback: escreve direto sem sync de UI
+      await writeProp(path, isBool ? (value ? '1' : '0') : String(value));
+      return true;
+    };
+
+    const updateAnticogProgress = async () => {
+      const idx = parseInt(await readProp('axis0.controller.config.anticogging.index') || '0', 10);
+      const valid = await readProp('axis0.controller.anticogging_valid');
+      const axisErr = parseInt(await readProp('axis0.error') || '0', 10);
+      const progEl = document.getElementById('anticog-progress');
+      const validEl = document.getElementById('anticog-valid');
+      if (progEl) {
+        const pct = ((idx / 3600) * 100).toFixed(1);
+        progEl.textContent = 'index: ' + idx + ' / 3600 (' + pct + '%)';
+      }
+      if (validEl) {
+        validEl.textContent = 'valid: ' + valid;
+        validEl.style.color = valid === 'True' ? 'var(--ok)' : 'var(--fg-muted)';
+      }
+      // Termina quando há erro no axis OU quando valid=True && index voltou a 0
+      if (axisErr !== 0) {
+        stopAnticogPoll();
+        toast(t('ctrl.anticog_fail'), 'err');
+        logLine('anticog cal aborted: axis.error=0x' + axisErr.toString(16), 'err');
+        btnAnticog.disabled = false;
+        btnAnticog.textContent = t('ctrl.anticog_btn');
+      } else if (valid === 'True' && idx === 0) {
+        stopAnticogPoll();
+        // Auto pós-cal: marca pre_calibrated + volta control_mode pra TORQUE.
+        // Isso deixa o setup pronto pro FFB (TORQUE_CONTROL) com a tabela
+        // de cogging armada — só falta o user clicar Save.
+        btnAnticog.textContent = '⏳ ' + t('ctrl.anticog_finalizing');
+        logLine('anticog cal complete — marking pre_calibrated + restoring TORQUE_CONTROL', 'rx');
+        await writeViaSchemaInput('axis0.controller.config.anticogging.pre_calibrated', true,  true);
+        await writeViaSchemaInput('axis0.controller.config.control_mode',                1,     false);
+        toast(t('ctrl.anticog_done'), 'ok');
+        btnAnticog.disabled = false;
+        btnAnticog.textContent = t('ctrl.anticog_btn');
+      }
+    };
+
+    btnAnticog.addEventListener('click', async () => {
+      if (!writer) { toast(t('toast.connect_first_board'), 'err'); return; }
+      if (!confirm(t('ctrl.anticog_confirm'))) return;
+
+      btnAnticog.disabled = true;
+      btnAnticog.textContent = '⏳ ' + t('ctrl.anticog_running');
+      stopAnticogPoll();
+
+      // 1. Auto: força control_mode = POSITION_CONTROL (3) antes de disparar.
+      //    A cal força esse modo internamente também, mas setar daqui
+      //    garante que o axis aceita o trigger sem erro.
+      logLine('anticog: setting control_mode=POSITION_CONTROL (3)', 'tx');
+      await writeViaSchemaInput('axis0.controller.config.control_mode', 3, false);
+      await new Promise(r => setTimeout(r, 200));   // settle do firmware
+
+      // 2. Dispara o comando customizado
+      const r = await execPropOffb('axis.anticogcal').catch(() => null);
+      logLine('axis.anticogcal! → ' + (r || 'timeout'),
+              r && r.indexOf('OK') === 0 ? 'rx' : 'err');
+
+      if (!r || r.indexOf('FAIL') === 0) {
+        toast(t('ctrl.anticog_fail') + ' (' + (r || 'timeout') + ')', 'err');
+        btnAnticog.disabled = false;
+        btnAnticog.textContent = t('ctrl.anticog_btn');
+        return;
+      }
+
+      toast(t('ctrl.anticog_started'), 'ok');
+      // Poll a cada 1s pra atualizar progresso visualmente
+      updateAnticogProgress();
+      anticogPollTimer = setInterval(updateAnticogProgress, 1000);
     });
   }
 }
