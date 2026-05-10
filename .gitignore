@@ -57,8 +57,12 @@ desktop.ini
 
 # =============================================================================
 # Saved configs (user-specific)
+# Pattern exclui exports timestamp-named do tool. Whitelist específico
+# pros 2 presets que rastreamos como referência de hardware atual.
 # =============================================================================
 odrive_config_*.json
+!Odrive-Wheel/tools/odrive_config_2026-05-06T16-33-53-630Z-Hoverboard.json
+!Odrive-Wheel/tools/odrive_config_2026-05-07T21-49-59-444Z_Servo18Nm.json
 odrive_config_dump.txt
 odrive servoconfig.json
 Odrive config.txt
