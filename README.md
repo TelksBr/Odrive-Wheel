@@ -122,14 +122,45 @@ git submodule update --init --recursive
 Prerequisites:
 - `arm-none-eabi-gcc` (tested with 12.2)
 - `make`
+- `python3` with `pyyaml`, `jinja2`, `jsonschema` (for autogen)
 - `dfu-util` (only for the first flash; later updates can use the in-browser flasher)
 
-```bash
-cd Odrive-Wheel
-make -j4
+### Option A — GitHub Actions (zero local setup)
+
+Push to `main` or open a PR. The workflow `.github/workflows/build.yml` runs
+autogen + `make` on Ubuntu and uploads `odrive-wheel.bin` as a build artifact
+(retention 14 days). Also triggers manually via **Actions → Build Firmware →
+Run workflow**.
+
+### Option B — Local build, Windows (`build-local.ps1`)
+
+Wraps autogen + MSYS2 + ARM GCC. Requires MSYS2 at `C:\msys64` (override with
+`-MsysBash`). The script auto-detects ARM GCC across common install paths.
+
+```powershell
+.\build-local.ps1                 # full clean build
+.\build-local.ps1 -NoClean        # incremental (skip make clean)
+.\build-local.ps1 -SkipSubmoduleInit  # skip git submodule update
 ```
 
-Artifact: `build/odrive-wheel.bin`
+### Option C — Manual (Linux / WSL / macOS)
+
+```bash
+# 1. Generate ODrive autogen headers (once, regenerate if interface YAML changes)
+cd ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/Firmware
+mkdir -p autogen
+python3 ../tools/odrive/version.py --output autogen/version.c
+python3 interface_generator_stub.py --definitions odrive-interface.yaml --template fibre-cpp/interfaces_template.j2     --output autogen/interfaces.hpp
+python3 interface_generator_stub.py --definitions odrive-interface.yaml --template fibre-cpp/function_stubs_template.j2 --output autogen/function_stubs.hpp
+python3 interface_generator_stub.py --definitions odrive-interface.yaml --generate-endpoints ODrive --template fibre-cpp/endpoints_template.j2 --output autogen/endpoints.hpp
+python3 interface_generator_stub.py --definitions odrive-interface.yaml --template fibre-cpp/type_info_template.j2 --output autogen/type_info.hpp
+
+# 2. Build
+cd ../../../Odrive-Wheel
+make -j$(nproc)
+```
+
+Artifact: `Odrive-Wheel/build/odrive-wheel.bin`
 
 ## Flash
 

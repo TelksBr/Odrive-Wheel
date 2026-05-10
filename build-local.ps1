@@ -1,19 +1,54 @@
 param(
-  [string]$ToolchainBin = "C:\Program Files (x86)\GNU Arm Embedded Toolchain\9 2020-q2-update\bin",
+  [string]$ToolchainBin = "",
   [string]$MsysBash = "C:\msys64\usr\bin\bash.exe",
-  [switch]$NoClean
+  [switch]$NoClean,
+  [switch]$SkipSubmoduleInit
 )
 
 $ErrorActionPreference = "Stop"
 
+# Auto-discover ARM toolchain — try common install locations across versions.
+# User can override via -ToolchainBin param.
+if ([string]::IsNullOrEmpty($ToolchainBin)) {
+  $candidates = @(
+    # Modern Arm GNU Toolchain (post-2022 rename)
+    "C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\*\bin",
+    "C:\Program Files\Arm GNU Toolchain arm-none-eabi\*\bin",
+    # Legacy GNU Arm Embedded Toolchain (pre-2022)
+    "C:\Program Files (x86)\GNU Arm Embedded Toolchain\*\bin",
+    "C:\Program Files\GNU Arm Embedded Toolchain\*\bin"
+  )
+  foreach ($pattern in $candidates) {
+    $found = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue |
+             Sort-Object FullName -Descending | Select-Object -First 1
+    if ($found) {
+      $ToolchainBin = $found.FullName
+      Write-Host "Auto-detected ARM toolchain: $ToolchainBin"
+      break
+    }
+  }
+}
+
 if (!(Test-Path $MsysBash)) {
-  Write-Error "MSYS2 bash not found at $MsysBash"
+  Write-Error "MSYS2 bash not found at $MsysBash. Install from https://www.msys2.org/ or override with -MsysBash."
   exit 1
 }
 
-if (!(Test-Path $ToolchainBin)) {
-  Write-Error "ARM toolchain bin path not found: $ToolchainBin"
+if ([string]::IsNullOrEmpty($ToolchainBin) -or !(Test-Path $ToolchainBin)) {
+  Write-Error "ARM toolchain not found. Install from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads or override with -ToolchainBin."
   exit 1
+}
+
+# Submodule init — pulls OpenFFBoard-master sources which are referenced by
+# the Makefile via include paths. Skipped via -SkipSubmoduleInit on repeated
+# runs to save time.
+if (-not $SkipSubmoduleInit) {
+  Write-Host "Ensuring submodules are initialized..."
+  & git submodule update --init --recursive
+  if ($LASTEXITCODE -ne 0) {
+    Write-Error "git submodule update failed. Run manually: git submodule update --init --recursive"
+    exit 1
+  }
 }
 
 function Convert-ToMsysPath {
@@ -64,7 +99,7 @@ if (Test-Path $venvPython) {
   }
 
   if (-not $pythonCmd) {
-    Write-Error "Python 3 not found. Install Python and pip packages: pyyaml, jinja2, jsonschema==4.17.3"
+    Write-Error "Python 3 not found. Install Python and pip packages: pyyaml, jinja2, jsonschema>=4.0"
     exit 1
   }
 
@@ -74,9 +109,9 @@ if (Test-Path $venvPython) {
 & $pythonExe -c "import yaml, jinja2, jsonschema" 2>$null
 if ($LASTEXITCODE -ne 0) {
   Write-Host "Installing Python deps..."
-  & $pythonExe -m pip install pyyaml jinja2 jsonschema==4.17.3
+  & $pythonExe -m pip install pyyaml jinja2 jsonschema>=4.0
   if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to install Python deps. Run: pip install pyyaml jinja2 jsonschema==4.17.3"
+    Write-Error "Failed to install Python deps. Run: pip install pyyaml jinja2 jsonschema>=4.0"
     exit 1
   }
 }
