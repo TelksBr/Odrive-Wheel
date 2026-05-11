@@ -21,8 +21,23 @@ Based on:
 
 ## 🚀 Quick start
 
-New to the project? Read **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** for the full
-step-by-step guide covering:
+**Fastest path — in-browser Quick Start wizard:**
+
+Open **<https://eagabriel.github.io/Odrive-Wheel/>** (Chrome/Edge), connect
+the board via Web Serial, and follow the **Quick Start** tab — a 12-step
+guided wizard that walks you from blank firmware all the way to FFB
+responding in-game:
+
+1. Flash firmware (DFU) → 2. Connect → 3. Erase old config → 4. Power
+& protections → 5. Motor config → 6. Encoder config → 7. Motor
+calibration → 8. Encoder offset → 9. Mark pre-calibrated & Save →
+10. FFB config → 11. Test Spring → 12. Done.
+
+Each step shows the suggested values, links to the relevant config tab,
+and decodes errors inline. PT/EN i18n.
+
+**Want the long-form reference instead?** Read
+**[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** for:
 
 - Flashing a pre-built `.bin` (with `dfu-util` or directly from the browser)
 - Compiling from source in VS Code
@@ -79,14 +94,22 @@ why PID gains (`pos_gain`, `vel_gain`, etc.) are inert in TORQUE mode.
 > You can also clone the repo and open the file locally if you prefer.
 
 Tabs:
+- **🚀 Quick Start** — 12-step guided setup wizard (firmware flash → motor cal → FFB test) with suggested values, inline error decoding, and tab cross-links
 - **ODrive** / **Axis 0** / **Motor** / **Encoder** / **Controller** — params via ODrive ASCII
+  - Controller tab has a **TORQUE-mode warning banner** flagging which PID-related fields (`pos_gain`, `vel_gain`, `vel_integrator_*`, `inertia`, gain scheduling, etc.) become inert when `control_mode = TORQUE` (default for FFB)
+  - One-click **Anticogging Calibration** button: sets `control_mode = POSITION`, triggers the cal, polls progress (index 0→3600), then auto-marks `pre_calibrated` and restores `control_mode = TORQUE`
+  - **Zero wheel position** action on the Encoder tab + AS5047 preset for SPI absolute encoders
+- **Inputs** — GPIO 1-4 mapped as joystick buttons or analog axes (Complementary-filter smoothing, range/invert per input)
 - **FFB Wheel** — range, maxtorque, fxratio, axis effects (idlespring, damper, inertia, friction, esgain, slew, expo)
 - **FFB Effects** — master gain + per-effect gains
 - **FFB Filters** — biquad lowpass cutoff + Q per effect type
 - **FFB Live** — live dashboard (FFB state, HID counters, active effects, bus current peaks, torque/position chart)
+- **FFB Test** — built-in WebHID effect tester (Spring/Constant/Damper/etc.) without needing a game
+- **iRacing overlay** — Document Picture-in-Picture window with telemetry hooks (dark/light theme)
 - **Debug / Status** — device info, state machine actions, decoded errors, live monitor, vbus/ibus/Iq/Ibrake chart
 - **Console** — serial TX/RX log
 - **DFU Flash** — re-flash the firmware from the browser (no `dfu-util` needed)
+- **Save/Load Profile** — export/import full board config as JSON for sharing motor presets
 
 Each configurable field has a **tooltip explaining its function** on hover, and the UI supports **PT/EN** with a header toggle.
 
@@ -278,8 +301,14 @@ It is the easiest way to say thanks and keeps the project maintained on my own t
 ✅ FFB validated: Spring / Constant / Friction / Periodic responding in ForceTest
 ✅ Brake resistor + regen stable (no PSU resets)
 ✅ Separated FFB / ODrive persistence
-✅ Full HTML config tool in PT/EN
-✅ In-browser DFU flasher (WebUSB + DfuSe)
+✅ Full HTML config tool in PT/EN with **12-step Quick Start wizard**
+✅ One-click **Anticogging Calibration** via custom `axis.anticogcal!` command
+✅ **GPIO 1-4** as joystick buttons or analog axes
+✅ **Inputs tab** with GPIO config + live preview
+✅ Controller tab **TORQUE-mode warning** flagging inert fields
+✅ In-browser DFU flasher (WebUSB + DfuSe), FFB EEPROM preserved across reflash
+✅ **iRacing overlay** (Document Picture-in-Picture)
+✅ **CI builds** via GitHub Actions — `.bin` artifact on every push
 ✅ End-to-end validation in **iRacing**
 
 ## History
@@ -293,3 +322,4 @@ Built iteratively, in phases:
 - **Phase 3** — FFB persistence in emulated EEPROM (S10+S11), full HTML tool, dashboards
 - **Phase 4** — Project rename to **Odrive-Wheel**, in-browser DFU flasher (WebUSB + DfuSe), Getting Started guide
 - **Phase 5** — iRacing overlay (Document Picture-in-Picture, dark/light theme), Encoder tab actions (zero wheel position + AS5047 preset), DFU now preserves FFB EEPROM across re-flash
+- **Phase 6** — **Quick Start wizard** (12-step guided setup), **GPIO 1-4 inputs** as buttons/axes, Controller TORQUE-mode warning, **Anticogging calibration** via custom `axis.anticogcal!` command (workaround for ODrive readonly `calib_anticogging`), `vbus_divider` boot fix (no more spurious overvoltage trips), **CI builds** via GitHub Actions, **Save/Load motor profiles** as JSON
