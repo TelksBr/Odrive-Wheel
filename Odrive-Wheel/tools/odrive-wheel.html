@@ -47,7 +47,7 @@
   body {
     font-family: var(--font-sans);
     background: var(--bg); color: var(--fg);
-    font-size: 21px; line-height: 1.5;
+    font-size: 17px; line-height: 1.5;
     overflow: hidden;
     display: grid;
     grid-template-columns: var(--sidebar-w) 1fr;
@@ -75,11 +75,11 @@
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 27px; color: #fff;
+    font-size: 22px; color: #fff;
     box-shadow: 0 2px 8px rgba(99,102,241,.3);
   }
   .sidebar-logo .name {
-    font-weight: 700; font-size: 22px;
+    font-weight: 700; font-size: 18px;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -89,7 +89,7 @@
   }
   .sidebar-section-title {
     padding: 12px 20px 6px;
-    font-size: 16px; font-weight: 600;
+    font-size: 13px; font-weight: 600;
     text-transform: uppercase; letter-spacing: .05em;
     color: var(--fg-dim);
   }
@@ -98,7 +98,7 @@
     padding: 9px 20px;
     color: var(--fg-muted);
     cursor: pointer;
-    font-size: 20px;
+    font-size: 16px;
     border-left: 3px solid transparent;
     transition: var(--transition);
     user-select: none;
@@ -113,7 +113,7 @@
     border-left-color: var(--accent);
   }
   .sidebar-item .ic {
-    font-size: 22px; width: 20px; text-align: center;
+    font-size: 18px; width: 20px; text-align: center;
   }
 
   /* ============================================================
@@ -132,7 +132,7 @@
     background: var(--bg-card-2);
     border: 1px solid var(--border);
     border-radius: 999px;
-    font-size: 19px; font-family: var(--font-mono);
+    font-size: 15px; font-family: var(--font-mono);
     color: var(--fg-muted);
   }
   .status-pill .dot {
@@ -159,7 +159,7 @@
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    color: var(--fg); font-size: 20px;
+    color: var(--fg); font-size: 16px;
     font-family: var(--font-sans);
     transition: var(--transition);
   }
@@ -170,12 +170,12 @@
   .header-search::before {
     content: '⌕'; position: absolute;
     left: 11px; top: 50%; transform: translateY(-50%);
-    color: var(--fg-dim); font-size: 24px;
+    color: var(--fg-dim); font-size: 19px;
     pointer-events: none;
   }
   .search-count {
     position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    font-size: 16px; font-family: var(--font-mono);
+    font-size: 13px; font-family: var(--font-mono);
     color: var(--accent-2);
     background: rgba(99,102,241,.15);
     border: 1px solid rgba(99,102,241,.3);
@@ -189,7 +189,7 @@
   }
   .sidebar-item .match-count {
     margin-left: auto;
-    font-size: 16px; font-family: var(--font-mono);
+    font-size: 13px; font-family: var(--font-mono);
     color: var(--accent-2);
     background: rgba(99,102,241,.18);
     border: 1px solid rgba(99,102,241,.35);
@@ -214,7 +214,7 @@
     padding: 7px 14px;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 20px;
+    font-size: 16px;
     font-family: inherit;
     font-weight: 500;
     transition: var(--transition);
@@ -243,7 +243,7 @@
     background: var(--err); color: #fff; border-color: var(--err);
   }
   button.icon {
-    padding: 7px 10px; font-size: 22px; line-height: 1;
+    padding: 7px 10px; font-size: 18px; line-height: 1;
   }
 
   select {
@@ -253,7 +253,7 @@
     padding: 7px 10px;
     border-radius: var(--radius-sm);
     font-family: inherit;
-    font-size: 20px;
+    font-size: 16px;
     cursor: pointer;
   }
 
@@ -274,7 +274,7 @@
   .group {
     grid-column: 1 / -1;
     font-weight: 600;
-    font-size: 24px;
+    font-size: 19px;
     color: var(--fg);
     padding: 16px 0 8px;
     margin-top: 4px;
@@ -304,7 +304,7 @@
   }
   .field label {
     font-family: var(--font-mono);
-    font-size: 19px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--fg);
     cursor: help;
@@ -312,11 +312,11 @@
     gap: 6px;
   }
   .field label .type {
-    color: var(--fg-dim); font-size: 16px;
+    color: var(--fg-dim); font-size: 13px;
     font-weight: 400;
   }
   .field label .range {
-    color: var(--accent-2); font-size: 16px;
+    color: var(--accent-2); font-size: 13px;
     background: rgba(99,102,241,.12);
     padding: 1px 6px; border-radius: 4px;
     font-style: normal; font-family: var(--font-mono);
@@ -333,7 +333,7 @@
     padding: 7px 10px;
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
-    font-size: 20px;
+    font-size: 16px;
     min-width: 0;
     transition: var(--transition);
   }
@@ -351,7 +351,7 @@
   .field input[type="checkbox"].changed { accent-color: var(--err); }
   .field input[type="checkbox"].synced  { accent-color: var(--ok); }
   .field button {
-    padding: 6px 10px; font-size: 18px;
+    padding: 6px 10px; font-size: 14px;
   }
   .field button.btn-read { background: transparent; }
 
@@ -371,7 +371,7 @@
   }
   .debug-section h3 {
     margin: 0 0 12px; color: var(--fg);
-    font-size: 22px; font-weight: 600;
+    font-size: 18px; font-weight: 600;
     /* flex-wrap: wrap permite que o poll-ctl (auto-refresh + intervalo + ler agora)
        quebre pra próxima linha se não couber junto com o título — antes estourava
        o card horizontalmente em fonts grandes. */
@@ -385,7 +385,7 @@
     border-radius: 2px;
   }
   .debug-section h3 small {
-    color: var(--fg-muted); font-size: 18px;
+    color: var(--fg-muted); font-size: 14px;
     font-weight: 400;
   }
   .action-grid {
@@ -401,7 +401,7 @@
   }
   .action-grid button .sub {
     display: block; color: var(--fg-muted);
-    font-size: 16px; font-family: var(--font-mono);
+    font-size: 13px; font-family: var(--font-mono);
     margin-top: 3px;
   }
   .action-grid button.warn  { border-color: rgba(245,158,11,.4); }
@@ -422,7 +422,7 @@
     border-radius: var(--radius);
   }
   .controller-torque-warning .ctrl-warn-icon {
-    font-size: 33px;
+    font-size: 26px;
     color: #ffa726;
     line-height: 1;
     flex-shrink: 0;
@@ -430,7 +430,7 @@
   .controller-torque-warning .ctrl-warn-body b {
     display: block;
     color: #ffa726;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 600;
     margin-bottom: 4px;
     font-family: var(--font-mono);
@@ -438,7 +438,7 @@
   .controller-torque-warning .ctrl-warn-body p {
     margin: 0;
     color: var(--fg-muted);
-    font-size: 18px;
+    font-size: 14px;
     line-height: 1.5;
   }
   /* Field "morto" em TORQUE mode — opacidade baixa + cursor not-allowed.
@@ -482,14 +482,14 @@
   }
   .setup-intro h2 {
     margin: 0 0 8px;
-    font-size: 30px;
+    font-size: 24px;
     color: #66bb6a;
   }
   .setup-intro p {
     margin: 0;
     line-height: 1.6;
     color: var(--fg-muted);
-    font-size: 20px;
+    font-size: 16px;
   }
   .setup-checklist {
     margin: 12px 0 0;
@@ -500,14 +500,14 @@
   }
   .setup-checklist h4 {
     margin: 0 0 6px;
-    font-size: 18px;
+    font-size: 14px;
     color: #66bb6a;
     text-transform: uppercase;
     letter-spacing: 0.6px;
   }
   .setup-checklist ul {
     margin: 0; padding: 0; list-style: none;
-    font-size: 18px; line-height: 1.7;
+    font-size: 14px; line-height: 1.7;
     color: var(--fg);
   }
   .setup-checklist li.warn { color: #ffa726; font-weight: 500; }
@@ -525,7 +525,7 @@
   }
   .setup-step h3 {
     margin: 0 0 8px;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--fg);
     display: flex; align-items: center; gap: 10px;
@@ -537,7 +537,7 @@
     background: var(--accent);
     color: #fff;
     border-radius: 50%;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     font-family: var(--font-mono);
   }
@@ -545,7 +545,7 @@
     margin: 0 0 10px;
     line-height: 1.55;
     color: var(--fg-muted);
-    font-size: 20px;
+    font-size: 16px;
   }
   .setup-step .params {
     margin: 8px 0 12px;
@@ -553,7 +553,7 @@
     background: rgba(0,0,0,.2);
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
-    font-size: 17px;
+    font-size: 14px;
     line-height: 1.65;
     color: var(--fg);
     border: 1px solid var(--border);
@@ -582,7 +582,7 @@
     gap: 12px;
     flex-wrap: nowrap;
     font-family: var(--font-mono);
-    font-size: 17px;
+    font-size: 14px;
   }
   .setup-step .params-form .row code {
     /* Largura suficiente pra paths longos no font 17px mono. word-break é
@@ -603,7 +603,7 @@
     border-radius: 3px;
     color: #66bb6a;
     font-family: var(--font-mono);
-    font-size: 18px;
+    font-size: 14px;
     box-sizing: border-box;
   }
   /* Slot do checkbox: largura igual à do input pra colunas alinharem */
@@ -621,7 +621,7 @@
     flex: 1 1 auto;
     min-width: 0;
     color: var(--fg-muted);
-    font-size: 16px;
+    font-size: 13px;
     font-style: italic;
     white-space: normal;
     line-height: 1.4;
@@ -637,7 +637,7 @@
   }
   .setup-step .setup-ffbtest-status {
     display: flex; align-items: center; gap: 8px;
-    font-size: 18px;
+    font-size: 14px;
     color: var(--fg-muted);
   }
   .setup-step .setup-ffbtest-status .dot {
@@ -653,7 +653,7 @@
   }
   .setup-step .setup-ffbtest-actions button {
     padding: 7px 14px;
-    font-size: 19px;
+    font-size: 15px;
   }
   .setup-step .setup-ffbtest-spring {
     display: flex; flex-direction: column; gap: 8px;
@@ -662,7 +662,7 @@
   }
   .setup-step .setup-ffbtest-spring .enable {
     display: flex; align-items: center; gap: 8px;
-    font-size: 20px;
+    font-size: 16px;
     cursor: pointer;
   }
   .setup-step .setup-ffbtest-spring .slider-row {
@@ -673,7 +673,7 @@
     gap: 12px;
   }
   .setup-step .setup-ffbtest-spring .slider-row .lbl {
-    font-size: 18px;
+    font-size: 14px;
     color: var(--fg-muted);
   }
   .setup-step .setup-ffbtest-spring .slider-row input[type="range"] {
@@ -682,7 +682,7 @@
   .setup-step .setup-ffbtest-spring .slider-row .val {
     text-align: right;
     font-family: var(--font-mono);
-    font-size: 19px;
+    font-size: 15px;
     color: #66bb6a;
   }
 
@@ -695,10 +695,10 @@
     border-left: 3px solid #66bb6a;
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
-    font-size: 17px;
+    font-size: 14px;
   }
   .setup-step .setup-step7-result .header {
-    font-size: 16px;
+    font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: #66bb6a;
@@ -723,14 +723,14 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
-    font-size: 17px;
+    font-size: 14px;
   }
   .setup-step .setup-err-panel .header {
     display: flex; align-items: center; gap: 10px;
     margin-bottom: 8px;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--border);
-    font-size: 16px;
+    font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--fg-muted);
@@ -742,7 +742,7 @@
   }
   .setup-step .setup-err-panel .header button {
     padding: 3px 10px;
-    font-size: 16px;
+    font-size: 13px;
     font-family: inherit;
     text-transform: none;
     letter-spacing: 0;
@@ -765,7 +765,7 @@
   .setup-step .setup-err-panel .err-row .hex.err { color: #ef5350; font-weight: 600; }
   .setup-step .setup-err-panel .err-row .bits {
     color: #ef5350;
-    font-size: 16px;
+    font-size: 13px;
     line-height: 1.4;
     word-break: break-word;
   }
@@ -778,7 +778,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
-    font-size: 17px;
+    font-size: 14px;
     line-height: 1.7;
   }
   .setup-step .field-list code { color: var(--accent); }
@@ -789,7 +789,7 @@
   }
   .setup-step .actions button {
     padding: 8px 16px;
-    font-size: 19px;
+    font-size: 15px;
   }
   .live-grid {
     /* Após font bump pra 19px, paths longos como axis0.controller.torque_setpoint
@@ -804,7 +804,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
-    font-size: 19px;
+    font-size: 15px;
     /* Permite que key+value quebrem em linhas separadas em casos muito apertados */
     flex-wrap: wrap;
     min-width: 0;
@@ -835,14 +835,14 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     margin-bottom: 4px;
-    font-family: var(--font-mono); font-size: 19px;
+    font-family: var(--font-mono); font-size: 15px;
     align-items: center;
   }
   .err-row .k { color: var(--fg-muted); }
   .err-row .hex { text-align: right; }
   .err-row .hex.ok { color: var(--ok); }
   .err-row .hex.err { color: var(--err); }
-  .err-row .bits { color: var(--warn); font-size: 16px; }
+  .err-row .bits { color: var(--warn); font-size: 13px; }
 
   .poll-ctl { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .poll-ctl input[type="number"] {
@@ -875,19 +875,106 @@
     align-items: center;
   }
   .console-box {
-    grid-column: 1 / -1; flex: 1;
+    grid-column: 1 / -1;
     overflow-y: auto;
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 14px 18px;
-    font-family: var(--font-mono); font-size: 19px;
-    min-height: 500px;
+    font-family: var(--font-mono); font-size: 15px;
+    /* Altura fixa pra evitar que o box cresça e empurre o input pra fora
+       da viewport. Auto-scroll funciona porque overflow:auto + altura fixa. */
+    height: clamp(260px, 38vh, 520px);
   }
   #log { margin: 0; white-space: pre-wrap; }
   #log .tx  { color: var(--accent-2); }
   #log .rx  { color: var(--ok); }
   #log .err { color: var(--err); }
+
+  /* Command picker — searchable dropdown com os comandos disponíveis */
+  .cmd-picker {
+    grid-column: 1 / -1;
+    position: relative;
+    margin-top: 10px;
+  }
+  .cmd-picker-toggle {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    background: var(--bg-input);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    transition: var(--transition);
+  }
+  .cmd-picker-toggle:hover { border-color: var(--accent); }
+  .cmd-picker-toggle .arrow {
+    margin-left: auto;
+    transition: transform .15s;
+  }
+  .cmd-picker.open .cmd-picker-toggle .arrow { transform: rotate(180deg); }
+  .cmd-picker-panel {
+    display: none;
+    position: absolute;
+    bottom: 100%; left: 0; right: 0;
+    margin-bottom: 4px;
+    max-height: 50vh;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 -4px 18px rgba(0,0,0,.4);
+    z-index: 50;
+  }
+  .cmd-picker.open .cmd-picker-panel { display: block; }
+  .cmd-picker-search {
+    position: sticky; top: 0;
+    padding: 10px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+  }
+  .cmd-picker-search input {
+    width: 100%;
+    background: var(--bg-input); color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-family: var(--font-mono); font-size: 13px;
+  }
+  .cmd-picker-search input:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .cmd-picker-list { padding: 4px 0; }
+  .cmd-picker-group {
+    padding: 6px 12px 2px;
+    color: var(--accent); font-size: 10px;
+    font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .cmd-picker-item {
+    display: flex; flex-direction: column;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: var(--transition);
+  }
+  .cmd-picker-item:hover {
+    background: var(--bg-input);
+    border-left-color: var(--accent);
+  }
+  .cmd-picker-item .cmd {
+    font-family: var(--font-mono); font-size: 13px;
+    color: var(--accent-2);
+  }
+  .cmd-picker-item .desc {
+    font-size: 10px; color: var(--fg-muted);
+    margin-top: 2px;
+  }
+  .cmd-picker-empty {
+    padding: 16px; text-align: center;
+    color: var(--fg-muted); font-size: 12px;
+  }
 
   /* Console input bar (manual command entry) */
   .console-input-bar {
@@ -898,7 +985,7 @@
   .console-input-bar .prompt {
     display: flex; align-items: center; padding: 0 6px 0 2px;
     color: var(--accent-2); font-family: var(--font-mono);
-    font-size: 27px; font-weight: 700;
+    font-size: 22px; font-weight: 700;
   }
   .console-input-bar input {
     flex: 1;
@@ -906,7 +993,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 9px 12px;
-    font-family: var(--font-mono); font-size: 20px;
+    font-family: var(--font-mono); font-size: 16px;
     transition: var(--transition);
   }
   .console-input-bar input:focus {
@@ -937,7 +1024,7 @@
     box-shadow: 0 0 12px var(--ok);
     animation: pulse 1.6s ease-in-out infinite;
   }
-  .fbt-status .text { color: var(--fg); font-size: 20px; flex: 1; min-width: 0; }
+  .fbt-status .text { color: var(--fg); font-size: 16px; flex: 1; min-width: 0; }
   .fbt-warn {
     grid-column: 1 / -1;
     padding: 10px 14px;
@@ -945,7 +1032,7 @@
     border: 1px solid rgba(245,158,11,.4);
     border-radius: var(--radius-sm);
     color: var(--warn);
-    font-size: 19px;
+    font-size: 15px;
     display: none;
   }
   .fbt-warn.on { display: block; }
@@ -963,14 +1050,14 @@
     background: linear-gradient(135deg, rgba(99,102,241,.05), transparent 50%);
   }
   .fbt-card h4 {
-    margin: 0; font-size: 20px; font-weight: 600;
+    margin: 0; font-size: 16px; font-weight: 600;
     color: var(--fg);
     display: flex; align-items: center; gap: 8px;
   }
   .fbt-card h4 .toggle {
     margin-left: auto;
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 18px; font-weight: 500; color: var(--fg-muted);
+    font-size: 14px; font-weight: 500; color: var(--fg-muted);
   }
   .fbt-card h4 .toggle input[type="checkbox"] {
     width: 18px; height: 18px;
@@ -983,7 +1070,7 @@
     gap: 8px; align-items: center;
   }
   .fbt-card .row > label {
-    font-size: 18px; color: var(--fg-muted);
+    font-size: 14px; color: var(--fg-muted);
   }
   .fbt-card input[type="range"] {
     -webkit-appearance: none;
@@ -1002,7 +1089,7 @@
   .fbt-card .val {
     text-align: right;
     font-family: var(--font-mono);
-    font-size: 18px;
+    font-size: 14px;
     color: var(--accent-2);
   }
   .fbt-actions {
@@ -1017,7 +1104,7 @@
     padding: 14px 16px;
   }
   .fbt-chart-wrap h3 {
-    margin: 0 0 8px; font-size: 20px; color: var(--fg-muted);
+    margin: 0 0 8px; font-size: 16px; color: var(--fg-muted);
     font-weight: 500;
   }
   #fbt-chart {
@@ -1054,10 +1141,10 @@
   }
   .inputs-status .text {
     color: var(--fg);
-    font-size: 20px;
+    font-size: 16px;
   }
   .inputs-status .text .sub {
-    color: var(--fg-muted); font-size: 18px; margin-left: 6px;
+    color: var(--fg-muted); font-size: 14px; margin-left: 6px;
   }
   .gpio-card {
     background: var(--bg-card);
@@ -1076,7 +1163,7 @@
   .gpio-card .badge {
     margin-left: auto;
     padding: 2px 9px; border-radius: 999px;
-    font-size: 16px; font-family: var(--font-mono);
+    font-size: 13px; font-family: var(--font-mono);
     background: var(--bg-card-2); color: var(--fg-muted);
     border: 1px solid var(--border);
   }
@@ -1086,20 +1173,20 @@
     background: rgba(16,185,129,.1);
   }
   .gpio-card h4 {
-    margin: 0; font-size: 20px; font-weight: 600;
+    margin: 0; font-size: 16px; font-weight: 600;
     color: var(--fg);
     display: flex; align-items: center; gap: 8px;
     font-family: var(--font-mono);
   }
   .gpio-card h4 .pin {
-    color: var(--fg-dim); font-size: 16px;
+    color: var(--fg-dim); font-size: 13px;
     font-weight: 400; margin-left: auto;
   }
   .gpio-card .row {
     display: flex; gap: 8px; align-items: center;
   }
   .gpio-card .row > label {
-    font-size: 18px; color: var(--fg-muted);
+    font-size: 14px; color: var(--fg-muted);
     min-width: 70px;
   }
   .gpio-card select, .gpio-card input[type="number"] {
@@ -1110,7 +1197,7 @@
     border-radius: var(--radius-sm);
     padding: 6px 9px;
     font-family: var(--font-mono);
-    font-size: 19px;
+    font-size: 15px;
     min-width: 0;
   }
   .gpio-card input[type="checkbox"] {
@@ -1118,7 +1205,7 @@
     accent-color: var(--accent);
   }
   .gpio-card button.capture {
-    padding: 5px 10px; font-size: 16px;
+    padding: 5px 10px; font-size: 13px;
   }
   .gpio-card .live {
     background: var(--bg-input);
@@ -1126,11 +1213,11 @@
     border-radius: var(--radius-sm);
     padding: 8px 10px;
     font-family: var(--font-mono);
-    font-size: 18px;
+    font-size: 14px;
     display: flex; align-items: center; gap: 8px;
   }
   .gpio-card .live .label {
-    color: var(--fg-muted); font-size: 16px;
+    color: var(--fg-muted); font-size: 13px;
   }
   .gpio-card .live .value {
     color: var(--fg); flex: 1; text-align: right;
@@ -1161,7 +1248,7 @@
     padding: 6px 0;
   }
   .inputs-controls .poll-info {
-    color: var(--fg-muted); font-size: 17px;
+    color: var(--fg-muted); font-size: 14px;
     margin-left: auto;
   }
 
@@ -1187,13 +1274,13 @@
   }
   .dfu-step h3 {
     margin: 0 0 6px; color: var(--fg);
-    font-size: 22px; font-weight: 600;
+    font-size: 18px; font-weight: 600;
     display: flex; align-items: center; gap: 10px;
   }
   .dfu-step .badge {
     margin-left: auto;
     padding: 2px 10px; border-radius: 999px;
-    font-size: 16px; font-family: var(--font-mono);
+    font-size: 13px; font-family: var(--font-mono);
     background: var(--bg-card-2); color: var(--fg-muted);
     border: 1px solid var(--border);
   }
@@ -1206,12 +1293,12 @@
     background: rgba(239,68,68,.1);
   }
   .dfu-step p {
-    color: var(--fg-muted); font-size: 20px; margin: 4px 0 12px;
+    color: var(--fg-muted); font-size: 16px; margin: 4px 0 12px;
     line-height: 1.5;
   }
   .dfu-step .hint {
     grid-column: unset;
-    color: var(--fg-dim); font-size: 18px;
+    color: var(--fg-dim); font-size: 14px;
     margin-top: 8px; padding: 8px 10px;
     background: var(--bg-input); border-radius: var(--radius-sm);
     border-left: 2px solid var(--border-strong);
@@ -1221,7 +1308,7 @@
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
   }
   .dfu-step .file-info {
-    color: var(--fg); font-size: 19px;
+    color: var(--fg); font-size: 15px;
     font-family: var(--font-mono);
   }
   .dfu-step .file-info .sub {
@@ -1245,7 +1332,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 14px 18px;
-    font-family: var(--font-mono); font-size: 18px;
+    font-family: var(--font-mono); font-size: 14px;
     max-height: 240px; overflow-y: auto;
     white-space: pre-wrap; line-height: 1.5;
   }
@@ -1271,7 +1358,7 @@
     border-left: 3px solid var(--accent);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-lg);
-    font-size: 20px;
+    font-size: 16px;
     color: var(--fg);
     animation: toast-in .25s ease-out;
     display: flex; gap: 10px; align-items: flex-start;
@@ -1279,7 +1366,7 @@
   .toast.ok   { border-left-color: var(--ok); }
   .toast.err  { border-left-color: var(--err); }
   .toast.warn { border-left-color: var(--warn); }
-  .toast .icon { font-size: 24px; line-height: 1.3; }
+  .toast .icon { font-size: 19px; line-height: 1.3; }
   @keyframes toast-in {
     from { opacity: 0; transform: translateX(100%); }
     to   { opacity: 1; transform: translateX(0); }
@@ -1303,7 +1390,7 @@
     background: var(--bg-card);
     border: 1px dashed var(--border-strong);
     border-radius: var(--radius);
-    color: var(--fg-muted); font-size: 20px;
+    color: var(--fg-muted); font-size: 16px;
     line-height: 1.6;
   }
   .search-redirect b { color: var(--accent-2); }
@@ -1326,7 +1413,7 @@
   .hint {
     grid-column: 1 / -1;
     color: var(--fg-muted);
-    font-size: 18px;
+    font-size: 14px;
     margin: 0;
   }
 </style>
@@ -1831,6 +1918,12 @@ const I18N = {
     'console.send':            'Enviar',
     'console.input_placeholder': 'Digite comando ASCII (Enter envia, ↑/↓ histórico)…',
     'console.input_hint':      'Exemplos: r vbus_voltage · w axis0.requested_state 1 · ss · sys.save? · sys.eedump?',
+    'console.picker_toggle':   '📋 Comandos disponíveis',
+    'console.picker_search':   'Filtrar comandos (caminho, descrição)…',
+    'console.picker_empty':    'Nenhum comando encontrado',
+    'console.picker_grp_odrv': 'ODrive ASCII',
+    'console.picker_grp_paths':'Propriedades (SCHEMA)',
+    'console.picker_grp_offb': 'OpenFFBoard (cmdparser)',
     // Action buttons
     'act.save_nvm':            'Salvar NVM',
     'act.erase_reboot':        'Apagar + Reboot',
@@ -2282,6 +2375,12 @@ const I18N = {
     'console.send':            'Send',
     'console.input_placeholder': 'Type ASCII command (Enter to send, ↑/↓ history)…',
     'console.input_hint':      'Examples: r vbus_voltage · w axis0.requested_state 1 · ss · sys.save? · sys.eedump?',
+    'console.picker_toggle':   '📋 Available commands',
+    'console.picker_search':   'Filter commands (path, description)…',
+    'console.picker_empty':    'No matching command',
+    'console.picker_grp_odrv': 'ODrive ASCII',
+    'console.picker_grp_paths':'Properties (SCHEMA)',
+    'console.picker_grp_offb': 'OpenFFBoard (cmdparser)',
     // Action buttons
     'act.save_nvm':            'Save NVM',
     'act.erase_reboot':        'Erase + Reboot',
@@ -3320,12 +3419,16 @@ function logLine(text, cls) {
   if (logPaused) return;
   const pre = document.getElementById('log');
   if (!pre) return;  // aba Console ainda não foi construída
+  // Smart auto-scroll: só faz scroll-to-bottom se o usuário JÁ estava no final
+  // (com tolerância de 24px). Se ele rolou pra cima pra ler algo, deixa lá —
+  // não yank back. Threshold 24px tolera 1-2 linhas de margem.
+  const wasAtBottom = (pre.scrollTop + pre.clientHeight) >= (pre.scrollHeight - 24);
   const span = document.createElement('span');
   if (cls) span.className = cls;
   span.textContent = text + '\n';
   pre.appendChild(span);
   if (pre.childNodes.length > LOG_MAX) pre.removeChild(pre.firstChild);
-  pre.scrollTop = pre.scrollHeight;
+  if (wasAtBottom) pre.scrollTop = pre.scrollHeight;
 }
 
 function wireConsoleTab() {
@@ -3398,6 +3501,235 @@ function wireConsoleTab() {
       }
     });
   }
+
+  // Command picker — dropdown buscável com todos os comandos disponíveis.
+  // Click numa entry preenche o input (sem auto-send) pra usuário poder
+  // editar args antes de Enter.
+  wireCommandPicker(inputEl);
+}
+
+/* =========================================================================
+   Command picker — fonte combinada de comandos disponíveis no firmware:
+   1. ODrive ASCII básicos (r/w/ss/sr/sc/sd, sys.save?, etc)
+   2. Propriedades de SCHEMA (todos os paths configuráveis, como "r" e "w")
+   3. Comandos do OpenFFBoard cmdparser (axis.anticogcal!, sys.eedump?, fx.spring, gpio.mode...)
+   ========================================================================= */
+function buildCommandList() {
+  const items = [];
+
+  // ── 1. ODrive ASCII fundamentals ───────────────────────────────────────
+  const odrvGrp = 'odrv';
+  items.push(
+    { grp: odrvGrp, cmd: 'r ',                       desc: 'Ler propriedade — completar com path' },
+    { grp: odrvGrp, cmd: 'w  ',                      desc: 'Escrever propriedade — completar com path + valor' },
+    { grp: odrvGrp, cmd: 'ss',                       desc: 'Save config em NVM' },
+    { grp: odrvGrp, cmd: 'sr',                       desc: 'Reboot' },
+    { grp: odrvGrp, cmd: 'sc',                       desc: 'Clear errors em todos os axes' },
+    { grp: odrvGrp, cmd: 'sd',                       desc: 'Soft DFU — entra em bootloader sem BOOT0' },
+    { grp: odrvGrp, cmd: 'se',                       desc: 'Erase config (sys.format)' },
+    { grp: odrvGrp, cmd: 'f 0',                      desc: 'Feed motor axis 0 (watchdog)' },
+    { grp: odrvGrp, cmd: 't 0 ',                     desc: 'Trapezoidal move — t <axis> <pos>' },
+    { grp: odrvGrp, cmd: 'q 0  10',                  desc: 'Input pos filtered — q <axis> <pos> <vel_lim>' },
+    { grp: odrvGrp, cmd: 'p 0 0 0 0',                desc: 'Pos setpoint — p <axis> <pos> <vel_ff> <torque_ff>' },
+    { grp: odrvGrp, cmd: 'v 0 0 0',                  desc: 'Vel setpoint — v <axis> <vel> <torque_ff>' },
+    { grp: odrvGrp, cmd: 'c 0 0',                    desc: 'Torque setpoint — c <axis> <torque_Nm>' },
+  );
+
+  // ── 2. SCHEMA paths — auto-gerado de todos os campos rastreados ────────
+  // Itera SCHEMA achatando paths. Para cada path gera "r <path>" + "w <path> <val>"
+  // com label legível. Pula seções custom (Quick Start, Inputs etc.) sem fields,
+  // e fields com _protocol='offb' (esses já estão na lista cmdparser hardcoded).
+  const seenPaths = new Set();
+  for (const tab of SCHEMA) {
+    if (!Array.isArray(tab.fields)) continue;
+    for (const f of tab.fields) {
+      if (!f || !f.name) continue;
+      // group markers ({ group: '...' }) não têm name — já filtrados acima.
+      if (f._protocol && f._protocol !== 'odrv') continue;
+      const path = f._path || (tab.prefix + f.name);
+      if (!path || seenPaths.has(path)) continue;
+      seenPaths.add(path);
+      const labelTxt = (f.name.split('.').slice(-1)[0] || f.name);
+      items.push({ grp: 'paths', cmd: 'r ' + path, desc: 'Read ' + labelTxt });
+      items.push({ grp: 'paths', cmd: 'w ' + path + ' ', desc: 'Write ' + labelTxt });
+    }
+  }
+
+  // ── 3. OpenFFBoard cmdparser — espelha cmd_table.cpp ───────────────────
+  const offb = (cmd, desc) => items.push({ grp: 'offb', cmd, desc });
+  // sys.*
+  offb('sys.lsmain?',    'Lista mainclasses disponíveis');
+  offb('sys.lsactive?',  'Mainclass ativa');
+  offb('sys.heapfree?',  'Heap livre (FreeRTOS)');
+  offb('sys.cmdinfo?',   'Info estática do comando');
+  offb('sys.temp?',      'Temperatura interna do MCU');
+  offb('sys.swver?',     'Versão do firmware');
+  offb('sys.hwtype?',    'Tipo de hardware');
+  offb('sys.uid?',       'Unique ID do STM32');
+  offb('sys.signature?', 'Signature word');
+  offb('sys.debug?',     'Dump de variáveis debug');
+  offb('sys.main?',      'ID da mainclass atual');
+  offb('sys.devid?',     'Device + revision ID');
+  offb('sys.errors?',    'Lista de erros');
+  offb('sys.errorsclr!', 'Limpa erros');
+  offb('sys.format!',    'Erase config (factory reset)');
+  offb('sys.flashdump?', 'Dump flash vars (NVM)');
+  offb('sys.vint?',      'VBUS interno em mV');
+  offb('sys.vext?',      'Tensão externa');
+  offb('sys.heap?',      'Free heap');
+  offb('sys.save!',      'Persist config em flash');
+  offb('sys.savestat?',  'Diagnóstico do último save');
+  offb('sys.eetest!',    'Teste low-level EEPROM');
+  offb('sys.eedump?',    'Dump raw EEPROM');
+  offb('sys.eeformat!',  '⚠ Force format EEPROM (escape hatch)');
+  offb('sys.vbusdiv',    'VBUS voltage divider (1-50, default 19 MKS)');
+  offb('sys.reboot!',    'Reset chip');
+  offb('sys.uptime?',    'Uptime em ms');
+  offb('sys.ping?',      'Ping (resposta deve ser OK)');
+  offb('sys.fxtest?',    'Test effects ratio');
+  // main.*
+  offb('main.id?',          'ID da FFB Wheel');
+  offb('main.hidrate?',     'Taxa de HID input report');
+  offb('main.cfrate?',      'Taxa de constant-force update');
+  offb('main.ffbactive?',   'Estado FFB (ativo/inativo)');
+  offb('main.hidsendspd',   'Velocidade de send HID');
+  offb('main.errors?',      'Erros da mainclass');
+  offb('main.lsbtn?',       'Lista de botões configurados');
+  offb('main.btntypes?',    'Tipos de botões disponíveis');
+  offb('main.lsain?',       'Lista de analog inputs');
+  offb('main.aintypes?',    'Tipos de analog inputs');
+  // axis.*
+  offb('axis.range',         'Range do volante em counts');
+  offb('axis.maxtorque',     'Maxtorque (limit final do FFB)');
+  offb('axis.fxratio',       'Effect ratio (0-255)');
+  offb('axis.invert',        '0/1 — inverte sentido');
+  offb('axis.drvtype?',      'Tipo de driver atual');
+  offb('axis.enctype?',      'Tipo de encoder atual');
+  offb('axis.pos?',          'Posição atual em counts');
+  offb('axis.idlespring',    'Mola quando jogo desligado (0-255)');
+  offb('axis.axisdamper',    'Damper sempre ativo (0-255)');
+  offb('axis.axisinertia',   'Inertia sempre ativa (0-255)');
+  offb('axis.axisfriction',  'Friction sempre ativa (0-255)');
+  offb('axis.esgain',        'Batente eletrônico (0-255)');
+  offb('axis.maxtorquerate', 'Slew limit (counts/ms, 0=off)');
+  offb('axis.expo',          'Curva exponencial (-32767..32767)');
+  offb('axis.exposcale',     'Divisor pro expo (1-255)');
+  offb('axis.zeroenc!',      'Zera posição atual do volante');
+  offb('axis.anticogcal!',   'Dispara anticogging calibration');
+  offb('axis.curtorque?',    'Live: torque atual');
+  offb('axis.curpos?',       'Live: posição atual');
+  offb('axis.curspd?',       'Live: velocidade atual');
+  offb('axis.curaccel?',     'Live: aceleração atual');
+  // fx.* (effects)
+  offb('fx.spring',          'Spring gain (0-255)');
+  offb('fx.damper',          'Damper gain (0-255)');
+  offb('fx.friction',        'Friction gain (0-255)');
+  offb('fx.inertia',         'Inertia gain (0-255)');
+  offb('fx.master',          'Master gain (global_gain)');
+  offb('fx.filterCfFreq',    'Filter Constant Force — freq');
+  offb('fx.filterCfQ',       'Filter Constant Force — Q');
+  offb('fx.filterFrFreq',    'Filter Friction — freq');
+  offb('fx.filterFrQ',       'Filter Friction — Q');
+  offb('fx.filterDaFreq',    'Filter Damper — freq');
+  offb('fx.filterDaQ',       'Filter Damper — Q');
+  offb('fx.filterInFreq',    'Filter Inertia — freq');
+  offb('fx.filterInQ',       'Filter Inertia — Q');
+  // gpio.*
+  offb('gpio.mode',          'GPIO mode (0=off / 1=button / 2=axis)');
+  offb('gpio.idx',           'GPIO index (0-63 botão, 0-3 eixo)');
+  offb('gpio.invert',        'GPIO invert (0/1)');
+  offb('gpio.amin',          'GPIO axis min raw (0-4095)');
+  offb('gpio.amax',          'GPIO axis max raw (0-4095)');
+  offb('gpio.cur?',          'GPIO raw atual (debug/UI)');
+  // odrv.*
+  offb('odrv.vbus?',         'VBUS atual (volts)');
+  offb('odrv.connected?',    'Estado de conexão');
+  offb('odrv.canid',         'CAN ID');
+  offb('odrv.canspd',        'CAN speed');
+  offb('odrv.maxtorque',     'Maxtorque limite final do hw');
+
+  return items;
+}
+
+function wireCommandPicker(inputEl) {
+  const picker     = document.getElementById('cmd-picker');
+  const toggle     = document.getElementById('cmd-picker-toggle');
+  const panel      = document.getElementById('cmd-picker-panel');
+  const searchInp  = document.getElementById('cmd-picker-search');
+  const listEl     = document.getElementById('cmd-picker-list');
+  if (!picker || !toggle || !panel || !searchInp || !listEl || !inputEl) return;
+
+  const all = buildCommandList();
+  const grpLabel = {
+    odrv:  'console.picker_grp_odrv',
+    paths: 'console.picker_grp_paths',
+    offb:  'console.picker_grp_offb',
+  };
+
+  const render = (filter) => {
+    listEl.innerHTML = '';
+    const q = (filter || '').toLowerCase().trim();
+    const matches = q
+      ? all.filter(it => it.cmd.toLowerCase().includes(q) ||
+                         (it.desc && it.desc.toLowerCase().includes(q)))
+      : all;
+    if (matches.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'cmd-picker-empty';
+      empty.dataset.i18n = 'console.picker_empty';
+      empty.textContent = t('console.picker_empty');
+      listEl.appendChild(empty);
+      return;
+    }
+    // Agrupa por grp, preservando ordem original dos items
+    let curGrp = null;
+    for (const it of matches) {
+      if (it.grp !== curGrp) {
+        curGrp = it.grp;
+        const h = document.createElement('div');
+        h.className = 'cmd-picker-group';
+        h.dataset.i18n = grpLabel[it.grp] || '';
+        h.textContent = t(grpLabel[it.grp] || it.grp);
+        listEl.appendChild(h);
+      }
+      const row = document.createElement('div');
+      row.className = 'cmd-picker-item';
+      row.innerHTML = `<span class="cmd"></span><span class="desc"></span>`;
+      row.querySelector('.cmd').textContent  = it.cmd;
+      row.querySelector('.desc').textContent = it.desc || '';
+      row.addEventListener('click', () => {
+        inputEl.value = it.cmd;
+        inputEl.focus();
+        // Cursor no fim (útil pros "w <path> " que terminam em espaço)
+        setTimeout(() => inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length), 0);
+        picker.classList.remove('open');
+      });
+      listEl.appendChild(row);
+    }
+  };
+
+  render('');
+
+  toggle.addEventListener('click', () => {
+    const willOpen = !picker.classList.contains('open');
+    picker.classList.toggle('open');
+    if (willOpen) {
+      searchInp.value = '';
+      render('');
+      setTimeout(() => searchInp.focus(), 0);
+    }
+  });
+  searchInp.addEventListener('input', () => render(searchInp.value));
+  searchInp.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      picker.classList.remove('open');
+      inputEl.focus();
+    }
+  });
+  // Click fora fecha
+  document.addEventListener('click', (e) => {
+    if (!picker.contains(e.target)) picker.classList.remove('open');
+  });
 }
 
 /* =========================================================================
@@ -3505,7 +3837,7 @@ function buildDFUHTML() {
   return `
     <div class="debug-section" style="grid-column:1/-1;">
       <h3 data-i18n="dfu.title">Atualização de Firmware via DFU</h3>
-      <p style="color:var(--fg-muted);font-size:20px;margin:0 0 4px;" data-i18n="dfu.subtitle">
+      <p style="color:var(--fg-muted);font-size:16px;margin:0 0 4px;" data-i18n="dfu.subtitle">
         Reboota a placa pro bootloader STM32 e grava o .bin pelo navegador (sem dfu-util).
       </p>
     </div>
@@ -3649,7 +3981,7 @@ function buildInputsHTML() {
   return `
     <div class="debug-section" style="grid-column:1/-1;">
       <h3 data-i18n="inputs.title">Entradas digitais e analógicas</h3>
-      <p style="color:var(--fg-muted);font-size:20px;margin:0;" data-i18n="inputs.subtitle">
+      <p style="color:var(--fg-muted);font-size:16px;margin:0;" data-i18n="inputs.subtitle">
         GPIOs 1-4 da MKS XDrive Mini configuráveis como botões ou eixos do joystick HID.
       </p>
     </div>
@@ -3933,7 +4265,7 @@ function buildFFBTestHTML() {
   return `
     <div class="debug-section" style="grid-column:1/-1;">
       <h3 data-i18n="fbt.title">Teste de FFB via WebHID</h3>
-      <p style="color:var(--fg-muted);font-size:20px;margin:0;" data-i18n="fbt.subtitle">
+      <p style="color:var(--fg-muted);font-size:16px;margin:0;" data-i18n="fbt.subtitle">
         Envia comandos PID HID direto pelo navegador, simulando um jogo.
       </p>
     </div>
@@ -4020,7 +4352,7 @@ function buildFFBTestHTML() {
 
     <div class="fbt-actions">
       <button id="fbt-panic" class="danger" data-i18n="fbt.panic">🛑 Parar tudo</button>
-      <span style="color:var(--fg-dim);font-size:17px;flex:1" data-i18n="fbt.note">
+      <span style="color:var(--fg-dim);font-size:14px;flex:1" data-i18n="fbt.note">
         Forças aqui são reais — segure o volante.
       </span>
     </div>
@@ -4034,13 +4366,13 @@ function buildFFBTestHTML() {
         <input type="number" id="fbt-poll-interval" value="200" min="50" max="2000" step="50" style="width:80px"> ms
         <button id="fbt-poll-once" data-i18n="fbt.chart_once">Ler agora</button>
         <button id="fbt-chart-clear" data-i18n="fbt.chart_clear">Limpar</button>
-        <span style="color:var(--fg-dim);font-size:16px;margin-left:auto" data-i18n="fbt.chart_hint">
+        <span style="color:var(--fg-dim);font-size:13px;margin-left:auto" data-i18n="fbt.chart_hint">
           Lê axis.curpos? + axis.curtorque? via Web Serial.
         </span>
       </div>
       <canvas id="fbt-chart" width="800" height="220"
               style="width:100%;height:220px;background:#0a0a0a;border:1px solid var(--border);border-radius:4px"></canvas>
-      <div style="display:flex;gap:16px;margin-top:6px;font-size:16px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:13px;flex-wrap:wrap;align-items:center">
         <span style="color:#ab47bc">━ <span data-i18n="legend.position">posição (graus)</span> <span id="fbt-chart-leg-pos">—</span></span>
         <span style="color:#ef5350">━ <span data-i18n="legend.torque">torque (Nm)</span> <span id="fbt-chart-leg-trq">—</span></span>
         <span style="margin-left:auto;color:var(--fg-muted)" id="fbt-chart-stats">—</span>
@@ -5202,11 +5534,11 @@ function buildOverlayHTML() {
   return `
     <div class="debug-section">
       <h3 data-i18n="ovl.title">Overlay de telemetria do volante</h3>
-      <p style="color:var(--muted);font-size:18px;margin:0 0 10px;line-height:1.5"
+      <p style="color:var(--muted);font-size:14px;margin:0 0 10px;line-height:1.5"
          data-i18n="ovl.subtitle">Abre uma janela "always-on-top" via Document Picture-in-Picture com dois gráficos vivos: barramento DC (vbus/ibus/Iq/I-brake) e dinâmica do volante (torque + posição). Útil pra monitorar a placa enquanto o iRacing (ou qualquer jogo) roda em fullscreen.</p>
-      <p style="color:var(--muted);font-size:16px;margin:0 0 10px"
+      <p style="color:var(--muted);font-size:13px;margin:0 0 10px"
          data-i18n="ovl.requirements">Requisitos: Chrome/Edge ≥ 116 (Document Picture-in-Picture API). Conexão serial com a placa precisa estar aberta.</p>
-      <p style="color:#ffa726;font-size:16px;margin:0 0 6px"
+      <p style="color:#ffa726;font-size:13px;margin:0 0 6px"
          data-i18n="ovl.tip_iracing">Dica iRacing: rode o jogo em modo Borderless ou Windowed. Em Fullscreen exclusivo o Windows oculta janelas always-on-top.</p>
     </div>
 
@@ -5219,14 +5551,14 @@ function buildOverlayHTML() {
         <div style="display:flex;align-items:center;gap:8px">
           <input type="number" id="ovl-poll-interval" value="200"
                  min="50" max="2000" step="50" style="width:90px"> ms
-          <span style="color:var(--muted);font-size:16px"
+          <span style="color:var(--muted);font-size:13px"
                 data-i18n="ovl.poll_hint">Intervalos curtos (~50ms) saturam a CDC e atrasam outras leituras. 100-300ms é o sweet spot pra um overlay fluido.</span>
         </div>
 
         <div class="live-kv" style="background:transparent;border:none;padding:0;justify-content:flex-start">
           <span class="k" data-i18n="ovl.window_label">Janela do gráfico</span>
         </div>
-        <div style="color:var(--muted);font-size:18px"
+        <div style="color:var(--muted);font-size:14px"
              data-i18n="ovl.window_value">60 segundos (fixo)</div>
 
         <div class="live-kv" style="background:transparent;border:none;padding:0;justify-content:flex-start">
@@ -5254,9 +5586,9 @@ function buildOverlayHTML() {
 
     <div class="debug-section">
       <h3 data-i18n="ovl.panels_title">Painéis do overlay</h3>
-      <p style="color:var(--muted);font-size:16px;margin:0 0 8px"
+      <p style="color:var(--muted);font-size:13px;margin:0 0 8px"
          data-i18n="ovl.panels_hint">Desligue o painel que não interessa pra dar todo o espaço pro outro.</p>
-      <div style="display:flex;flex-direction:column;gap:6px;font-size:20px">
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:16px">
         <label style="cursor:pointer;display:flex;align-items:center;gap:8px">
           <input type="checkbox" id="ovl-enable-bus" checked>
           <span data-i18n="ovl.enable_bus">Mostrar gráfico de barramento DC (vbus / ibus / Iq / I-brake)</span>
@@ -5270,9 +5602,9 @@ function buildOverlayHTML() {
 
     <div class="debug-section">
       <h3 data-i18n="ovl.series_title">Séries do gráfico de barramento</h3>
-      <p style="color:var(--muted);font-size:16px;margin:0 0 8px"
+      <p style="color:var(--muted);font-size:13px;margin:0 0 8px"
          data-i18n="ovl.series_hint">Marque o que quer ver. As preferências são salvas no navegador.</p>
-      <div style="display:flex;flex-direction:column;gap:6px;font-size:20px">
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:16px">
         <label style="color:#4fc3f7;cursor:pointer;display:flex;align-items:center;gap:8px">
           <input type="checkbox" id="ovl-show-vbus" checked>
           <span data-i18n="ovl.series_vbus">vbus (V) — tensão do bus DC</span>
@@ -5294,11 +5626,11 @@ function buildOverlayHTML() {
 
     <div class="debug-section">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <button id="btn-ovl-open" class="primary" style="padding:10px 20px;font-size:21px"
+        <button id="btn-ovl-open" class="primary" style="padding:10px 20px;font-size:17px"
                 data-i18n="ovl.btn_open">⧉ Abrir overlay</button>
-        <button id="btn-ovl-close" style="padding:10px 20px;font-size:21px;display:none"
+        <button id="btn-ovl-close" style="padding:10px 20px;font-size:17px;display:none"
                 data-i18n="ovl.btn_close">✕ Fechar overlay</button>
-        <span id="ovl-status" style="color:var(--muted);font-size:18px"
+        <span id="ovl-status" style="color:var(--muted);font-size:14px"
               data-i18n="ovl.status_closed">Overlay fechado.</span>
       </div>
     </div>
@@ -5318,7 +5650,7 @@ function _ovlPipStyles() {
     html, body {
       margin: 0; padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 16px;
+      font-size: 13px;
       overflow: hidden;
     }
     /* Tema escuro (default) */
@@ -6436,13 +6768,28 @@ function buildTabs() {
         <div class="console-toolbar">
           <button id="btn-console-clear" data-i18n="console.clear">Limpar</button>
           <button id="btn-console-pause" data-paused="0" data-i18n="console.pause">⏸ Pausar</button>
-          <span style="color:var(--muted);font-size:16px;margin-left:auto">
+          <span style="color:var(--muted);font-size:13px;margin-left:auto">
             <span class="k" style="color:var(--accent)">→</span> TX
             &nbsp;<span class="k" style="color:var(--ok)">←</span> RX
             &nbsp;<span class="k" style="color:var(--err)">!</span> <span data-i18n="console.legend_err">erro</span>
           </span>
         </div>
         <pre id="log" class="console-box"></pre>
+        <div class="cmd-picker" id="cmd-picker">
+          <button class="cmd-picker-toggle" id="cmd-picker-toggle" type="button">
+            <span data-i18n="console.picker_toggle">📋 Comandos disponíveis</span>
+            <span class="arrow">▲</span>
+          </button>
+          <div class="cmd-picker-panel" id="cmd-picker-panel">
+            <div class="cmd-picker-search">
+              <input type="text" id="cmd-picker-search"
+                     data-i18n-placeholder="console.picker_search"
+                     placeholder="Filtrar comandos (caminho, descrição)…"
+                     autocomplete="off" spellcheck="false">
+            </div>
+            <div class="cmd-picker-list" id="cmd-picker-list"></div>
+          </div>
+        </div>
         <div class="console-input-bar">
           <span class="prompt">›</span>
           <input type="text" id="console-input"
@@ -6451,7 +6798,7 @@ function buildTabs() {
                  autocomplete="off" spellcheck="false">
           <button id="btn-console-send" class="primary" data-i18n="console.send">Enviar</button>
         </div>
-        <p class="hint" style="grid-column:1/-1;color:var(--fg-dim);font-size:17px;margin:4px 0 0">
+        <p class="hint" style="grid-column:1/-1;color:var(--fg-dim);font-size:14px;margin:4px 0 0">
           <span data-i18n="console.input_hint">Exemplos: <code>r vbus_voltage</code> · <code>w axis0.requested_state 1</code> · <code>ss</code> · <code>sys.save?</code> · <code>sys.eedump?</code></span>
         </p>
       `;
@@ -6492,13 +6839,13 @@ function buildTabs() {
       actionBar.innerHTML = `
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button id="btn-zero-wheel" class="primary"
-                  style="padding:8px 16px;font-size:20px"
+                  style="padding:8px 16px;font-size:16px"
                   data-i18n="encoder.zero_btn">⊙ Zerar posição do volante</button>
           <button id="btn-preset-as5047" class="warn"
-                  style="padding:8px 16px;font-size:20px"
+                  style="padding:8px 16px;font-size:16px"
                   data-i18n="encoder.preset_as5047_btn">⚙ Ativar AS5047 (preset)</button>
         </div>
-        <div style="color:var(--muted);font-size:16px;line-height:1.5">
+        <div style="color:var(--muted);font-size:13px;line-height:1.5">
           <p style="margin:2px 0">
             <b data-i18n="encoder.zero_label">Zerar posição:</b>
             <span data-i18n="encoder.zero_hint">Captura a posição atual como o novo zero (centro lógico). HID position passa a reportar 0 imediatamente. Não toca no encoder do ODrive — só no offset virtual da camada FFB. NÃO persiste após reboot; pra centro permanente use phase_offset + index search.</span>
@@ -6843,7 +7190,7 @@ function buildFFBLiveHTML() {
              style="width:80px"> ms
       <button id="btn-ffb-poll-once" data-i18n="ffb.update_now">Atualizar agora</button>
       <button id="btn-ffb-reset-peaks" class="warn" data-i18n="ffb.reset_peaks">Reset peaks</button>
-      <span style="color:var(--muted);font-size:16px" data-i18n="ffb.poll_hint">Intervalos &lt; 100ms podem sobrecarregar a CDC. 200-500ms é o sweet spot.</span>
+      <span style="color:var(--muted);font-size:13px" data-i18n="ffb.poll_hint">Intervalos &lt; 100ms podem sobrecarregar a CDC. 200-500ms é o sweet spot.</span>
     </div>
 
     <div class="debug-section">
@@ -6865,7 +7212,7 @@ function buildFFBLiveHTML() {
         <div class="live-kv"><span class="k" data-i18n="ffb.rate_setef">Force updates (setEffect)</span><span class="v" id="ffb-kv-rate-setef">—</span></div>
         <div class="live-kv"><span class="k" data-i18n="ffb.rate_efop">Effect ops (start/stop)</span><span class="v" id="ffb-kv-rate-efop">—</span></div>
       </div>
-      <p style="color:var(--fg-dim);font-size:17px;margin:8px 0 0;line-height:1.5" data-i18n="ffb.rate_hint">
+      <p style="color:var(--fg-dim);font-size:14px;margin:8px 0 0;line-height:1.5" data-i18n="ffb.rate_hint">
         Tipicamente: 60 Hz (jogos casuais) · 100–250 Hz (sim racing) · 500 Hz+ (rigs com USB polling alto). Se ficar abaixo de 30 Hz com FFB ativo, o jogo provavelmente está limitando.
       </p>
     </div>
@@ -6890,7 +7237,7 @@ function buildFFBLiveHTML() {
       <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px">
         ${[0,1,2].map(n => `
           <div style="background:#1a1a1a;border:1px solid var(--border);border-radius:4px;padding:8px">
-            <div style="color:var(--accent);font-weight:bold;margin-bottom:6px;font-size:18px">Effect ${n}</div>
+            <div style="color:var(--accent);font-weight:bold;margin-bottom:6px;font-size:14px">Effect ${n}</div>
             <div class="live-kv"><span class="k" data-i18n="ffb.kv_slot">slot</span><span class="v" id="ffb-kv-eidx-${n}">—</span></div>
             <div class="live-kv"><span class="k" data-i18n="ffb.kv_state">state</span><span class="v" id="ffb-kv-est-${n}">—</span></div>
             <div class="live-kv"><span class="k" data-i18n="ffb.kv_type">type</span><span class="v" id="ffb-kv-etype-${n}">—</span></div>
@@ -6903,7 +7250,7 @@ function buildFFBLiveHTML() {
       <div class="live-kv" style="margin-top:8px"><span class="k" data-i18n="ffb.kv_egg">global gain (master)</span><span class="v" id="ffb-kv-egg">—</span></div>
 
       <div style="margin-top:12px;padding:8px;background:#1a1a1a;border:1px solid var(--border);border-radius:4px">
-        <div style="color:var(--accent);font-weight:bold;margin-bottom:6px;font-size:18px">
+        <div style="color:var(--accent);font-weight:bold;margin-bottom:6px;font-size:14px">
           <span data-i18n="ffb.mag_title">Effect 0 magnitude — análise de dinâmica</span>
           <button id="btn-ffb-mag-reset" style="margin-left:12px;padding:2px 8px;font-size:15px" data-i18n="ffb.mag_reset">Reset janela</button>
         </div>
@@ -6936,10 +7283,10 @@ function buildFFBLiveHTML() {
         <small style="color:var(--muted)" data-i18n="ffb.chart_subtitle">(janela 60s — torque pendente / posição encoder)</small>
         <button id="btn-ffb-chart-clear" style="margin-left:12px;padding:2px 8px;font-size:15px" data-i18n="dbg.clear_history">Limpar histórico</button>
       </h3>
-      <p style="color:var(--muted);font-size:16px;margin:0 0 8px" data-i18n="ffb.chart_hint">Capacidade da janela = 60s ÷ intervalo do auto-poll FFB. Ex: 200ms → 300 pontos. Eixos auto-escalam baseado no min/max amostrados.</p>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 8px" data-i18n="ffb.chart_hint">Capacidade da janela = 60s ÷ intervalo do auto-poll FFB. Ex: 200ms → 300 pontos. Eixos auto-escalam baseado no min/max amostrados.</p>
       <canvas id="ffb-chart" width="800" height="280"
               style="width:100%;height:280px;background:#0a0a0a;border:1px solid var(--border);border-radius:4px"></canvas>
-      <div style="display:flex;gap:16px;margin-top:6px;font-size:16px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:13px;flex-wrap:wrap;align-items:center">
         <label style="color:#ef5350;cursor:pointer">
           <input type="checkbox" id="ffb-chart-show-trq" checked style="vertical-align:middle">
           ━ <span data-i18n="legend.torque">torque (Nm)</span> <span id="ffb-chart-leg-trq">—</span>
@@ -7327,8 +7674,8 @@ function wireFFBLive() {
 function buildDebugHTML() {
   return `
     <div class="debug-section" style="display:flex;align-items:center;gap:12px;background:transparent;border:none;padding:0">
-      <button id="btn-refresh-all" class="primary" style="padding:10px 20px;font-size:21px" data-i18n="dbg.refresh_all">↻ Atualizar tudo</button>
-      <span style="color:var(--muted);font-size:16px" data-i18n="dbg.refresh_all_hint">Lê info + erros + monitor live de uma vez. Atalho: tecla R quando aba Debug ativa.</span>
+      <button id="btn-refresh-all" class="primary" style="padding:10px 20px;font-size:17px" data-i18n="dbg.refresh_all">↻ Atualizar tudo</button>
+      <span style="color:var(--muted);font-size:13px" data-i18n="dbg.refresh_all_hint">Lê info + erros + monitor live de uma vez. Atalho: tecla R quando aba Debug ativa.</span>
     </div>
 
     <div class="debug-section">
@@ -7368,7 +7715,7 @@ function buildDebugHTML() {
 
     <div class="debug-section">
       <h3><span data-i18n="dbg.live_monitor">Monitor ao vivo</span>
-        <span class="poll-ctl" style="margin-left:16px;font-size:18px;font-weight:normal">
+        <span class="poll-ctl" style="margin-left:16px;font-size:14px;font-weight:normal">
           <span class="poll-dot" id="poll-dot"></span>
           <label><input type="checkbox" id="poll-enable"> <span data-i18n="dbg.auto_refresh">Auto-refresh</span></label>
           <input type="number" id="poll-interval" value="500" min="100" max="5000" step="100"> ms
@@ -7406,10 +7753,10 @@ function buildDebugHTML() {
         <small style="color:var(--muted)" data-i18n="dbg.chart_subtitle">(janela 60s — vbus / ibus / motor.Iq)</small>
         <button id="btn-chart-clear" style="margin-left:12px;padding:2px 8px;font-size:15px" data-i18n="dbg.clear_history">Limpar histórico</button>
       </h3>
-      <p style="color:var(--muted);font-size:16px;margin:0 0 8px" data-i18n="dbg.chart_hint">Capacidade da janela = 60s ÷ intervalo de auto-refresh. Ex: 500ms → 120 pontos. Eixos auto-escalam baseado no min/max amostrados.</p>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 8px" data-i18n="dbg.chart_hint">Capacidade da janela = 60s ÷ intervalo de auto-refresh. Ex: 500ms → 120 pontos. Eixos auto-escalam baseado no min/max amostrados.</p>
       <canvas id="dbg-chart" width="800" height="280"
               style="width:100%;height:280px;background:#0a0a0a;border:1px solid var(--border);border-radius:4px"></canvas>
-      <div style="display:flex;gap:16px;margin-top:6px;font-size:16px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:13px;flex-wrap:wrap;align-items:center">
         <label style="color:#4fc3f7;cursor:pointer">
           <input type="checkbox" id="chart-show-vbus" checked style="vertical-align:middle">
           ━ <span data-i18n="legend.vbus">vbus (V)</span> <span id="chart-leg-vbus">—</span>
