@@ -149,37 +149,41 @@
     50% { opacity: .5; }
   }
 
-  .header-search {
-    flex: 1; max-width: 380px;
+  .sidebar-search {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
     position: relative;
   }
-  .header-search input {
+  .sidebar-search input {
     width: 100%;
-    padding: 8px 12px 8px 34px;
+    padding: 7px 10px 7px 30px;
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    color: var(--fg); font-size: 16px;
+    color: var(--fg); font-size: 14px;
     font-family: var(--font-sans);
     transition: var(--transition);
   }
-  .header-search input:focus {
+  .sidebar-search input:focus {
     outline: none; border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(99,102,241,.15);
   }
-  .header-search::before {
+  /* Lupa fica posicionada DENTRO do input (não da div) — left calculado
+     a partir do padding da .sidebar-search + offset interno do input. */
+  .sidebar-search::before {
     content: '⌕'; position: absolute;
-    left: 11px; top: 50%; transform: translateY(-50%);
-    color: var(--fg-dim); font-size: 19px;
+    left: 22px; top: 50%; transform: translateY(-50%);
+    color: var(--fg-dim); font-size: 16px;
     pointer-events: none;
   }
   .search-count {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    font-size: 13px; font-family: var(--font-mono);
+    position: absolute;
+    right: 22px; top: 50%; transform: translateY(-50%);
+    font-size: 11px; font-family: var(--font-mono);
     color: var(--accent-2);
     background: rgba(99,102,241,.15);
     border: 1px solid rgba(99,102,241,.3);
-    padding: 1px 7px; border-radius: 999px;
+    padding: 1px 6px; border-radius: 999px;
     pointer-events: none;
   }
   .search-count.zero {
@@ -1426,17 +1430,18 @@
     <div class="icon">⚡</div>
     <div class="name">Odrive-Wheel</div>
   </div>
+  <!-- Search box (moved from header to be closer to the nav it filters) -->
+  <div class="sidebar-search">
+    <input type="search" id="search-input" data-i18n-placeholder="search.placeholder"
+           placeholder="Search parameter (e.g. pole_pairs, brake, encoder)…">
+    <span id="search-count" class="search-count" hidden></span>
+  </div>
   <!-- Navigation populated dynamically by buildTabs() -->
   <div id="sidebar-nav"></div>
 </aside>
 
 <!-- ============== Header ============== -->
 <header class="app-header">
-  <div class="header-search">
-    <input type="search" id="search-input" data-i18n-placeholder="search.placeholder"
-           placeholder="Search parameter (e.g. pole_pairs, brake, encoder)…">
-    <span id="search-count" class="search-count" hidden></span>
-  </div>
   <div class="header-actions">
     <span id="status" class="status-pill">
       <span class="dot"></span><span id="status-text" data-i18n="status.disconnected">Desconectado</span>
