@@ -25,10 +25,10 @@ public:
         // MKS Mini + FFB-target defaults — TORQUE_CONTROL mode needed for FFB torque injection.
         ControlMode control_mode = CONTROL_MODE_TORQUE_CONTROL;   // was POSITION_CONTROL stock; FFB requires torque mode
         InputMode input_mode = INPUT_MODE_PASSTHROUGH;            // input_torque_ → torque_setpoint_ 1:1
-        float pos_gain = 20.0f;                  // [(turn/s) / turn]
-        float vel_gain = 1.0f / 6.0f;            // [Nm/(turn/s)]
+        float pos_gain = 100.0f;                 // [(turn/s) / turn] — era 20.0 stock; subido pra dar resposta de posição mais rígida (POSITION_CONTROL e anticogging calibration)
+        float vel_gain = 0.566f;                 // [Nm/(turn/s)]    — era 1/6 (≈0.1667) stock
         // float vel_gain = 0.2f / 200.0f,       // [Nm/(rad/s)] <sensorless example>
-        float vel_integrator_gain = 2.0f / 6.0f; // [Nm/(turn/s * s)]
+        float vel_integrator_gain = 1.33f;       // [Nm/(turn/s * s)] — era 2/6 (≈0.333) stock
         float vel_limit = 5.0f;                  // [turn/s] (era 2.0f stock; subimos pra wheel sim racing — passar de 5 turn/s = 300 rpm é raro)
         float vel_limit_tolerance = 1.2f;        // ratio to vel_lim. Infinity to disable.
         float vel_integrator_limit = INFINITY;   // Vel. integrator clamping value. Infinity to disable.

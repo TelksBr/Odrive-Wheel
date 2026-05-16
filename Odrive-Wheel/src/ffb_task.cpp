@@ -68,7 +68,8 @@ public:
     uint8_t axisDamper_     = 0;      // damper sempre ativo (resistência velocidade)
     uint8_t axisInertia_    = 0;      // inertia sempre ativa (resistência aceleração)
     uint8_t axisFriction_   = 0;      // friction sempre ativa (atrito constante)
-    uint8_t endstopStrength_= 0;      // batente eletrônico quando volante passa ±range/2 (0-255)
+    uint8_t endstopStrength_= 0;      // batente eletrônico: força da mola na região >±range/2 (0-255)
+    uint8_t endstopDamper_  = 15;     // amortecimento do endstop, INDEPENDENTE de esgain (0-255). 15 ~ leve.
 
     // Slew rate — limita derivada do torque. 0 = desativado (sem limit).
     // Em counts/ms. Ex: 5000 = max 5000 counts de mudança por ms.
@@ -167,22 +168,42 @@ public:
             axisEffectTorque_ -= (int32_t)fricForce;
         }
 
-        // 5. Endstop eletrônico — força crescente proporcional ao overshoot.
-        // Quando posição passa ±range/2, aplica torque oposto cresce com profundidade.
-        // Replica formula do OpenFFBoard: F = overshoot_deg * strength * gain (gain const = 25).
+        // 5. Endstop eletrônico — mola (esgain) + damper (esdamp) na região de overshoot.
+        // Os dois parâmetros são INDEPENDENTES — usuário pode configurar mola firme
+        // com damper suave (batente "duro" que ricochetea), ou mola suave com damper
+        // forte (batente "macio" que prende suavemente), ou qualquer combinação.
+        //
+        // Fórmulas:
+        //   F_spring = -overshoot_deg × esgain  × SPRING_GAIN    (SPRING_GAIN=25)
+        //   F_damper = -speed         × esdamp  × DAMP_RATIO     (DAMP_RATIO=1.0)
+        //
+        // SPRING_GAIN=25 (compat OpenFFBoard).
+        // DAMP_RATIO=1.0 — direto: esdamp=N → multiplier=N. esdamp=100 satura o
+        // canal a partir de ~330°/s (agressivo). esdamp=15 (default) é leve:
+        // ~28% saturação a 600°/s — segura bouncing sem travar o volante.
         if (endstopStrength_ != 0) {
-            float halfRange = rangeDegrees_ / 2.0f;
-            float pos = metrics_.posDegrees;
-            const float endstopGain = 25.0f;
+            const float halfRange       = rangeDegrees_ / 2.0f;
+            const float SPRING_GAIN     = 25.0f;
+            const float DAMP_RATIO      = 1.0f;
+            const float pos             = metrics_.posDegrees;
+            const float speed           = metrics_.speed;
+
+            float spring = 0.0f;
+            bool inOvershoot = false;
+
             if (pos > halfRange) {
-                float overshoot = pos - halfRange;
-                float force = -overshoot * (float)endstopStrength_ * endstopGain;
-                if (force < -32767.0f) force = -32767.0f;
-                axisEffectTorque_ += (int32_t)force;
+                spring = -(pos - halfRange) * (float)endstopStrength_ * SPRING_GAIN;
+                inOvershoot = true;
             } else if (pos < -halfRange) {
-                float overshoot = -pos - halfRange;
-                float force = overshoot * (float)endstopStrength_ * endstopGain;
-                if (force > 32767.0f) force = 32767.0f;
+                spring = (-pos - halfRange) * (float)endstopStrength_ * SPRING_GAIN;
+                inOvershoot = true;
+            }
+
+            if (inOvershoot) {
+                float damper = -speed * (float)endstopDamper_ * DAMP_RATIO;
+                float force = spring + damper;
+                if (force >  32767.0f) force =  32767.0f;
+                if (force < -32767.0f) force = -32767.0f;
                 axisEffectTorque_ += (int32_t)force;
             }
         }
@@ -493,8 +514,14 @@ static void ffb_load_axis_params_internal(void) {
     if (Flash_Read(ADR_AXIS1_ENDSTOP, &v, false) && v != 0xFFFF && v > 0 && v <= 255) {
         s_axis_raw->exposcale_ = (uint8_t)(v & 0xFF);
     }
-    if (Flash_Read(ADR_AXIS1_ENC_RATIO, &v, false) && v != 0xFFFF && v <= 255) {
+    if (Flash_Read(ADR_AXIS1_ENC_RATIO, &v, false) && v != 0xFFFF) {
         s_axis_raw->endstopStrength_ = (uint8_t)(v & 0xFF);
+        // High byte: endstopDamper_. Se = 0, é formato antigo (firmware antes da
+        // separação spring/damper) — preserva default já inicializado (30).
+        uint8_t dampStored = (uint8_t)((v >> 8) & 0xFF);
+        if (dampStored != 0) {
+            s_axis_raw->endstopDamper_ = dampStored;
+        }
     }
     // Phase 4.x — bitfield de flags do axis (ADR_AXIS1_CONFIG)
     if (Flash_Read(ADR_AXIS1_CONFIG, &v, false) && v != 0xFFFF) {
@@ -809,7 +836,9 @@ extern "C" int ffb_save_flash(void) {
         if (!Flash_Write(ADR_AXIS1_MAX_SPEED, s_axis_raw->maxTorqueRate_)) s_last_save_errors++;
         if (!Flash_Write(ADR_AXIS1_MAX_ACCEL, (uint16_t)s_axis_raw->expo_))  s_last_save_errors++;
         if (!Flash_Write(ADR_AXIS1_ENDSTOP,   (uint16_t)s_axis_raw->exposcale_)) s_last_save_errors++;
-        if (!Flash_Write(ADR_AXIS1_ENC_RATIO, (uint16_t)s_axis_raw->endstopStrength_)) s_last_save_errors++;
+        // ADR_AXIS1_ENC_RATIO empacota: low byte = esgain, high byte = esdamp
+        uint16_t esPack = ((uint16_t)s_axis_raw->endstopDamper_ << 8) | s_axis_raw->endstopStrength_;
+        if (!Flash_Write(ADR_AXIS1_ENC_RATIO, esPack)) s_last_save_errors++;
         s_last_save_writes += 6;
 
         // Phase 4.x — bitfield de flags do axis. Atualmente só bit 0 = inverted_.
@@ -987,6 +1016,8 @@ extern "C" int  ffb_get_axis_friction(void)     { return s_axis_raw ? (int)s_axi
 extern "C" void ffb_set_axis_friction(int v)    { if (s_axis_raw) s_axis_raw->axisFriction_ = (uint8_t)(v < 0 ? 0 : v > 255 ? 255 : v); }
 extern "C" int  ffb_get_axis_esgain(void)       { return s_axis_raw ? (int)s_axis_raw->endstopStrength_ : 0; }
 extern "C" void ffb_set_axis_esgain(int v)      { if (s_axis_raw) s_axis_raw->endstopStrength_ = (uint8_t)(v < 0 ? 0 : v > 255 ? 255 : v); }
+extern "C" int  ffb_get_axis_esdamp(void)       { return s_axis_raw ? (int)s_axis_raw->endstopDamper_ : 15; }
+extern "C" void ffb_set_axis_esdamp(int v)      { if (s_axis_raw) s_axis_raw->endstopDamper_ = (uint8_t)(v < 0 ? 0 : v > 255 ? 255 : v); }
 extern "C" int  ffb_get_axis_maxtorquerate(void){ return s_axis_raw ? (int)s_axis_raw->maxTorqueRate_: 0; }
 extern "C" void ffb_set_axis_maxtorquerate(int v){ if (s_axis_raw) s_axis_raw->maxTorqueRate_= (uint16_t)(v < 0 ? 0 : v > 65535 ? 65535 : v); }
 extern "C" int  ffb_get_axis_expo(void)         { return s_axis_raw ? (int)s_axis_raw->expo_         : 0; }

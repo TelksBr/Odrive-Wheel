@@ -406,6 +406,8 @@ extern "C" int  ffb_get_axis_friction(void);
 extern "C" void ffb_set_axis_friction(int v);
 extern "C" int  ffb_get_axis_esgain(void);
 extern "C" void ffb_set_axis_esgain(int v);
+extern "C" int  ffb_get_axis_esdamp(void);
+extern "C" void ffb_set_axis_esdamp(int v);
 extern "C" int  ffb_get_axis_maxtorquerate(void);
 extern "C" void ffb_set_axis_maxtorquerate(int v);
 extern "C" int  ffb_get_axis_expo(void);
@@ -479,6 +481,7 @@ AXIS_INT_HANDLER(damper)
 AXIS_INT_HANDLER(inertia)
 AXIS_INT_HANDLER(friction)
 AXIS_INT_HANDLER(esgain)
+AXIS_INT_HANDLER(esdamp)
 AXIS_INT_HANDLER(maxtorquerate)
 AXIS_INT_HANDLER(expo)
 AXIS_INT_HANDLER(exposcale)
@@ -770,7 +773,8 @@ const CmdEntry cmdtable[] = {
     { "axis",  "axisdamper",    h_axis_damper },         // damper sempre ativo (0-255)
     { "axis",  "axisinertia",   h_axis_inertia },        // inertia sempre ativa (0-255)
     { "axis",  "axisfriction",  h_axis_friction },       // friction sempre ativa (0-255)
-    { "axis",  "esgain",        h_axis_esgain },         // batente eletrônico (0-255)
+    { "axis",  "esgain",        h_axis_esgain },         // batente eletrônico: força da mola (0-255)
+    { "axis",  "esdamp",        h_axis_esdamp },         // batente eletrônico: amortecimento, independente da mola (0-255)
     { "axis",  "maxtorquerate", h_axis_maxtorquerate },  // slew limit (counts/ms, 0=off)
     { "axis",  "expo",          h_axis_expo },           // curva exponencial (-32767..32767)
     { "axis",  "exposcale",     h_axis_exposcale },      // divisor pro expo (1-255)
