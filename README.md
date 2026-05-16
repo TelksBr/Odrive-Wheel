@@ -95,17 +95,18 @@ why PID gains (`pos_gain`, `vel_gain`, etc.) are inert in TORQUE mode.
 
 Tabs:
 - **🚀 Quick Start** — 12-step guided setup wizard (firmware flash → motor cal → FFB test) with suggested values, inline error decoding, and tab cross-links
-- **ODrive** / **Axis 0** / **Motor** / **Encoder** / **Controller** — params via ODrive ASCII
+- **PSU/RBrake** / **Axis 0** / **Motor** / **Encoder** / **Controller** — params via ODrive ASCII
   - Controller tab has a **TORQUE-mode warning banner** flagging which PID-related fields (`pos_gain`, `vel_gain`, `vel_integrator_*`, `inertia`, gain scheduling, etc.) become inert when `control_mode = TORQUE` (default for FFB)
   - One-click **Anticogging Calibration** button: sets `control_mode = POSITION`, triggers the cal, polls progress (index 0→3600), then auto-marks `pre_calibrated` and restores `control_mode = TORQUE`
   - **Zero wheel position** action on the Encoder tab + AS5047 preset for SPI absolute encoders
 - **Inputs** — GPIO 1-4 mapped as joystick buttons or analog axes (Complementary-filter smoothing, range/invert per input)
-- **FFB Wheel** — range, maxtorque, fxratio, axis effects (idlespring, damper, inertia, friction, esgain, slew, expo)
+- **FFB Wheel** — range, maxtorque, fxratio, axis effects (idlespring, damper, inertia, friction, **electronic end-stop with separate spring `esgain` + damper `esdamp`**, slew, expo)
 - **FFB Effects** — master gain + per-effect gains
 - **FFB Filters** — biquad lowpass cutoff + Q per effect type
 - **FFB Live** — live dashboard (FFB state, HID counters, active effects, bus current peaks, torque/position chart)
 - **FFB Test** — built-in WebHID effect tester (Spring/Constant/Damper/etc.) without needing a game
-- **iRacing overlay** — Document Picture-in-Picture window with telemetry hooks (dark/light theme)
+- **Performance Test** — measures real wheel performance under HID FFB drive: **peak RPM**, **maximum angular acceleration** (2nd derivative of HID position with median+MA filter pipeline, calibrated against RFR Wheel), **friction breakaway** torque, **motor + wheel inertia (J)**, motor saturation detection (Iq sampling), end-stop reach time. Position captured at ~1 kHz via HID input reports during a 6-phase controlled launch (centering → friction probe → push-to-limit → stabilize → LAUNCH → return). Results exportable as CSV. Must be run with the physical wheel attached — measures the real combined assembly.
+- **Overlay (iRacing)** — always-on-top Document Picture-in-Picture window (compact dark theme) with live charts for DC bus (vbus / ibus / Iq / I-brake) and wheel dynamics (torque + position). Includes **brake resistor average dissipated power** calculated as `P = R · ⟨I²⟩` over a rolling 60 s window. When the power calculation is enabled, the overlay enters an **exclusive high-rate mode** (25 ms poll of brake current only) to avoid CDC dessync; otherwise the regular multi-signal poll runs no faster than 50 ms.
 - **Debug / Status** — device info, state machine actions, decoded errors, live monitor, vbus/ibus/Iq/Ibrake chart
 - **Console** — serial TX/RX log
 - **DFU Flash** — re-flash the firmware from the browser (no `dfu-util` needed)
@@ -307,7 +308,9 @@ It is the easiest way to say thanks and keeps the project maintained on my own t
 ✅ **Inputs tab** with GPIO config + live preview
 ✅ Controller tab **TORQUE-mode warning** flagging inert fields
 ✅ In-browser DFU flasher (WebUSB + DfuSe), FFB EEPROM preserved across reflash
-✅ **iRacing overlay** (Document Picture-in-Picture)
+✅ **iRacing overlay** (Document Picture-in-Picture) + **brake resistor dissipated power** (P = R·⟨I²⟩, exclusive 25 ms mode)
+✅ **Performance Test** — peak RPM, peak angular acceleration, friction breakaway, inertia J, motor saturation
+✅ **Electronic end-stop** with separate spring (`axis.esgain`) and damper (`axis.esdamp`) — prevents end-of-range bounce
 ✅ **CI builds** via GitHub Actions — `.bin` artifact on every push
 ✅ End-to-end validation in **iRacing**
 
@@ -323,3 +326,4 @@ Built iteratively, in phases:
 - **Phase 4** — Project rename to **Odrive-Wheel**, in-browser DFU flasher (WebUSB + DfuSe), Getting Started guide
 - **Phase 5** — iRacing overlay (Document Picture-in-Picture, dark/light theme), Encoder tab actions (zero wheel position + AS5047 preset), DFU now preserves FFB EEPROM across re-flash
 - **Phase 6** — **Quick Start wizard** (12-step guided setup), **GPIO 1-4 inputs** as buttons/axes, Controller TORQUE-mode warning, **Anticogging calibration** via custom `axis.anticogcal!` command (workaround for ODrive readonly `calib_anticogging`), `vbus_divider` boot fix (no more spurious overvoltage trips), **CI builds** via GitHub Actions, **Save/Load motor profiles** as JSON
+- **Phase 7** — **Performance Test tab** (peak RPM, peak angular acceleration via 2nd-derivative of HID-captured position at ~1 kHz, friction breakaway, motor + wheel inertia J, motor saturation detection; filter pipeline calibrated against RFR Wheel), **brake resistor power dissipation** in the overlay (P = R·⟨I²⟩ over rolling 60 s window with exclusive 25 ms poll mode to avoid CDC dessync), **electronic end-stop split into spring + damper** (`axis.esgain` and `axis.esdamp` — fixes end-of-range bounce), sidebar search, embedded logo, console picker, schema label/path decoupling, PSU/RBrake sidebar rename
