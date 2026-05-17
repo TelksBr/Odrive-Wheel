@@ -1469,6 +1469,40 @@
   .toast.err  { border-left-color: var(--err); }
   .toast.warn { border-left-color: var(--warn); }
   .toast .icon { font-size: 19px; line-height: 1.3; }
+  /* Toast persistente (sticky) — usado pra progresso de ops longas.
+     Layout vertical: icon+msg na primeira linha, barra de progresso embaixo. */
+  .toast.sticky {
+    flex-direction: column;
+    min-width: 280px;
+  }
+  .toast.sticky .row1 { display: flex; gap: 10px; align-items: flex-start; }
+  .toast.sticky .bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .toast.sticky .bar > div {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.12s ease;
+    width: 0%;
+  }
+  .toast.sticky.ok  .bar > div { background: var(--ok); }
+  .toast.sticky.err .bar > div { background: var(--err); }
+  .toast.sticky.warn .bar > div { background: var(--warn); }
+  .toast.sticky .sub {
+    font-size: 12px;
+    color: var(--fg-muted);
+    margin-top: 2px;
+    font-family: monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+  }
   @keyframes toast-in {
     from { opacity: 0; transform: translateX(100%); }
     to   { opacity: 1; transform: translateX(0); }
@@ -1630,6 +1664,7 @@ const I18N = {
     'import.loaded_only':    '✓ {n} campo(s) carregado(s) no formulário — revise e clique Salvar pra aplicar',
     'import.applied':        '✓ Aplicados: {ok} · falhas: {fail} — clique Salvar pra persistir em NVM',
     'import.no_match':       'Nenhum campo do JSON casa com o SCHEMA atual',
+    'import.progress':       'Aplicando configuração ({cur}/{total})',
     // Status / log (PT)
     'status.error':          'Erro',
     'status.no_webserial':   'Web Serial não suportado — use Chrome/Edge',
@@ -1906,11 +1941,11 @@ const I18N = {
     'setup.step7_result_title':'Valores medidos pós-cal',
 
     'setup.step8_title':       'Passo 8 — Calibrar offset do encoder',
-    'setup.step8_desc':        'Alinha a fase elétrica do motor com a posição do encoder. Motor gira ~10 voltas. Antes de rodar, limpa erros automaticamente (sc). Após terminar, axis0.encoder.is_ready fica True.',
+    'setup.step8_desc':        'Alinha a fase elétrica do motor com a posição do encoder. Motor gira ~1 volta (suave). Antes de rodar, limpa erros automaticamente (sc). Após terminar, axis0.encoder.is_ready fica True.',
     'setup.step8_action':      '▶ Rodar ENCODER_OFFSET_CALIBRATION (state=7)',
 
     'setup.step9_title':       'Passo 9 — Marcar pré-calibrado e salvar',
-    'setup.step9_desc':        'Marca motor + encoder como pré-calibrados, e ativa startup_motor_calibration + startup_encoder_offset_calibration + startup_closed_loop_control (a placa faz cal e arma sozinha a cada boot). ⚠ encoder.config.pre_calibrated SÓ pode ser True se você tem index Z conectado E use_index=True, OU se está usando encoder absoluto (AS5047). Depois clica Save — persiste em NVM e reinicia (auto-reconnect em 5s).',
+    'setup.step9_desc':        'Marca motor + encoder como pré-calibrados, ativa startup_motor_calibration + startup_encoder_offset_calibration + startup_closed_loop_control (a placa faz cal e arma sozinha a cada boot), e DESATIVA os limites de velocidade do controller (enable_vel_limit, enable_overspeed_error, enable_torque_mode_vel_limit = False) — evita ERROR_OVERSPEED ao girar o volante rápido durante os primeiros testes. Você pode reativar e ajustar vel_limit depois, na aba Controller, quando o conjunto estiver estável. ⚠ encoder.config.pre_calibrated SÓ pode ser True se você tem index Z conectado E use_index=True, OU se está usando encoder absoluto (AS5047). Depois clica Save — persiste em NVM e reinicia (auto-reconnect em 5s).',
     'setup.step9_apply':       '✓ Marcar pre_calibrated + ativar startup',
     'setup.step9_save':        'Save',
 
@@ -2153,6 +2188,7 @@ const I18N = {
     'import.loaded_only':    '✓ {n} field(s) loaded into the form — review and click Save to apply',
     'import.applied':        '✓ Applied: {ok} · failures: {fail} — click Save to persist to NVM',
     'import.no_match':       'No fields in the JSON match the current SCHEMA',
+    'import.progress':       'Applying configuration ({cur}/{total})',
     // Status / log (EN)
     'status.error':          'Error',
     'status.no_webserial':   'Web Serial not supported — use Chrome/Edge',
@@ -2418,11 +2454,11 @@ const I18N = {
     'setup.step7_result_title':'Measured post-cal values',
 
     'setup.step8_title':       'Step 8 — Encoder offset calibration',
-    'setup.step8_desc':        'Aligns the motor\'s electrical phase with the encoder position. Motor spins ~10 turns. Before running, errors are auto-cleared (sc). When done, axis0.encoder.is_ready turns True.',
+    'setup.step8_desc':        'Aligns the motor\'s electrical phase with the encoder position. Motor spins ~1 turn (gently). Before running, errors are auto-cleared (sc). When done, axis0.encoder.is_ready turns True.',
     'setup.step8_action':      '▶ Run ENCODER_OFFSET_CALIBRATION (state=7)',
 
     'setup.step9_title':       'Step 9 — Mark pre-calibrated and save',
-    'setup.step9_desc':        'Marks motor + encoder as pre-calibrated, and enables startup_motor_calibration + startup_encoder_offset_calibration + startup_closed_loop_control (the board calibrates and arms itself on every boot). ⚠ encoder.config.pre_calibrated can ONLY be True if you have Z index wired AND use_index=True, OR if using an absolute encoder (AS5047). Then click Save — persists to NVM and reboots (auto-reconnect in 5s).',
+    'setup.step9_desc':        'Marks motor + encoder as pre-calibrated, enables startup_motor_calibration + startup_encoder_offset_calibration + startup_closed_loop_control (the board calibrates and arms itself on every boot), and DISABLES the controller velocity limits (enable_vel_limit, enable_overspeed_error, enable_torque_mode_vel_limit = False) — prevents ERROR_OVERSPEED when spinning the wheel fast during the first tests. You can re-enable and tune vel_limit later in the Controller tab once the setup is stable. ⚠ encoder.config.pre_calibrated can ONLY be True if you have Z index wired AND use_index=True, OR if using an absolute encoder (AS5047). Then click Save — persists to NVM and reboots (auto-reconnect in 5s).',
     'setup.step9_apply':       '✓ Mark pre_calibrated + enable startup',
     'setup.step9_save':        'Save',
 
@@ -2680,7 +2716,8 @@ const FIELD_DESC = {
     'axis0.motor.config.calibration_current':  'Corrente usada durante motor cal (A). 10A é seguro pra maioria.',
     'axis0.motor.config.resistance_calib_max_voltage':'Tensão máxima durante cal de R (V). Limita ruído.',
     'axis0.motor.config.requested_current_range':     'Range do ADC de corrente. Deve ser ≥ current_lim + current_lim_margin.',
-    'axis0.motor.config.current_control_bandwidth':   'Banda do PI de corrente em Hz. 100-1000. Maior = resposta mais rápida.',
+    'axis0.motor.config.current_control_bandwidth':   'Banda do PI de corrente em rad/s. 100-1000. Maior = resposta mais rápida e mais ruído.',
+    'axis0.motor.config.current_control_deadband':    'Zona morta do erro do PI de corrente em A (Odrive-Wheel mod). Abaixo deste valor, o PI ignora o erro: P = 0 e integrador congela. Mata vibração de idle causada pelo PI perseguindo ruído de ADC/encoder. Não afeta resposta dinâmica (fora da banda o loop é idêntico ao stock). Incerteza estática introduzida ≈ valor × torque_constant (alguns mNm — imperceptível). 0 = desligado. Default 0.1 (100 mA). Útil: 0.02–0.20.',
     'axis0.motor.config.dc_calib_tau':                'Constante de tempo da calibração DC (s).',
     'axis0.motor.config.current_lim':                 'Corrente máxima do motor (A). Limita torque máximo.',
     'axis0.motor.config.current_lim_margin':          'Margem entre current_lim e trip de hardware (A). Tolera transientes.',
@@ -2817,7 +2854,8 @@ const FIELD_DESC = {
     'axis0.motor.config.calibration_current':  'Current used during motor cal (A). 10A safe for most.',
     'axis0.motor.config.resistance_calib_max_voltage':'Max voltage during R cal (V). Limits noise.',
     'axis0.motor.config.requested_current_range':     'Current ADC range. Must be ≥ current_lim + current_lim_margin.',
-    'axis0.motor.config.current_control_bandwidth':   'Current PI loop bandwidth in Hz. 100-1000. Higher = faster response.',
+    'axis0.motor.config.current_control_bandwidth':   'Current PI loop bandwidth in rad/s. 100-1000. Higher = faster response and more noise.',
+    'axis0.motor.config.current_control_deadband':    'Dead-band on the current PI error in A (Odrive-Wheel mod). Below this value the PI ignores the error: P = 0 and integrator freezes. Kills idle vibration caused by the PI chasing ADC/encoder noise. Does not affect dynamic response (outside the band the loop is identical to stock). Static uncertainty introduced ≈ value × torque_constant (a few mNm — imperceptible). 0 = disabled. Default 0.1 (100 mA). Useful range 0.02–0.20.',
     'axis0.motor.config.dc_calib_tau':                'DC calibration time constant (s).',
     'axis0.motor.config.current_lim':                 'Max motor current (A). Limits max torque.',
     'axis0.motor.config.current_lim_margin':          'Margin between current_lim and hw trip (A). Tolerates transients.',
@@ -2930,7 +2968,8 @@ const FIELD_RANGE = {
   'axis0.motor.config.calibration_current':         '1–60 A',
   'axis0.motor.config.resistance_calib_max_voltage':'0.5–20 V',
   'axis0.motor.config.requested_current_range':     '5–80 A',
-  'axis0.motor.config.current_control_bandwidth':   '50–2000 Hz',
+  'axis0.motor.config.current_control_bandwidth':   '50–2000 rad/s',
+  'axis0.motor.config.current_control_deadband':    '0–0.5 A (0.02–0.20 típico)',
   'axis0.motor.config.dc_calib_tau':                '0.05–2 s',
   'axis0.motor.config.current_lim':                 '0–80 A',
   'axis0.motor.config.current_lim_margin':          '1–20 A',
@@ -3328,6 +3367,7 @@ const SCHEMA = [
       F('resistance_calib_max_voltage'),
       F('requested_current_range'),
       F('current_control_bandwidth'),
+      F('current_control_deadband'),
       F('dc_calib_tau'),
 
       { group: 'Limites' },
@@ -5593,6 +5633,13 @@ function wireSetupTab() {
       { path: 'axis0.config.startup_motor_calibration',           value: true, type: 'bool' },
       { path: 'axis0.config.startup_encoder_offset_calibration',  value: true, type: 'bool' },
       { path: 'axis0.config.startup_closed_loop_control',         value: true, type: 'bool' },
+      // Desativa limites de velocidade pro primeiro setup — usuários novos
+      // batiam em ERROR_OVERSPEED ao girar o volante manualmente.
+      // Podem reativar depois na aba Controller quando o conjunto estiver
+      // estável e a velocidade máxima for conhecida.
+      { path: 'axis0.controller.config.enable_vel_limit',             value: false, type: 'bool' },
+      { path: 'axis0.controller.config.enable_overspeed_error',       value: false, type: 'bool' },
+      { path: 'axis0.controller.config.enable_torque_mode_vel_limit', value: false, type: 'bool' },
     ];
     let ok = 0, fail = 0;
     for (const f of fields) {
@@ -8230,7 +8277,40 @@ async function readProp(path) {
 }
 
 async function writeProp(path, value) {
-  await sendCmd('w ' + path + ' ' + value, false);
+  // ODrive ASCII: writes respondem APENAS em erro ("not implemented" para
+  // readonly properties, "invalid property" para path desconhecido).
+  // Em sucesso o firmware não emite nada.
+  //
+  // Bug que isso evita: sem absorver a resposta de erro, ela vaza pro
+  // próximo pending na fila — o readback subsequente recebe "not implemented"
+  // em vez do valor real, contaminando o campo seguinte do import/save.
+  //
+  // Estratégia: push um pending temporário com janela de 80 ms. Se chegar
+  // alguma resposta nesse intervalo, é o erro do ODrive — loga e descarta.
+  // Sem resposta = sucesso. ODrive tipicamente responde em < 5 ms quando
+  // vai responder, então 80 ms é margem confortável.
+  if (!writer) throw new Error('not connected');
+  const cmd = 'w ' + path + ' ' + value;
+  logLine('→ ' + cmd, 'tx');
+  await writer.write(new TextEncoder().encode(cmd + '\n'));
+  return new Promise((resolve) => {
+    const entry = {
+      resolve: null,  // preenchido abaixo
+      timeout: null,
+    };
+    entry.timeout = setTimeout(() => {
+      // Nenhuma resposta — assume sucesso, remove o pending da fila.
+      const idx = pendingReplies.indexOf(entry);
+      if (idx >= 0) pendingReplies.splice(idx, 1);
+      resolve(null);
+    }, 80);
+    entry.resolve = (line) => {
+      clearTimeout(entry.timeout);
+      logLine('write rejeitado: ' + cmd + ' → ' + line, 'err');
+      resolve(line);
+    };
+    pendingReplies.push(entry);
+  });
 }
 
 // OpenFFBoard CmdParser — formato "class.cmd?" ou "class.cmd=value"
@@ -10014,13 +10094,28 @@ async function readAll() {
   logLine('--- readAll: ' + n + ' fields ---');
 }
 
+// Paths que aparecem no SCHEMA mas são READONLY no firmware do ODrive.
+// O `w path value` via ASCII responde "not implemented" pra esses, o que
+// (com o fix do writeProp) só polui o log — mas é melhor pular completamente
+// pra evitar tentativas inúteis e logs ruidosos durante save/import.
+//
+// Lista pequena e bem definida; expandir só se aparecerem outros casos.
+const READONLY_EXPORT_PATHS = new Set([
+  'axis0.controller.config.anticogging.index',           // contador runtime, não config
+  'axis0.controller.config.anticogging.calib_anticogging', // disparador, não estado persistente
+]);
+
 function exportJSON() {
   const obj = {};
+  let skipped = 0;
   document.querySelectorAll(
     '#content input[data-path], #content select[data-path]').forEach(inp => {
+    const path = inp.dataset.path;
+    if (READONLY_EXPORT_PATHS.has(path)) { skipped++; return; }
     const v = inp.dataset.currentServerValue;
-    if (v !== undefined && v !== '') obj[inp.dataset.path] = v;
+    if (v !== undefined && v !== '') obj[path] = v;
   });
+  if (skipped > 0) logLine('export: ' + skipped + ' campo(s) readonly pulado(s)', 'info');
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -10031,7 +10126,13 @@ function exportJSON() {
 }
 
 function importJSON() {
-  document.getElementById('file-import').click();
+  // Bug clássico de <input type="file">: o event 'change' só dispara quando
+  // o valor MUDA. Se usuário seleciona o mesmo arquivo de novo, ou cancela
+  // e tenta de novo, nada acontece. Limpar o value antes força a comparação
+  // a falhar e garantir que change dispare a cada seleção.
+  const inp = document.getElementById('file-import');
+  inp.value = '';
+  inp.click();
 }
 
 async function doImport(file) {
@@ -10046,12 +10147,20 @@ async function doImport(file) {
   }
 
   let n = 0;
+  let skipped = 0;
   const loaded = [];
   // Apenas SCHEMA fields (com dataset.path) — caso contrário pegaríamos
   // inputs do Quick Start, overlay, FFB Test inline etc., gerando lixo.
+  // Também pula paths readonly: tentar `w` neles retorna "not implemented"
+  // e (mesmo com o fix do writeProp absorvendo essa resposta) é desnecessário.
   document.querySelectorAll(
     '#content input[data-path], #content select[data-path]').forEach(inp => {
-    const v = obj[inp.dataset.path];
+    const path = inp.dataset.path;
+    if (READONLY_EXPORT_PATHS.has(path)) {
+      if (obj[path] !== undefined) skipped++;
+      return;
+    }
+    const v = obj[path];
     if (v !== undefined) {
       try {
         if (inp.dataset.type === 'bool')
@@ -10061,11 +10170,12 @@ async function doImport(file) {
         loaded.push(inp);
         n++;
       } catch (e) {
-        logLine('import field skip: ' + inp.dataset.path + ' → ' + e.message, 'err');
+        logLine('import field skip: ' + path + ' → ' + e.message, 'err');
       }
     }
   });
-  logLine('--- import: ' + n + ' campos carregados (vermelho) ---');
+  logLine('--- import: ' + n + ' campos carregados (vermelho)' +
+          (skipped > 0 ? ', ' + skipped + ' readonly pulado(s)' : '') + ' ---');
 
   if (n === 0) {
     toast(t('import.no_match'), 'warn');
@@ -10088,8 +10198,16 @@ async function doImport(file) {
 
   // Aplica: writeOne em cada field alterado. NÃO persiste em NVM —
   // user clica Salvar manualmente depois pra fazer ss + sys.save!.
+  // Mostra progress toast sticky que atualiza a cada campo — ops com
+  // 100+ campos podem demorar vários segundos, sem feedback o usuário
+  // fica achando que travou.
+  const total = loaded.length;
   let ok = 0, fail = 0;
-  for (const inp of loaded) {
+  toastSticky('import-apply',
+    t('import.progress').replace('{cur}', '0').replace('{total}', total),
+    '', 0);
+  for (let i = 0; i < loaded.length; i++) {
+    const inp = loaded[i];
     try {
       await writeOne(inp);
       ok++;
@@ -10097,7 +10215,13 @@ async function doImport(file) {
       fail++;
       logLine('import write fail: ' + inp.dataset.path + ' → ' + e.message, 'err');
     }
+    const pct = Math.round(((i + 1) / total) * 100);
+    toastSticky('import-apply',
+      t('import.progress').replace('{cur}', (i + 1)).replace('{total}', total),
+      inp.dataset.path,
+      pct);
   }
+  toastStickyClose('import-apply');
   toast(t('import.applied').replace('{ok}', ok).replace('{fail}', fail),
         fail === 0 ? 'ok' : 'warn');
   logLine('--- import apply: ' + ok + ' ok, ' + fail + ' falhas ---');
@@ -10318,7 +10442,12 @@ document.getElementById('btn-reboot').onclick = async () => {
 document.getElementById('btn-export').onclick = exportJSON;
 document.getElementById('btn-import').onclick = importJSON;
 document.getElementById('file-import').onchange = (e) => {
-  if (e.target.files[0]) doImport(e.target.files[0]);
+  if (e.target.files[0]) {
+    doImport(e.target.files[0]);
+    // Limpa após consumir pra que próxima seleção do MESMO arquivo
+    // ainda dispare change (browsers comparam value antes de emitir o evento).
+    e.target.value = '';
+  }
 };
 
 buildTabs();
@@ -10356,6 +10485,44 @@ function toast(msg, kind) {
     el.style.animation = 'toast-out .25s ease-in forwards';
     setTimeout(() => el.remove(), 260);
   }, 3500);
+}
+
+// Toast persistente com barra de progresso. Identificado por ID — chamadas
+// subsequentes com mesmo ID atualizam o conteúdo no lugar (sem flicker).
+//   id       — identificador único da operação (ex: 'import-apply')
+//   msg      — texto principal (linha 1)
+//   sub      — texto secundário pequeno (ex: nome do campo atual)
+//   pct      — 0..100 (ou null pra esconder a barra)
+//   kind     — 'ok' | 'err' | 'warn' | undefined (info)
+function toastSticky(id, msg, sub, pct, kind) {
+  const box = document.getElementById('toasts');
+  if (!box) return;
+  const elId = 'toast-sticky-' + id;
+  let el = document.getElementById(elId);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = elId;
+    box.appendChild(el);
+  }
+  el.className = 'toast sticky' + (kind ? ' ' + kind : '');
+  const icon = kind === 'ok' ? '✓' : kind === 'err' ? '✕' : kind === 'warn' ? '⚠' : '⏳';
+  const safePct = (typeof pct === 'number') ? Math.max(0, Math.min(100, pct)) : null;
+  el.innerHTML =
+    '<div class="row1">' +
+      '<span class="icon">' + icon + '</span>' +
+      '<div style="flex:1">' +
+        '<div>' + msg + '</div>' +
+        (sub ? '<div class="sub">' + sub + '</div>' : '') +
+      '</div>' +
+    '</div>' +
+    (safePct !== null ? '<div class="bar"><div style="width:' + safePct + '%"></div></div>' : '');
+}
+
+function toastStickyClose(id) {
+  const el = document.getElementById('toast-sticky-' + id);
+  if (!el) return;
+  el.style.animation = 'toast-out .25s ease-in forwards';
+  setTimeout(() => el.remove(), 260);
 }
 
 /* =========================================================================
