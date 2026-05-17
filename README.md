@@ -311,6 +311,8 @@ It is the easiest way to say thanks and keeps the project maintained on my own t
 ✅ **iRacing overlay** (Document Picture-in-Picture) + **brake resistor dissipated power** (P = R·⟨I²⟩, exclusive 25 ms mode)
 ✅ **Performance Test** — peak RPM, peak angular acceleration, friction breakaway, inertia J, motor saturation
 ✅ **Electronic end-stop** with separate spring (`axis.esgain`) and damper (`axis.esdamp`) — prevents end-of-range bounce
+✅ **Current control deadband** (`motor.config.current_control_deadband`) — kills idle vibration from PI chasing ADC/encoder noise
+✅ **Robust JSON import** — handles readonly paths, allows re-importing the same file, progress toast for long applies
 ✅ **CI builds** via GitHub Actions — `.bin` artifact on every push
 ✅ End-to-end validation in **iRacing**
 
@@ -327,3 +329,4 @@ Built iteratively, in phases:
 - **Phase 5** — iRacing overlay (Document Picture-in-Picture, dark/light theme), Encoder tab actions (zero wheel position + AS5047 preset), DFU now preserves FFB EEPROM across re-flash
 - **Phase 6** — **Quick Start wizard** (12-step guided setup), **GPIO 1-4 inputs** as buttons/axes, Controller TORQUE-mode warning, **Anticogging calibration** via custom `axis.anticogcal!` command (workaround for ODrive readonly `calib_anticogging`), `vbus_divider` boot fix (no more spurious overvoltage trips), **CI builds** via GitHub Actions, **Save/Load motor profiles** as JSON
 - **Phase 7** — **Performance Test tab** (peak RPM, peak angular acceleration via 2nd-derivative of HID-captured position at ~1 kHz, friction breakaway, motor + wheel inertia J, motor saturation detection; filter pipeline calibrated against RFR Wheel), **brake resistor power dissipation** in the overlay (P = R·⟨I²⟩ over rolling 60 s window with exclusive 25 ms poll mode to avoid CDC dessync), **electronic end-stop split into spring + damper** (`axis.esgain` and `axis.esdamp` — fixes end-of-range bounce), sidebar search, embedded logo, console picker, schema label/path decoupling, PSU/RBrake sidebar rename
+- **Phase 8** — **Current control deadband** (`motor.config.current_control_deadband`) on the FOC PI error eliminates idle vibration from the loop chasing ADC/encoder quantization noise (default 100 mA, tuned for the MKS XDrive Mini), Quick Start UX fixes (encoder cal description "~1 turn" instead of "~10 turns" + auto-disable of velocity limits on initial setup to prevent ERROR_OVERSPEED), **JSON import robustness** (writeProp absorbs ODrive error replies to fix FIFO dessync, readonly paths skipped on export/import, file input value reset to fix the "second import does nothing" bug), **progress toast** with progress bar for long bulk operations
