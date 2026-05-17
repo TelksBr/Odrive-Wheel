@@ -31,6 +31,13 @@ public:
         // Value used to compute shunt amplifier gains
         float requested_current_range = 60.0f; // [A]
         float current_control_bandwidth = 200.0f;  // [rad/s]
+        // PI error deadband: kills idle vibration from the current loop chasing
+        // measurement noise (ADC LSB + encoder quantization) when Iq_setpoint ≈ 0.
+        // Below this threshold the P term zeros and integrator freezes. Static
+        // torque uncertainty introduced is approximately deadband × torque_constant
+        // (ex: 0.1 A × 0.05 Nm/A = 5 mNm, imperceptible on a wheel).
+        // 0 = disabled (stock). Default 0.1 A (100 mA) — works for typical MKS Mini noise floor.
+        float current_control_deadband = 0.1f;  // [A]
         float inverter_temp_limit_lower = 100;
         float inverter_temp_limit_upper = 120;
 
@@ -58,6 +65,7 @@ public:
         void set_phase_inductance(float value) { phase_inductance = value; parent->update_current_controller_gains(); }
         void set_phase_resistance(float value) { phase_resistance = value; parent->update_current_controller_gains(); }
         void set_current_control_bandwidth(float value) { current_control_bandwidth = value; parent->update_current_controller_gains(); }
+        void set_current_control_deadband(float value) { current_control_deadband = value < 0.0f ? 0.0f : value; parent->update_current_controller_gains(); }
     };
 
     Motor(TIM_HandleTypeDef* timer,

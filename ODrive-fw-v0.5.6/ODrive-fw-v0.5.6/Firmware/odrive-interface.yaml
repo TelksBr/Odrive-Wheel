@@ -889,13 +889,28 @@ interfaces:
             doc: |
               The minimum phase current range expected to be measured.  This is used to set the current shunt amplifier gains.
               This should be set > `current_lim + curren_lim_margin`, but as low as possible to maximize precision and accuracy of the controller.
-          current_control_bandwidth: 
+          current_control_bandwidth:
             type: float32
             c_setter: set_current_control_bandwidth
             unit: rad/s
             doc: |
               Sets the PI gains of the Q and D axis FOC control according to `phase_resistance` and `phase_inductance` to create a critically-damped controller with a -3dB
               bandwidth at this frequency.
+          current_control_deadband:
+            type: float32
+            c_setter: set_current_control_deadband
+            unit: A
+            doc: |
+              Odrive-Wheel local mod. Dead-band on the PI error of the current
+              controller (Id and Iq). When the absolute error between commanded
+              and measured current is below this threshold, the proportional
+              term is forced to 0 and the integrator freezes. Kills idle
+              vibration produced by the PI chasing ADC and encoder quantization
+              noise when `Iq_setpoint` is near zero. Outside the band the loop
+              is bit-identical to stock, so dynamic response is unchanged.
+              Static torque uncertainty introduced is bounded by
+              `deadband * torque_constant` (typically a few mNm, imperceptible).
+              0 = disabled. Default 0.1 A (100 mA). Typical useful range 0.02 - 0.20 A.
           acim_gain_min_flux: float32
           acim_autoflux_min_Id: float32
           acim_autoflux_enable: bool

@@ -135,6 +135,25 @@ ODriveIntf::MotorIntf::Error FieldOrientedController::get_alpha_beta_output(
         float Ierr_d = Id_setpoint - Id;
         float Ierr_q = Iq_setpoint - Iq;
 
+        // PI error dead-band — Odrive-Wheel local mod.
+        //
+        // Kills idle vibration caused by the PI chasing measurement noise
+        // (ADC LSB ~10 mA + encoder quantization cross-coupling) when the
+        // commanded current is near zero. Below the threshold the proportional
+        // term is forced to 0 and the integrator freezes (because it accumulates
+        // Ierr × Ki × dt — zero Ierr means zero accumulation).
+        //
+        // Outside the band, behaviour is bit-identical to stock — no impact on
+        // dynamic response. Static torque uncertainty introduced is bounded by
+        // (deadband × torque_constant) and is typically a few mNm.
+        //
+        // 0 (default in stock) = disabled. Configured via
+        // motor.config.current_control_deadband, propagated by Motor.
+        if (current_control_deadband_ > 0.0f) {
+            if (std::abs(Ierr_d) < current_control_deadband_) Ierr_d = 0.0f;
+            if (std::abs(Ierr_q) < current_control_deadband_) Ierr_q = 0.0f;
+        }
+
         // Apply PI control (V{d,q}_setpoint act as feed-forward terms in this mode)
         mod_d = V_to_mod * (Vd + v_current_control_integral_d_ + Ierr_d * p_gain);
         mod_q = V_to_mod * (Vq + v_current_control_integral_q_ + Ierr_q * p_gain);

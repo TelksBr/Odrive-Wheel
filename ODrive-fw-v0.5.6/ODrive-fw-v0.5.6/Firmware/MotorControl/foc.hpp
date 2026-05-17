@@ -28,6 +28,12 @@ public:
 
     // Config - these values are set while this controller is inactive
     std::optional<float2D> pi_gains_; // [V/A, V/As] should be auto set after resistance and inductance measurement
+    // Dead-band on Id/Iq error: when |Ierr| < this threshold, P term is forced
+    // to 0 and the integrator freezes. Kills idle vibration from the PI chasing
+    // ADC/encoder quantization noise when Iq_setpoint ≈ 0. Trade-off: introduces
+    // a static torque uncertainty of approximately deadband * torque_constant.
+    // 0 = disabled (stock behaviour). Set via Motor::config_.current_control_deadband.
+    float current_control_deadband_ = 0.0f; // [A]
     float I_measured_report_filter_k_ = 1.0f;
 
     // Inputs

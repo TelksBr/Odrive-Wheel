@@ -343,6 +343,8 @@ void Motor::update_current_controller_gains() {
     float p_gain = config_.current_control_bandwidth * config_.phase_inductance;
     float plant_pole = config_.phase_resistance / config_.phase_inductance;
     current_control_.pi_gains_ = {p_gain, plant_pole * p_gain};
+    // Propagate PI error deadband (see motor.hpp for rationale).
+    current_control_.current_control_deadband_ = config_.current_control_deadband;
 }
 
 bool Motor::apply_config() {
