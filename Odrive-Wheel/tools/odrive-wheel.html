@@ -324,6 +324,16 @@
     font-style: normal; font-family: var(--font-mono);
     margin-left: auto;
   }
+  /* Badge RO — campo calibrado, leitura apenas */
+  .field label .ro-badge {
+    color: var(--warn); font-size: 11px;
+    background: rgba(245,158,11,.15);
+    padding: 1px 5px; border-radius: 3px;
+    font-weight: 600; letter-spacing: 0.5px;
+    font-family: var(--font-mono);
+    margin-left: 6px;
+    cursor: help;
+  }
   .field .value {
     display: flex; gap: 6px; align-items: center;
   }
@@ -1512,6 +1522,134 @@
   }
 
   /* ============================================================
+     Modal backdrop + box (NTC calculator etc)
+     ============================================================ */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 10000;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    width: min(560px, 92vw);
+    max-height: 92vh; overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-box h3 { margin: 0 0 6px; font-size: 18px; color: var(--fg); }
+  .modal-box h4 { margin: 14px 0 6px; font-size: 14px; color: var(--accent); }
+  .modal-box .muted { color: var(--fg-muted); font-size: 13px; margin: 0 0 12px; }
+  .modal-box .muted.small { font-size: 12px; margin-top: 4px; }
+  .modal-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6px 12px; align-items: center;
+    margin-top: 8px;
+  }
+  .modal-grid label { font-size: 13px; color: var(--fg-muted); }
+  .modal-grid input {
+    padding: 6px 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 4px; color: var(--fg); font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .modal-coefs {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: rgba(99,102,241,0.06);
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 6px;
+  }
+  .coefs-row {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 13px;
+    padding: 2px 0;
+  }
+  .coefs-row .mono { color: var(--accent); font-weight: 600; }
+  .modal-preview { margin-top: 12px; }
+  .modal-preview table {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--font-mono); font-size: 12px;
+  }
+  .modal-preview th, .modal-preview td {
+    padding: 4px 6px; text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-preview th { color: var(--fg-muted); font-weight: 500; }
+  .modal-actions {
+    display: flex; gap: 8px; margin-top: 16px;
+    justify-content: flex-end;
+  }
+  .modal-actions button { padding: 8px 14px; font-size: 13px; }
+
+  /* Botão "Calcular coeficientes" injetado ao lado do c0 field */
+  .ntc-calc-btn {
+    margin-left: 8px; padding: 4px 10px;
+    font-size: 12px; cursor: pointer;
+    background: var(--accent); color: white;
+    border: none; border-radius: 4px;
+  }
+  .ntc-calc-btn:hover { opacity: 0.85; }
+
+  /* Indicador de limite físico de torque (FFB Wheel tab) */
+  .maxtorque-helper {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 4px 0 6px 0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background: rgba(99,102,241,0.05);
+    border: 1px solid rgba(99,102,241,0.2);
+    font-family: var(--font-mono);
+  }
+  .maxtorque-helper.ok    { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); }
+  .maxtorque-helper.error { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.5); }
+  .maxtorque-helper b { font-weight: 600; }
+  .maxtorque-helper .status-ok    { color: var(--ok); }
+  .maxtorque-helper .status-error { color: var(--err); }
+
+  /* Banner com diagrama de fiação do termistor (aba Motor) */
+  .thermistor-wiring-banner {
+    grid-column: 1 / -1;
+    margin: 0 0 12px 0;
+    padding: 12px 16px;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 6px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .thermistor-wiring-banner pre {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--fg);
+    background: rgba(0,0,0,0.25);
+    padding: 8px 12px;
+    border-radius: 4px;
+    white-space: pre;
+  }
+  .thermistor-wiring-banner .info {
+    font-size: 13px;
+    color: var(--fg);
+  }
+  .thermistor-wiring-banner .info b { color: var(--warn); }
+  .thermistor-wiring-banner .info ul {
+    margin: 6px 0 0 18px;
+    padding: 0;
+    color: var(--fg-muted);
+    font-size: 12px;
+  }
+  .thermistor-wiring-banner .info ul li { margin: 2px 0; }
+
+  /* ============================================================
      Search hide/show — só esconde dentro do tab ATIVO. As outras abas
      ficam display:none por padrão, mas seus matches são contados e
      mostrados no badge da sidebar.
@@ -1599,6 +1737,64 @@
 <!-- ============== Toast container ============== -->
 <div id="toasts"></div>
 
+<!-- ============== NTC Calculator Modal ============== -->
+<!-- Pop-up que calcula os 4 coeficientes do polinômio do motor_thermistor
+     a partir de especificações simples do NTC (β e R@25°C). -->
+<div id="ntc-calc-backdrop" class="modal-backdrop" style="display:none">
+  <div class="modal-box">
+    <h3 data-i18n="ntc.title">Gerador de coeficientes do NTC</h3>
+    <p class="muted" data-i18n="ntc.subtitle">
+      Calcula os 4 coeficientes do polinômio T(V) usado por axis0.motor.motor_thermistor.
+      O polinômio é gerado por regressão de 3ª ordem sobre a curva físico do NTC + divisor de tensão.
+    </p>
+    <div id="ntc-pullup-warning" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--fg)" data-i18n-html="ntc.pullup_warning">
+      <b style="color:var(--warn)">⚠ Pull-up é EXTERNO</b> — instale um resistor entre Vref e o GPIO. NTC fica entre o GPIO e GND. <b>5V</b> exige pull-up ≥47kΩ pra não estourar o ADC (limite 3.6V) em temperaturas baixas; <b>3.3V</b> com 10kΩ é o setup padrão.
+    </div>
+    <div id="ntc-adc-overflow" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.5);border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--err)" data-i18n="ntc.adc_overflow_warn">
+      ⚠ Esta combinação faz V_adc passar de 3.3V em temperaturas baixas — risco de danificar o ADC. Use pull-up maior ou reduza Vref.
+    </div>
+    <div class="modal-grid">
+      <label data-i18n="ntc.beta">β (beta, K):</label>
+      <input id="ntc-beta" type="number" step="any" value="3950">
+      <label data-i18n="ntc.r25">R @ 25°C (Ω):</label>
+      <input id="ntc-r25" type="number" step="any" value="10000">
+      <label data-i18n="ntc.rpullup">Pull-up (Ω):</label>
+      <input id="ntc-rpullup" type="number" step="any" value="10000">
+      <label data-i18n="ntc.vref">V referência (V):</label>
+      <input id="ntc-vref" type="number" step="any" value="3.3">
+      <label data-i18n="ntc.tmin">Range Tmin (°C):</label>
+      <input id="ntc-tmin" type="number" step="any" value="10">
+      <label data-i18n="ntc.tmax">Range Tmax (°C):</label>
+      <input id="ntc-tmax" type="number" step="any" value="130">
+    </div>
+    <div class="modal-coefs">
+      <h4 data-i18n="ntc.coefs_title">Coeficientes gerados</h4>
+      <div class="coefs-row"><span>c0 =</span><span id="ntc-c0" class="mono">—</span></div>
+      <div class="coefs-row"><span>c1 =</span><span id="ntc-c1" class="mono">—</span></div>
+      <div class="coefs-row"><span>c2 =</span><span id="ntc-c2" class="mono">—</span></div>
+      <div class="coefs-row"><span>c3 =</span><span id="ntc-c3" class="mono">—</span></div>
+    </div>
+    <div class="modal-preview">
+      <h4 data-i18n="ntc.preview_title">Verificação (V → T)</h4>
+      <table id="ntc-preview-table">
+        <thead><tr>
+          <th title="Tensão física no pino (o que você mede com multímetro)">V_pino (V)</th>
+          <th data-i18n="ntc.preview_phys">T física</th>
+          <th data-i18n="ntc.preview_poly">T polinômio</th>
+          <th>Δ</th>
+        </tr></thead>
+        <tbody id="ntc-preview-body"></tbody>
+      </table>
+      <p class="muted small" id="ntc-fit-error" data-i18n="ntc.fit_error_hint">Erro RMS de ajuste:</p>
+    </div>
+    <div class="modal-actions">
+      <button id="ntc-recalc" class="primary" data-i18n="ntc.recalc">↻ Recalcular</button>
+      <button id="ntc-cancel" data-i18n="ntc.cancel">Cancelar</button>
+      <button id="ntc-apply" class="ok" data-i18n="ntc.apply">✓ Aplicar nos campos</button>
+    </div>
+  </div>
+</div>
+
 
 <script>
 /* =========================================================================
@@ -1665,6 +1861,37 @@ const I18N = {
     'import.applied':        '✓ Aplicados: {ok} · falhas: {fail} — clique Salvar pra persistir em NVM',
     'import.no_match':       'Nenhum campo do JSON casa com o SCHEMA atual',
     'import.progress':       'Aplicando configuração ({cur}/{total})',
+    // NTC calculator (PT)
+    'ntc.title':             'Gerador de coeficientes do NTC',
+    'ntc.subtitle':          'Calcula os 4 coeficientes do polinômio T(V) usado por axis0.motor.motor_thermistor. Polinômio gerado por regressão de 3ª ordem sobre a curva física do NTC + divisor de tensão.',
+    'ntc.beta':              'β (beta, K):',
+    'ntc.r25':               'R @ 25°C (Ω):',
+    'ntc.rpullup':           'Pull-up (Ω):',
+    'ntc.vref':              'V referência (V):',
+    'ntc.tmin':              'Range Tmin (°C):',
+    'ntc.tmax':              'Range Tmax (°C):',
+    'ntc.coefs_title':       'Coeficientes gerados',
+    'ntc.preview_title':     'Verificação (V → T)',
+    'ntc.preview_phys':      'T física',
+    'ntc.preview_poly':      'T polinômio',
+    'ntc.fit_error_hint':    'Erro RMS de ajuste:',
+    'ntc.recalc':            '↻ Recalcular',
+    'ntc.cancel':            'Cancelar',
+    'ntc.apply':             '✓ Aplicar nos campos',
+    'ntc.calc_btn_label':    '🧮 Calcular coeficientes…',
+    // Thermistor wiring banner (PT)
+    'thermistor.wiring_info':  '<b>⚠ Pull-up é EXTERNO</b> — obrigatório. Sem ele o ADC lê 0V e o polinômio retorna sempre c0.',
+    'thermistor.wiring_opt33': 'Setup padrão: <b>3.3V + 10kΩ pull-up</b> (NTC 10k @ 25°C → V≈1.65V)',
+    'thermistor.wiring_opt5':  'Alternativa: <b>5V + 47kΩ pull-up</b> (mais swing útil, ~2.5V vs 1.44V; pull-up <b>menor que 47k</b> com 5V queima o ADC em temperaturas baixas)',
+    'thermistor.wiring_test':  'Teste sem NTC: troque o termistor por um resistor fixo de mesmo valor do NTC@25°C → ADC deve ler ~50% de Vref',
+    'ntc.pullup_warning':     '<b style="color:var(--warn)">⚠ Pull-up é EXTERNO</b> — instale um resistor entre Vref e o GPIO. NTC fica entre o GPIO e GND. <b>5V</b> exige pull-up ≥47kΩ pra não estourar o ADC (limite 3.6V) em temperaturas baixas; <b>3.3V</b> com 10kΩ é o setup padrão.',
+    'ntc.adc_overflow_warn':  '⚠ Esta combinação faz V_adc passar de 3.3V em temperaturas baixas — risco de danificar o ADC. Use pull-up maior ou reduza Vref.',
+    // FFB Wheel — max torque helper (PT)
+    'ffb.maxtq_load_hint':   'Carregue valores do motor (current_lim, torque_constant) pra calcular o limite físico de torque.',
+    'ffb.maxtq_physical':    'Limite físico',
+    'ffb.maxtq_effective':   'Máximo efetivo',
+    'ffb.maxtq_ok':          'axis.maxtorque ≤ limite efetivo — OK',
+    'ffb.maxtq_saturate':    'axis.maxtorque ({max} Nm) > limite efetivo ({eff} Nm) — efeitos FFB acima de {eff} Nm vão saturar fisicamente, e o jogo calibra pra força que o motor não consegue entregar. Reduza axis.maxtorque ou aumente current_lim.',
     // Status / log (PT)
     'status.error':          'Erro',
     'status.no_webserial':   'Web Serial não suportado — use Chrome/Edge',
@@ -1811,12 +2038,13 @@ const I18N = {
     'fbt.note':        'Avisos: forças aqui são reais — segure o volante. "Parar tudo" desliga todos os efeitos. Sair da aba também para automaticamente.',
     // Inputs section (PT)
     'inputs.title':       'Entradas digitais e analógicas',
-    'inputs.subtitle':    'GPIOs 1-4 da MKS XDrive Mini configuráveis como botões ou eixos do joystick HID. Polling a 1 kHz.',
+    'inputs.subtitle':    'GPIOs 1-4 e 6 da MKS XDrive Mini configuráveis como inputs do joystick HID. GPIOs 1-4 suportam Button e Axis (têm ADC); GPIO 6 é digital, só Button. Polling a 1 kHz.',
     'inputs.gpio_label':  'GPIO',
     'inputs.mode':        'Modo',
     'inputs.mode_off':    'Desligado',
     'inputs.mode_button': 'Botão',
     'inputs.mode_axis':   'Eixo',
+    'inputs.mode_thermistor': 'Termistor (NTC)',
     'inputs.button_idx':  'Botão #',
     'inputs.axis_idx':    'Eixo',
     'inputs.invert':      'Inverter',
@@ -1835,6 +2063,10 @@ const I18N = {
     'inputs.badge_off':             'Off',
     'inputs.badge_button':          '● Configurado: botão',
     'inputs.badge_axis':            '● Configurado: eixo',
+    'inputs.badge_thermistor':      '🌡 Termistor (NTC)',
+    'inputs.thermistor_hint':       '🌡 GPIO reservado pra NTC do motor. Ajuste limites, polinômio e leia temperatura ao vivo na aba Motor.',
+    'inputs.thermistor_go_motor':   'Ir pra aba Motor →',
+    'inputs.thermistor_activated':  '🌡 GPIO {n} configurado como NTC do motor. Configure o polinômio e limites na aba Motor.',
     // DFU section (PT)
     'dfu.title': 'Atualização de Firmware via DFU',
     'dfu.subtitle': 'Reboota a placa pro bootloader STM32 e grava o .bin pelo navegador (sem dfu-util).',
@@ -1869,6 +2101,8 @@ const I18N = {
     'group.motor_type': 'Tipo / calibração',
     'group.motor_limits': 'Limites',
     'group.motor_temp': 'Temperatura',
+    'group.motor_thermistor_fet': 'Termistor FET (onboard)',
+    'group.motor_thermistor_ntc': 'Termistor do motor (NTC offboard)',
     'group.motor_ff': 'Feed-forward',
     'group.motor_acim': 'ACIM (induction only)',
     // Groups (Encoder)
@@ -1941,7 +2175,7 @@ const I18N = {
     'setup.step7_result_title':'Valores medidos pós-cal',
 
     'setup.step8_title':       'Passo 8 — Calibrar offset do encoder',
-    'setup.step8_desc':        'Alinha a fase elétrica do motor com a posição do encoder. Motor gira ~1 volta (suave). Antes de rodar, limpa erros automaticamente (sc). Após terminar, axis0.encoder.is_ready fica True.',
+    'setup.step8_desc':        '⚠ ANTES de iniciar: posicione o volante PERFEITAMENTE NO CENTRO mecânico (lock-to-lock midpoint). Esse passo gira o motor ~1 volta — se o volante estiver fora do centro, a calibração pode bater no batente físico e falhar; e a posição "zero" resultante do encoder ficará deslocada do centro real, fazendo o jogo perceber o volante torto. Alinha a fase elétrica do motor com a posição do encoder. Motor gira ~1 volta (suave). Antes de rodar, limpa erros automaticamente (sc). Após terminar, axis0.encoder.is_ready fica True.',
     'setup.step8_action':      '▶ Rodar ENCODER_OFFSET_CALIBRATION (state=7)',
 
     'setup.step9_title':       'Passo 9 — Marcar pré-calibrado e salvar',
@@ -2189,6 +2423,37 @@ const I18N = {
     'import.applied':        '✓ Applied: {ok} · failures: {fail} — click Save to persist to NVM',
     'import.no_match':       'No fields in the JSON match the current SCHEMA',
     'import.progress':       'Applying configuration ({cur}/{total})',
+    // NTC calculator (EN)
+    'ntc.title':             'NTC coefficient generator',
+    'ntc.subtitle':          'Computes the 4 coefficients of the T(V) polynomial used by axis0.motor.motor_thermistor. The polynomial is generated by 3rd-order regression over the physical NTC curve + voltage divider.',
+    'ntc.beta':              'β (beta, K):',
+    'ntc.r25':               'R @ 25°C (Ω):',
+    'ntc.rpullup':           'Pull-up (Ω):',
+    'ntc.vref':              'V reference (V):',
+    'ntc.tmin':              'Range Tmin (°C):',
+    'ntc.tmax':              'Range Tmax (°C):',
+    'ntc.coefs_title':       'Generated coefficients',
+    'ntc.preview_title':     'Sanity check (V → T)',
+    'ntc.preview_phys':      'T physical',
+    'ntc.preview_poly':      'T polynomial',
+    'ntc.fit_error_hint':    'RMS fit error:',
+    'ntc.recalc':            '↻ Recalculate',
+    'ntc.cancel':            'Cancel',
+    'ntc.apply':             '✓ Apply to fields',
+    'ntc.calc_btn_label':    '🧮 Calculate coefficients…',
+    // Thermistor wiring banner (EN)
+    'thermistor.wiring_info':  '<b>⚠ Pull-up is EXTERNAL</b> — required. Without it the ADC reads 0V and the polynomial always returns c0.',
+    'thermistor.wiring_opt33': 'Default setup: <b>3.3V + 10kΩ pull-up</b> (NTC 10k @ 25°C → V≈1.65V)',
+    'thermistor.wiring_opt5':  'Alternative: <b>5V + 47kΩ pull-up</b> (more useful swing, ~2.5V vs 1.44V; pull-up <b>smaller than 47k</b> with 5V burns the ADC at low temperatures)',
+    'thermistor.wiring_test':  'Test without NTC: replace the thermistor with a fixed resistor equal to NTC@25°C → ADC should read ~50% of Vref',
+    'ntc.pullup_warning':     '<b style="color:var(--warn)">⚠ Pull-up is EXTERNAL</b> — install a resistor between Vref and the GPIO. NTC goes between the GPIO and GND. <b>5V</b> requires pull-up ≥47kΩ to keep below the ADC limit (3.6V) at low temperatures; <b>3.3V</b> with 10kΩ is the standard setup.',
+    'ntc.adc_overflow_warn':  '⚠ This combination produces V_adc above 3.3V at low temperatures — risk of damaging the ADC. Use a larger pull-up or reduce Vref.',
+    // FFB Wheel — max torque helper (EN)
+    'ffb.maxtq_load_hint':   'Load motor values (current_lim, torque_constant) to compute the physical torque limit.',
+    'ffb.maxtq_physical':    'Physical limit',
+    'ffb.maxtq_effective':   'Effective max',
+    'ffb.maxtq_ok':          'axis.maxtorque ≤ effective limit — OK',
+    'ffb.maxtq_saturate':    'axis.maxtorque ({max} Nm) > effective limit ({eff} Nm) — FFB effects above {eff} Nm will saturate physically, and the game calibrates for torque the motor cannot deliver. Reduce axis.maxtorque or increase current_lim.',
     // Status / log (EN)
     'status.error':          'Error',
     'status.no_webserial':   'Web Serial not supported — use Chrome/Edge',
@@ -2332,12 +2597,13 @@ const I18N = {
     'fbt.note':        'Warnings: forces here are real — hold the wheel. "Stop everything" disables all effects. Leaving the tab also stops them automatically.',
     // Inputs section (EN)
     'inputs.title':       'Digital and analog inputs',
-    'inputs.subtitle':    'MKS XDrive Mini GPIOs 1-4 configurable as joystick buttons or axes via HID. Polled at 1 kHz.',
+    'inputs.subtitle':    'MKS XDrive Mini GPIOs 1-4 and 6 configurable as joystick inputs via HID. GPIOs 1-4 support Button and Axis (ADC-capable); GPIO 6 is digital, Button only. Polled at 1 kHz.',
     'inputs.gpio_label':  'GPIO',
     'inputs.mode':        'Mode',
     'inputs.mode_off':    'Off',
     'inputs.mode_button': 'Button',
     'inputs.mode_axis':   'Axis',
+    'inputs.mode_thermistor': 'Thermistor (NTC)',
     'inputs.button_idx':  'Button #',
     'inputs.axis_idx':    'Axis',
     'inputs.invert':      'Invert',
@@ -2356,6 +2622,10 @@ const I18N = {
     'inputs.badge_off':             'Off',
     'inputs.badge_button':          '● Configured: button',
     'inputs.badge_axis':            '● Configured: axis',
+    'inputs.badge_thermistor':      '🌡 Thermistor (NTC)',
+    'inputs.thermistor_hint':       '🌡 GPIO reserved for motor NTC. Adjust limits, polynomial and read live temperature in the Motor tab.',
+    'inputs.thermistor_go_motor':   'Go to Motor tab →',
+    'inputs.thermistor_activated':  '🌡 GPIO {n} configured as motor NTC. Configure the polynomial and limits in the Motor tab.',
     // DFU section (EN)
     'dfu.title': 'Firmware Update via DFU',
     'dfu.subtitle': 'Reboots the board into the STM32 bootloader and flashes the .bin from the browser (no dfu-util needed).',
@@ -2387,6 +2657,8 @@ const I18N = {
     'group.motor_type': 'Type / calibration',
     'group.motor_limits': 'Limits',
     'group.motor_temp': 'Temperature',
+    'group.motor_thermistor_fet': 'FET thermistor (onboard)',
+    'group.motor_thermistor_ntc': 'Motor thermistor (offboard NTC)',
     'group.motor_ff': 'Feed-forward',
     'group.motor_acim': 'ACIM (induction only)',
     'group.enc_mode': 'Mode / resolution',
@@ -2454,7 +2726,7 @@ const I18N = {
     'setup.step7_result_title':'Measured post-cal values',
 
     'setup.step8_title':       'Step 8 — Encoder offset calibration',
-    'setup.step8_desc':        'Aligns the motor\'s electrical phase with the encoder position. Motor spins ~1 turn (gently). Before running, errors are auto-cleared (sc). When done, axis0.encoder.is_ready turns True.',
+    'setup.step8_desc':        '⚠ BEFORE starting: position the wheel PERFECTLY AT MECHANICAL CENTER (lock-to-lock midpoint). This step spins the motor ~1 turn — if the wheel is off-center, the calibration may hit the physical end-stop and fail; and the resulting encoder "zero" will be offset from the real center, causing the game to perceive the wheel as crooked. Aligns the motor\'s electrical phase with the encoder position. Motor spins ~1 turn (gently). Before running, errors are auto-cleared (sc). When done, axis0.encoder.is_ready turns True.',
     'setup.step8_action':      '▶ Run ENCODER_OFFSET_CALIBRATION (state=7)',
 
     'setup.step9_title':       'Step 9 — Mark pre-calibrated and save',
@@ -2711,8 +2983,8 @@ const FIELD_DESC = {
     'axis0.motor.config.pole_pairs':           'Pares de polos do motor. Conta os imãs e divide por 2.',
     'axis0.motor.config.torque_constant':      'Nm/A. Calculável: 8.27 / motor_kv. Usado pra converter input_torque em corrente.',
     'axis0.motor.config.pre_calibrated':       'True = pula motor cal no boot, usa phase_resistance/inductance armazenados.',
-    'axis0.motor.config.phase_resistance':     'Resistência de fase em ohms. Medido por motor_calibration.',
-    'axis0.motor.config.phase_inductance':     'Indutância de fase em H. Medido por motor_calibration.',
+    'axis0.motor.config.phase_resistance':     'Resistência de fase em ohms. READONLY — medido por motor_calibration. Editar manualmente desalinha o tuning do PI de corrente (Kp = bw × L, Ki = bw × R). Se valor estiver errado, recalibrar.',
+    'axis0.motor.config.phase_inductance':     'Indutância de fase em H. READONLY — medido por motor_calibration. Editar manualmente desalinha o tuning do PI de corrente. Se valor estiver errado, recalibrar.',
     'axis0.motor.config.calibration_current':  'Corrente usada durante motor cal (A). 10A é seguro pra maioria.',
     'axis0.motor.config.resistance_calib_max_voltage':'Tensão máxima durante cal de R (V). Limita ruído.',
     'axis0.motor.config.requested_current_range':     'Range do ADC de corrente. Deve ser ≥ current_lim + current_lim_margin.',
@@ -2725,16 +2997,29 @@ const FIELD_DESC = {
     'axis0.motor.config.I_bus_hard_min':              'Limite duro de corrente DC negativa do motor (A). Limita regen.',
     'axis0.motor.config.I_bus_hard_max':              'Limite duro de corrente DC positiva do motor (A). Limita consumo.',
     'axis0.motor.config.I_leak_max':                  'Corrente de leak máxima permitida.',
-    'axis0.motor.config.inverter_temp_limit_lower':   'Temperatura onde corrente começa a ser reduzida.',
-    'axis0.motor.config.inverter_temp_limit_upper':   'Temperatura onde ODrive desarma.',
+    'axis0.motor.config.inverter_temp_limit_lower':   'LEGACY/DESATIVADO no ODrive 0.5.6 ("Not implemented" no YAML). Use motor.fet_thermistor.config.temp_limit_lower.',
+    'axis0.motor.config.inverter_temp_limit_upper':   'LEGACY/DESATIVADO no ODrive 0.5.6 ("Not implemented" no YAML). Use motor.fet_thermistor.config.temp_limit_upper.',
+    // FET thermistor (onboard)
+    'axis0.motor.fet_thermistor.config.enabled':          'Habilita monitoramento de temperatura do gate driver/MOSFETs (sensor onboard). Quando T cruza temp_limit_lower, current_lim é reduzido proporcionalmente até zerar em temp_limit_upper. Default: True (recomendado).',
+    'axis0.motor.fet_thermistor.config.temp_limit_lower': 'Temperatura (°C) onde o current_lim começa a ser reduzido linearmente. Default 100°C.',
+    'axis0.motor.fet_thermistor.config.temp_limit_upper': 'Temperatura (°C) onde current_lim = 0 e dispara FET_THERMISTOR_OVER_TEMP (0x4000). Default 120°C.',
+    // Motor thermistor (offboard NTC)
+    'axis0.motor.motor_thermistor.config.enabled':              'Habilita monitoramento de temperatura do motor via NTC externo. Requer NTC + pull-up no GPIO configurado em ANALOG_IN. Use o botão "Calcular coeficientes" pra gerar o polinômio a partir das specs do seu NTC.',
+    'axis0.motor.motor_thermistor.config.gpio_pin':             'GPIO físico onde o NTC está conectado. Esse pino entra em ANALOG_IN — STM32 NÃO permite pull-up interno em modo analógico (datasheet F405). VOCÊ PRECISA INSTALAR UM RESISTOR DE PULL-UP EXTERNO DE 10kΩ entre 3.3V e o GPIO; o NTC vai entre o GPIO e GND. Sem o pull-up, o ADC lê sempre 0V → polinômio retorna o termo c0 (parece "temperatura travada"). Conflita com inputs do joystick — dedica 1 GPIO. Default 4.',
+    'axis0.motor.motor_thermistor.config.temp_limit_lower':     'Temperatura (°C) onde current_lim começa a ser reduzido linearmente. Default 100°C (típico pra motor BLDC).',
+    'axis0.motor.motor_thermistor.config.temp_limit_upper':     'Temperatura (°C) onde current_lim = 0 e dispara MOTOR_THERMISTOR_OVER_TEMP (0x8000). Default 120°C.',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_0':   'c0 do polinômio T(°C) = c0 + c1·V + c2·V² + c3·V³ onde V é a tensão normalizada [0,1] do ADC. Use "Calcular coeficientes" pra gerar automaticamente.',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_1':   'c1 do polinômio (ver poly_coefficient_0).',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_2':   'c2 do polinômio (ver poly_coefficient_0).',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_3':   'c3 do polinômio (ver poly_coefficient_0).',
     // Encoder
     'axis0.encoder.config.mode':                  'Tipo de encoder: incremental, hall, SPI absoluto, sin/cos, etc.',
     'axis0.encoder.config.cpr':                   'Counts per revolution (4× pulses pra encoder em quadratura).',
-    'axis0.encoder.config.direction':             'Direção do encoder (1 ou -1). Define se sentido horário é positivo.',
+    'axis0.encoder.config.direction':             'Direção do encoder (1 ou -1). READONLY — calibrado automaticamente por motor_calibration (firmware aplica torque conhecido e mede pra qual lado o encoder responde). Editar manualmente inverte o sinal do Park transform → FOC fica com sinal trocado → motor oscila/gira errado/desarmado. Pra inverter o SENTIDO do volante do ponto de vista do usuário/jogo, use axis.invert na aba FFB Wheel.',
     'axis0.encoder.config.bandwidth':             'Banda do PLL de estimativa (Hz). Encoder ABZ típico: 100-500.',
     'axis0.encoder.config.pre_calibrated':        'True = pula offset cal no boot. Use após calibrar e salvar.',
-    'axis0.encoder.config.phase_offset':          'Offset entre encoder zero e phase A do motor (counts).',
-    'axis0.encoder.config.phase_offset_float':    'Offset em radianos (resolução fina).',
+    'axis0.encoder.config.phase_offset':          'Offset entre encoder zero e phase A do motor (counts). READONLY — calibrado por encoder_offset_calibration. Editar manualmente desalinha Park transform → motor pode oscilar ou girar errado. Se quiser inverter o sentido pro usuário, use axis.invert na aba FFB Wheel.',
+    'axis0.encoder.config.phase_offset_float':    'Offset em radianos (resolução fina). READONLY — calibrado junto com phase_offset.',
     'axis0.encoder.config.enable_phase_interpolation':'Interpolação de fase entre counts. Reduz cogging.',
     'axis0.encoder.config.use_index':             'Usa pulso index Z do encoder pra zerar.',
     'axis0.encoder.config.use_index_offset':      'Aplica offset relativo ao index.',
@@ -2849,8 +3134,8 @@ const FIELD_DESC = {
     'axis0.motor.config.pole_pairs':           'Motor pole pairs. Count magnets, divide by 2.',
     'axis0.motor.config.torque_constant':      'Nm/A. Calc: 8.27 / motor_kv. Used to convert input_torque to current.',
     'axis0.motor.config.pre_calibrated':       'True = skips motor cal at boot, uses stored phase_resistance/inductance.',
-    'axis0.motor.config.phase_resistance':     'Phase resistance in ohms. Measured by motor_calibration.',
-    'axis0.motor.config.phase_inductance':     'Phase inductance in H. Measured by motor_calibration.',
+    'axis0.motor.config.phase_resistance':     'Phase resistance in ohms. READONLY — measured by motor_calibration. Manually editing breaks the current PI tuning (Kp = bw × L, Ki = bw × R). If wrong, re-run calibration.',
+    'axis0.motor.config.phase_inductance':     'Phase inductance in H. READONLY — measured by motor_calibration. Manually editing breaks the current PI tuning. If wrong, re-run calibration.',
     'axis0.motor.config.calibration_current':  'Current used during motor cal (A). 10A safe for most.',
     'axis0.motor.config.resistance_calib_max_voltage':'Max voltage during R cal (V). Limits noise.',
     'axis0.motor.config.requested_current_range':     'Current ADC range. Must be ≥ current_lim + current_lim_margin.',
@@ -2863,15 +3148,28 @@ const FIELD_DESC = {
     'axis0.motor.config.I_bus_hard_min':              'Hard limit on motor negative DC current (A). Limits regen.',
     'axis0.motor.config.I_bus_hard_max':              'Hard limit on motor positive DC current (A). Limits consumption.',
     'axis0.motor.config.I_leak_max':                  'Max allowed leak current.',
-    'axis0.motor.config.inverter_temp_limit_lower':   'Temp where current begins to be reduced.',
-    'axis0.motor.config.inverter_temp_limit_upper':   'Temp where ODrive disarms.',
+    'axis0.motor.config.inverter_temp_limit_lower':   'LEGACY / NOT IMPLEMENTED on ODrive 0.5.6 (per YAML). Use motor.fet_thermistor.config.temp_limit_lower.',
+    'axis0.motor.config.inverter_temp_limit_upper':   'LEGACY / NOT IMPLEMENTED on ODrive 0.5.6 (per YAML). Use motor.fet_thermistor.config.temp_limit_upper.',
+    // FET thermistor (onboard)
+    'axis0.motor.fet_thermistor.config.enabled':          'Enables monitoring of gate driver / MOSFET temperature (onboard sensor). When T crosses temp_limit_lower, current_lim is progressively reduced down to 0 at temp_limit_upper. Default: True (recommended).',
+    'axis0.motor.fet_thermistor.config.temp_limit_lower': 'Temperature (°C) where current_lim begins to be reduced linearly. Default 100°C.',
+    'axis0.motor.fet_thermistor.config.temp_limit_upper': 'Temperature (°C) where current_lim reaches 0 and triggers FET_THERMISTOR_OVER_TEMP (0x4000). Default 120°C.',
+    // Motor thermistor (offboard NTC)
+    'axis0.motor.motor_thermistor.config.enabled':              'Enables motor temperature monitoring via an external NTC. Requires NTC + pull-up on the GPIO configured as ANALOG_IN. Use the "Calculate coefficients" button to generate the polynomial from your NTC spec.',
+    'axis0.motor.motor_thermistor.config.gpio_pin':             'GPIO where the NTC is connected. The pin is set to ANALOG_IN — STM32 does NOT allow an internal pull-up in analog mode (F405 datasheet). YOU MUST INSTALL AN EXTERNAL 10kΩ PULL-UP between 3.3V and the GPIO; the NTC goes between the GPIO and GND. Without the pull-up, the ADC always reads 0V → polynomial returns the c0 term (looks like "stuck temperature"). Conflicts with joystick inputs — dedicate 1 GPIO. Default 4.',
+    'axis0.motor.motor_thermistor.config.temp_limit_lower':     'Temperature (°C) where current_lim begins to be reduced linearly. Default 100°C (typical for BLDC).',
+    'axis0.motor.motor_thermistor.config.temp_limit_upper':     'Temperature (°C) where current_lim reaches 0 and triggers MOTOR_THERMISTOR_OVER_TEMP (0x8000). Default 120°C.',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_0':   'c0 of polynomial T(°C) = c0 + c1·V + c2·V² + c3·V³ where V is the normalized [0,1] ADC voltage. Use "Calculate coefficients" to generate automatically.',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_1':   'c1 of polynomial (see poly_coefficient_0).',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_2':   'c2 of polynomial (see poly_coefficient_0).',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_3':   'c3 of polynomial (see poly_coefficient_0).',
     'axis0.encoder.config.mode':                  'Encoder type: incremental, hall, SPI absolute, sin/cos, etc.',
     'axis0.encoder.config.cpr':                   'Counts per revolution (4× pulses for quadrature encoder).',
-    'axis0.encoder.config.direction':             'Encoder direction (1 or -1). Defines whether clockwise is positive.',
+    'axis0.encoder.config.direction':             'Encoder direction (1 or -1). READONLY — calibrated automatically by motor_calibration (firmware applies known torque and measures which way the encoder responds). Manually editing flips the sign in the Park transform → FOC sees inverted sign → motor oscillates / spins wrong / disarms. To flip the wheel direction from the user/game perspective, use axis.invert in the FFB Wheel tab.',
     'axis0.encoder.config.bandwidth':             'PLL estimator bandwidth (Hz). Typical ABZ encoder: 100-500.',
     'axis0.encoder.config.pre_calibrated':        'True = skips offset cal at boot. Use after calibrating and saving.',
-    'axis0.encoder.config.phase_offset':          'Offset between encoder zero and motor phase A (counts).',
-    'axis0.encoder.config.phase_offset_float':    'Offset in radians (fine resolution).',
+    'axis0.encoder.config.phase_offset':          'Offset between encoder zero and motor phase A (counts). READONLY — calibrated by encoder_offset_calibration. Manually editing breaks the Park transform → motor may oscillate or spin the wrong way. To invert the user-facing direction use axis.invert in the FFB Wheel tab.',
+    'axis0.encoder.config.phase_offset_float':    'Offset in radians (fine resolution). READONLY — calibrated together with phase_offset.',
     'axis0.encoder.config.enable_phase_interpolation':'Phase interpolation between counts. Reduces cogging.',
     'axis0.encoder.config.use_index':             'Uses encoder Z index pulse to zero.',
     'axis0.encoder.config.use_index_offset':      'Applies offset relative to index.',
@@ -2977,8 +3275,14 @@ const FIELD_RANGE = {
   'axis0.motor.config.I_bus_hard_min':              '-inf..0 A',
   'axis0.motor.config.I_bus_hard_max':              '0–inf A',
   'axis0.motor.config.I_leak_max':                  '0.01–1 A',
-  'axis0.motor.config.inverter_temp_limit_lower':   '50–120 °C',
-  'axis0.motor.config.inverter_temp_limit_upper':   '60–125 °C',
+  'axis0.motor.config.inverter_temp_limit_lower':   '50–120 °C (legacy)',
+  'axis0.motor.config.inverter_temp_limit_upper':   '60–125 °C (legacy)',
+  // Thermistors
+  'axis0.motor.fet_thermistor.config.temp_limit_lower':    '50–120 °C',
+  'axis0.motor.fet_thermistor.config.temp_limit_upper':    '60–125 °C',
+  'axis0.motor.motor_thermistor.config.gpio_pin':          '1–8 (ANALOG_IN)',
+  'axis0.motor.motor_thermistor.config.temp_limit_lower':  '50–120 °C',
+  'axis0.motor.motor_thermistor.config.temp_limit_upper':  '60–150 °C',
 
   // Encoder
   'axis0.encoder.config.cpr':                       '1–1000000',
@@ -3068,6 +3372,12 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });
+  // data-i18n-html: strings que contêm tags <b>, <code>, etc. são inseridas
+  // via innerHTML em vez de textContent. Use SOMENTE pra strings literais do
+  // dicionário i18n (nunca pra dados de usuário) pra evitar XSS.
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     el.title = t(el.dataset.i18nTitle);
   });
@@ -3144,7 +3454,9 @@ const GROUP_KEY_MAP = {
   // Motor
   'Tipo / calibração':                     'group.motor_type',
   'Limites':                               'group.motor_limits',
-  'Temperatura':                           'group.motor_temp',
+  'Temperatura':                           'group.motor_temp',  // legacy, mantido por compat
+  'Termistor FET (onboard)':               'group.motor_thermistor_fet',
+  'Termistor do motor (NTC offboard)':     'group.motor_thermistor_ntc',
   'Feed-forward':                          'group.motor_ff',
   'ACIM (induction only)':                 'group.motor_acim',
   // Encoder
@@ -3220,7 +3532,26 @@ const ICMD = (displayName, fullPath, protocol, type) => ({
   _path: fullPath,
   _protocol: protocol || 'offb',
 });
-const RO = (name, type) => ({ name, type, readonly: true });
+// Helpers READONLY pra campos que são RESULTADO de calibração ou estado
+// runtime — não devem ser editados manualmente pelo usuário (editar quebra
+// o alinhamento da calibração ou são apenas leitura no firmware).
+// O renderer:
+//   - desabilita o input
+//   - esconde o botão "✓" de gravar
+//   - mostra badge "RO" no label
+// Continua exportando/importando em JSON normalmente (pra backup/clone).
+const F_RO = (name, displayName) => ({ name, type: 'float', displayName, readonly: true });
+const I_RO = (name, displayName) => ({ name, type: 'int',   displayName, readonly: true });
+const B_RO = (name, displayName) => ({ name, type: 'bool',  displayName, readonly: true });
+const E_RO = (name, opts, displayName) => ({ name, type: 'enum', opts, displayName, readonly: true });
+const RO = (name, type) => ({ name, type, readonly: true });  // legacy, mantido por compat
+
+// Helpers EXTENDED (FX/IX/BX) — pra campos que vivem fora do prefix da
+// tab atual (ex: motor.motor_thermistor.config.* dentro da aba Motor que
+// tem prefix motor.config.*). Path completo é passado direto.
+const FX = (path, displayName) => ({ name: path.split('.').pop(), type: 'float', displayName, _path: path });
+const IX = (path, displayName) => ({ name: path.split('.').pop(), type: 'int',   displayName, _path: path });
+const BX = (path, displayName) => ({ name: path.split('.').pop(), type: 'bool',  displayName, _path: path });
 
 // Sidebar visual grouping. Items must reference SCHEMA tab IDs.
 // Order here defines order in the sidebar (independent of SCHEMA order).
@@ -3361,8 +3692,8 @@ const SCHEMA = [
       I('pole_pairs'),
       F('torque_constant'),
       B('pre_calibrated'),
-      F('phase_resistance'),
-      F('phase_inductance'),
+      F_RO('phase_resistance'),    // medido por motor_calibration — NÃO editar manualmente
+      F_RO('phase_inductance'),    // medido por motor_calibration — NÃO editar manualmente
       F('calibration_current'),
       F('resistance_calib_max_voltage'),
       F('requested_current_range'),
@@ -3378,9 +3709,30 @@ const SCHEMA = [
       F('I_bus_hard_max'),
       F('I_leak_max'),
 
-      { group: 'Temperatura' },
-      F('inverter_temp_limit_lower'),
-      F('inverter_temp_limit_upper'),
+      // === Termistores ===
+      // ODrive 0.5.6 expõe DOIS termistores:
+      //   - FET (onboard) = sensor de temperatura do gate driver/MOSFETs
+      //   - Motor (offboard) = NTC externo conectado num GPIO ANALOG_IN
+      // Ambos fazem CURRENT DERATING progressivo entre lower e upper:
+      //   - T < lower → current_lim normal
+      //   - lower < T < upper → current_lim cai linear até 0
+      //   - T ≥ upper + 5°C → erro FET_THERMISTOR_OVER_TEMP / MOTOR_THERMISTOR_OVER_TEMP
+      // motor.config.inverter_temp_limit_* (versão legacy) foi REMOVIDO daqui
+      // — está marcado como "Not implemented" no YAML do ODrive.
+      { group: 'Termistor FET (onboard)' },
+      BX('axis0.motor.fet_thermistor.config.enabled',          'enabled'),
+      FX('axis0.motor.fet_thermistor.config.temp_limit_lower', 'temp_limit_lower (°C)'),
+      FX('axis0.motor.fet_thermistor.config.temp_limit_upper', 'temp_limit_upper (°C)'),
+
+      { group: 'Termistor do motor (NTC offboard)' },
+      BX('axis0.motor.motor_thermistor.config.enabled',              'enabled'),
+      IX('axis0.motor.motor_thermistor.config.gpio_pin',             'GPIO pin (ANALOG_IN)'),
+      FX('axis0.motor.motor_thermistor.config.temp_limit_lower',     'temp_limit_lower (°C)'),
+      FX('axis0.motor.motor_thermistor.config.temp_limit_upper',     'temp_limit_upper (°C)'),
+      FX('axis0.motor.motor_thermistor.config.poly_coefficient_0',   'Polynomial c0'),
+      FX('axis0.motor.motor_thermistor.config.poly_coefficient_1',   'Polynomial c1'),
+      FX('axis0.motor.motor_thermistor.config.poly_coefficient_2',   'Polynomial c2'),
+      FX('axis0.motor.motor_thermistor.config.poly_coefficient_3',   'Polynomial c3'),
 
       { group: 'Feed-forward' },
       B('R_wL_FF_enable'),
@@ -3400,11 +3752,11 @@ const SCHEMA = [
       { group: 'Modo / resolução' },
       E('mode', ENUM_ENCODER_MODE),
       I('cpr'),
-      I('direction'),
+      I_RO('direction'),                // calibrado por motor_calibration — inverter pelo axis.invert, NÃO aqui
       F('bandwidth'),
       B('pre_calibrated'),
-      I('phase_offset'),
-      F('phase_offset_float'),
+      I_RO('phase_offset'),             // calibrado por encoder_offset_calibration
+      F_RO('phase_offset_float'),       // idem (resolução fina)
       B('enable_phase_interpolation'),
 
       { group: 'Index / offset' },
@@ -4189,13 +4541,36 @@ function buildDFUHTML() {
      gpio.<inst>.cur?    leitura raw atual (0/1 botão, 0..4095 eixo)
    Polling de live indicator: 200 ms quando aba ativa.
    ========================================================================= */
-const INPUTS_GPIOS = [1, 2, 3, 4];
-const INPUTS_PIN_NAMES = { 1: 'PA0 (ADC1_IN0)', 2: 'PA1 (ADC1_IN1)', 3: 'PA2 (ADC1_IN2)', 4: 'PA3 (ADC1_IN3)' };
+// GPIOs externos da MKS XDrive Mini disponíveis pra inputs.
+// `adc: true`  → suporta Button E Axis (pino tem canal ADC)
+// `adc: false` → SÓ Button (digital only — pino sem ADC no STM32F405)
+const INPUTS_GPIO_CAPS = {
+  1: { adc: true,  name: 'PA0 (ADC1_IN0)' },
+  2: { adc: true,  name: 'PA1 (ADC1_IN1)' },
+  3: { adc: true,  name: 'PA2 (ADC1_IN2)' },
+  4: { adc: true,  name: 'PA3 (ADC1_IN3)' },
+  6: { adc: false, name: 'PB2 (digital only)' },
+};
+const INPUTS_GPIOS = Object.keys(INPUTS_GPIO_CAPS).map(Number);
+const INPUTS_PIN_NAMES = Object.fromEntries(
+  Object.entries(INPUTS_GPIO_CAPS).map(([k, v]) => [k, v.name])
+);
 const INPUTS_AXIS_NAMES = ['Rx', 'Ry', 'Rz', 'Slider'];
 let inputsPollTimer = null;
 
 function buildInputsHTML() {
-  const cards = INPUTS_GPIOS.map(i => `
+  const cards = INPUTS_GPIOS.map(i => {
+    const hasAdc = INPUTS_GPIO_CAPS[i].adc;
+    const axisOption = hasAdc
+      ? '<option value="2" data-i18n="inputs.mode_axis">Axis</option>'
+      : '';   // GPIO sem ADC: omite opção Axis pra evitar config inválida
+    // Thermistor mode (=3) é UI-only — não existe no firmware GPIO mode (que é 0/1/2).
+    // Selecionar dispara: motor_thermistor.gpio_pin = i + enabled = True + firmware GPIO mode = 0.
+    // Só faz sentido em pinos com ADC (NTC precisa de leitura analógica).
+    const thermistorOption = hasAdc
+      ? '<option value="3" data-i18n="inputs.mode_thermistor">Thermistor (NTC)</option>'
+      : '';
+    return `
     <div class="gpio-card" id="gpio-card-${i}">
       <h4>
         <span data-i18n="inputs.gpio_label">GPIO</span> ${i}
@@ -4207,8 +4582,19 @@ function buildInputsHTML() {
         <select data-gpio="${i}" data-field="mode">
           <option value="0" data-i18n="inputs.mode_off">Off</option>
           <option value="1" data-i18n="inputs.mode_button">Button</option>
-          <option value="2" data-i18n="inputs.mode_axis">Axis</option>
+          ${axisOption}
+          ${thermistorOption}
         </select>
+      </div>
+      <div class="row" data-show-when="thermistor" style="background:rgba(245,158,11,.08);padding:8px 10px;border-radius:6px;border:1px solid rgba(245,158,11,.3)">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--fg)" data-i18n="inputs.thermistor_hint">
+            🌡 GPIO reservado pra NTC. Ajuste limites e polinômio na aba Motor.
+          </span>
+          <button class="primary" data-gpio="${i}" data-field="go-motor" style="padding:4px 10px;font-size:12px" data-i18n="inputs.thermistor_go_motor">
+            Ir pra aba Motor →
+          </button>
+        </div>
       </div>
       <div class="row" data-show-when="button">
         <label data-i18n="inputs.button_idx">Button #</label>
@@ -4244,13 +4630,14 @@ function buildInputsHTML() {
         <span class="value" id="gpio-val-${i}">—</span>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   return `
     <div class="debug-section" style="grid-column:1/-1;">
       <h3 data-i18n="inputs.title">Entradas digitais e analógicas</h3>
       <p style="color:var(--fg-muted);font-size:16px;margin:0;" data-i18n="inputs.subtitle">
-        GPIOs 1-4 da MKS XDrive Mini configuráveis como botões ou eixos do joystick HID.
+        GPIOs 1-4 e 6 da MKS XDrive Mini configuráveis como botões/eixos do joystick HID. GPIO 6 só suporta Button (digital).
       </p>
     </div>
 
@@ -4276,12 +4663,15 @@ function buildInputsHTML() {
 function wireInputsTab() {
   if (!document.getElementById('gpio-card-1')) return;
 
-  // Helper pra atualizar visibilidade dos rows + badge baseado no modo
+  // Helper pra atualizar visibilidade dos rows + badge baseado no modo.
+  // Modes: 0=Off, 1=Button, 2=Axis, 3=Thermistor(UI-only — escreve motor_thermistor).
   const refreshVisibility = (cardEl, mode) => {
     cardEl.classList.toggle('active', mode !== '0');
     cardEl.querySelectorAll('[data-show-when]').forEach(el => {
       const want = el.dataset.showWhen;
-      const show = (want === 'button' && mode === '1') || (want === 'axis' && mode === '2');
+      const show = (want === 'button'     && mode === '1')
+                || (want === 'axis'       && mode === '2')
+                || (want === 'thermistor' && mode === '3');
       el.style.display = show ? '' : 'none';
     });
     // Badge no header do card
@@ -4289,6 +4679,7 @@ function wireInputsTab() {
     if (badge) {
       const key = mode === '1' ? 'inputs.badge_button'
                 : mode === '2' ? 'inputs.badge_axis'
+                : mode === '3' ? 'inputs.badge_thermistor'
                 : 'inputs.badge_off';
       badge.dataset.i18n = key;
       badge.textContent = t(key);
@@ -4325,6 +4716,25 @@ function wireInputsTab() {
 
   const reload = async () => {
     if (!writer) return;
+    // Lê estado atual do motor_thermistor pra detectar se algum GPIO está
+    // configurado como NTC (override visual do mode firmware pra mode=3).
+    // Tolera múltiplos formatos de bool ODrive ("True"/"true"/"1") + trim
+    // de whitespace pra evitar falsos negativos por bug de protocolo.
+    let thermistorGpio = -1;
+    try {
+      const enRaw = await readProp('axis0.motor.motor_thermistor.config.enabled');
+      const en    = (enRaw || '').trim().toLowerCase();
+      const isOn  = (en === 'true' || en === '1');
+      if (isOn) {
+        const gpRaw = await readProp('axis0.motor.motor_thermistor.config.gpio_pin');
+        const gpNum = parseInt((gpRaw || '').trim(), 10);
+        if (isFinite(gpNum)) thermistorGpio = gpNum;
+      }
+      logLine('inputs reload: thermistor enabled=' + enRaw + ' gpio_pin=' + thermistorGpio, 'info');
+    } catch (e) {
+      logLine('inputs reload: motor_thermistor read fail: ' + e.message, 'err');
+    }
+
     for (const i of INPUTS_GPIOS) {
       const card = document.getElementById('gpio-card-' + i);
       if (!card) continue;
@@ -4340,9 +4750,18 @@ function wireInputsTab() {
       const parse = (r) => { if (!r) return null; const x = r.match(/\|(-?\d+)\]/); return x ? x[1] : null; };
       const mv = parse(m), ixv = parse(ix), ivv = parse(iv), amv = parse(am), axv = parse(ax);
 
-      if (mv !== null) {
-        card.querySelector('[data-field="mode"]').value = mv;
-        refreshVisibility(card, mv);
+      // Se motor_thermistor.gpio_pin aponta pra ESTE GPIO e está enabled,
+      // override visual: mostra como mode=3 (Thermistor), mesmo que firmware
+      // diga 0/1/2 (UI-only mode).
+      let effectiveMode = mv;
+      if (thermistorGpio === i && INPUTS_GPIO_CAPS[i] && INPUTS_GPIO_CAPS[i].adc) {
+        effectiveMode = '3';
+      }
+      if (effectiveMode !== null) {
+        const modeSel = card.querySelector('[data-field="mode"]');
+        modeSel.value = effectiveMode;
+        modeSel.dataset.lastMode = effectiveMode;   // pra detectar transição DE Thermistor
+        refreshVisibility(card, effectiveMode);
       }
       if (ixv !== null) {
         // idx é um valor único; exibido em button-idx ou axis-idx conforme mode
@@ -4354,6 +4773,42 @@ function wireInputsTab() {
       if (ivv !== null) card.querySelector('[data-field="invert"]').checked = ivv === '1';
       if (amv !== null) card.querySelector('[data-field="amin"]').value = amv;
       if (axv !== null) card.querySelector('[data-field="amax"]').value = axv;
+    }
+  };
+
+  // Helper: ativa/desativa motor_thermistor pra um GPIO específico.
+  // Quando ativando:
+  //   1. Configura axis0.config.gpioN_mode = 3 (ANALOG_IN) — CRÍTICO!
+  //      Sem isso, ODrive deixa o pino em modo default (digital input) e
+  //      a leitura ADC fica corrompida → temperatura sai sempre errada.
+  //   2. Escreve gpio_pin = N + enabled = True no motor_thermistor
+  // Quando desativando: enabled = False + restaura gpio_mode pra 0 (digital).
+  const setThermistor = async (gpioNum, enable) => {
+    if (!writer) return false;
+    const ODRIVE_GPIO_MODE_ANALOG_IN = 3;
+    const ODRIVE_GPIO_MODE_DIGITAL   = 0;
+    try {
+      if (enable) {
+        // Ordem importa: configura o pino como analog ANTES de habilitar o termistor
+        await writeProp('config.gpio' + gpioNum + '_mode', ODRIVE_GPIO_MODE_ANALOG_IN);
+        await writeProp('axis0.motor.motor_thermistor.config.gpio_pin', gpioNum);
+        await writeProp('axis0.motor.motor_thermistor.config.enabled',  'True');
+      } else {
+        // Desativa o termistor primeiro (libera o pino), depois volta o mode
+        await writeProp('axis0.motor.motor_thermistor.config.enabled',  'False');
+        await writeProp('config.gpio' + gpioNum + '_mode', ODRIVE_GPIO_MODE_DIGITAL);
+      }
+      // Reflete no SCHEMA da aba Motor pra UX consistente quando user visitar.
+      const inpGpio = document.getElementById('in-axis0.motor.motor_thermistor.config.gpio_pin');
+      const inpEn   = document.getElementById('in-axis0.motor.motor_thermistor.config.enabled');
+      const inpMode = document.getElementById('in-config.gpio' + gpioNum + '_mode');
+      if (enable && inpGpio) { inpGpio.value = String(gpioNum); markDirty(inpGpio); }
+      if (inpEn)             { inpEn.checked = enable;          markDirty(inpEn); }
+      if (inpMode)           { inpMode.value = String(enable ? ODRIVE_GPIO_MODE_ANALOG_IN : ODRIVE_GPIO_MODE_DIGITAL); markDirty(inpMode); }
+      return true;
+    } catch (e) {
+      logLine('setThermistor fail: ' + e.message, 'err');
+      return false;
     }
   };
 
@@ -4380,15 +4835,55 @@ function wireInputsTab() {
     const capMax   = card.querySelector('[data-field="capture-max"]');
 
     modeSel.addEventListener('change', async () => {
-      const v = modeSel.value;
-      refreshVisibility(card, v);
-      await sendSet(i, 'mode', v);
+      const newMode = modeSel.value;
+      const oldMode = modeSel.dataset.lastMode || '0';
+      refreshVisibility(card, newMode);
+      modeSel.dataset.lastMode = newMode;
+
+      // Transição PARA Thermistor (mode=3 UI-only):
+      //   1. desativa GPIO no firmware (gpio.N.mode=0) pra liberar o pino
+      //   2. configura motor_thermistor.gpio_pin = N + enabled = True
+      //   3. troca pra aba Motor + toast com instruções
+      if (newMode === '3') {
+        await sendSet(i, 'mode', '0');   // firmware GPIO = disabled
+        const ok = await setThermistor(i, true);
+        if (ok) {
+          toast(t('inputs.thermistor_activated').replace('{n}', i), 'ok');
+          // Vai pra aba Motor — usuário ajusta polinômio + limites lá
+          selectTab('motor');
+          // Scroll até a seção do termistor
+          setTimeout(() => {
+            const el = document.getElementById('in-axis0.motor.motor_thermistor.config.enabled');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 200);
+        }
+        return;
+      }
+
+      // Transição DE Thermistor pra outro modo:
+      // Desabilita motor_thermistor primeiro (libera o ODrive), depois aplica novo mode no firmware.
+      if (oldMode === '3') {
+        await setThermistor(i, false);
+      }
+      await sendSet(i, 'mode', newMode);
     });
     idxBtn.addEventListener('change', () => sendSet(i, 'idx', idxBtn.value));
     idxAxis.addEventListener('change', () => sendSet(i, 'idx', idxAxis.value));
     invertCk.addEventListener('change', () => sendSet(i, 'invert', invertCk.checked ? '1' : '0'));
     aminIn.addEventListener('change', () => sendSet(i, 'amin', aminIn.value));
     amaxIn.addEventListener('change', () => sendSet(i, 'amax', amaxIn.value));
+
+    // Botão "Ir pra aba Motor" (aparece só quando mode=Thermistor)
+    const goMotorBtn = card.querySelector('[data-field="go-motor"]');
+    if (goMotorBtn) {
+      goMotorBtn.addEventListener('click', () => {
+        selectTab('motor');
+        setTimeout(() => {
+          const el = document.getElementById('in-axis0.motor.motor_thermistor.config.enabled');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 200);
+      });
+    }
 
     // "Capture min/max": lê valor atual via gpio.N.cur? e seta amin/amax local + remoto
     capMin.addEventListener('click', async () => {
@@ -4491,6 +4986,43 @@ function wireInputsTab() {
 
   // Expose pra fora (caso queira chamar reload depois de connect)
   window.inputsReload = reload;
+
+  // Refresh visual dos cards GPIO usando os valores JÁ POPULADOS dos SCHEMA
+  // fields (sem novos reads do device). Chamado pelo readAll() global no fim
+  // do ciclo de leitura, pra propagar mudanças em motor_thermistor pros cards
+  // da aba Inputs (modo Thermistor é UI-only, derivado desses 2 valores).
+  // Diferente de reload(), NÃO faz device round-trip — só re-classifica
+  // baseado no DOM atual.
+  window.inputsRefreshFromSchema = () => {
+    const enInp = document.getElementById('in-axis0.motor.motor_thermistor.config.enabled');
+    const gpInp = document.getElementById('in-axis0.motor.motor_thermistor.config.gpio_pin');
+    if (!enInp || !gpInp) return;
+    const thermEnabled = !!enInp.checked;
+    const thermGpio = parseInt(gpInp.value, 10);
+    for (const i of INPUTS_GPIOS) {
+      const card = document.getElementById('gpio-card-' + i);
+      if (!card) continue;
+      const modeSel = card.querySelector('[data-field="mode"]');
+      if (!modeSel) continue;
+      // Se este GPIO está marcado como termistor no motor_thermistor → mode=3.
+      // Senão, mantém o valor atual do firmware GPIO mode (já populado pelo
+      // ciclo de read direto do gpio_inputs, OU pelo reload() prévio).
+      if (thermEnabled && thermGpio === i && INPUTS_GPIO_CAPS[i] && INPUTS_GPIO_CAPS[i].adc) {
+        if (modeSel.value !== '3') {
+          modeSel.value = '3';
+          modeSel.dataset.lastMode = '3';
+          refreshVisibility(card, '3');
+        }
+      } else if (modeSel.value === '3') {
+        // GPIO estava marcado como termistor antes mas motor_thermistor agora
+        // diz outro GPIO (ou disabled). Volta pra Off — usuário precisará
+        // reconfigurar se quiser.
+        modeSel.value = '0';
+        modeSel.dataset.lastMode = '0';
+        refreshVisibility(card, '0');
+      }
+    }
+  };
 }
 
 /* =========================================================================
@@ -8613,7 +9145,8 @@ function buildTabs() {
       labelEl.innerHTML = labelText +
         '<span class="type">(' + fld.type +
         (fld.opts ? ' ['+Object.keys(fld.opts).length+']' : '') + ')</span>' +
-        (range ? '<span class="range">[' + range + ']</span>' : '');
+        (range ? '<span class="range">[' + range + ']</span>' : '') +
+        (fld.readonly ? '<span class="ro-badge" title="Read-only — calibrated automatically, do not edit manually">RO</span>' : '');
       labelEl.htmlFor = 'in-' + path;
 
       const valWrap = document.createElement('div');
@@ -8639,22 +9172,38 @@ function buildTabs() {
       input.dataset.type = fld.type;
       input.dataset.protocol = fld._protocol || tab.protocol || 'odrv';
       input.dataset.currentServerValue = '';
-      input.addEventListener('input', () => markDirty(input));
-      input.addEventListener('change', () => markDirty(input));
+      // Readonly: input visível mas não editável. JSON import/export e readback
+      // continuam funcionando — só edição manual + botão "✓" são bloqueados.
+      if (fld.readonly) {
+        input.dataset.readonly = '1';
+        if (fld.type === 'bool' || fld.type === 'enum') {
+          input.disabled = true;
+        } else {
+          input.readOnly = true;
+        }
+        input.style.opacity = '0.6';
+        input.style.cursor = 'not-allowed';
+      } else {
+        input.addEventListener('input', () => markDirty(input));
+        input.addEventListener('change', () => markDirty(input));
+      }
 
       const btnRead = document.createElement('button');
       btnRead.textContent = '↻';
       btnRead.title = 'Ler do device';
       btnRead.onclick = () => readOne(input);
 
-      const btnWrite = document.createElement('button');
-      btnWrite.textContent = '✓';
-      btnWrite.title = 'Gravar no device';
-      btnWrite.onclick = () => writeOne(input);
-
       valWrap.appendChild(input);
       valWrap.appendChild(btnRead);
-      valWrap.appendChild(btnWrite);
+      // Botão write só pra campos editáveis. Calibração não tem como ser
+      // "escrita à mão" — usar Erase + recalibrar se algo estiver errado.
+      if (!fld.readonly) {
+        const btnWrite = document.createElement('button');
+        btnWrite.textContent = '✓';
+        btnWrite.title = 'Gravar no device';
+        btnWrite.onclick = () => writeOne(input);
+        valWrap.appendChild(btnWrite);
+      }
       // Cada par label+value vai num <div class="field"> — isso faz cada
       // par virar um único item do grid #content (repeat auto-fit minmax 440px).
       // Sem wrapper, em monitor wide com 3 colunas, label e value de fields
@@ -10092,6 +10641,19 @@ async function readAll() {
     n++;
   }
   logLine('--- readAll: ' + n + ' fields ---');
+
+  // Sincroniza cards da aba Inputs — readAll só atualiza os SCHEMA fields da
+  // aba Motor; sem isso, um GPIO configurado como NTC continua mostrando
+  // mode=0 (Off) na aba Inputs. Usa inputsReload (que lê direto do device:
+  // gpio_inputs.mode + motor_thermistor.enabled/gpio_pin) — mais robusto que
+  // o refresh-from-schema, que tinha sync issues com checkbox state.
+  if (typeof window.inputsReload === 'function') {
+    await window.inputsReload();
+  }
+  // Atualiza o helper de Max Torque (precisa dos valores recém-lidos do motor)
+  if (typeof window.refreshMaxTorqueHelper === 'function') {
+    window.refreshMaxTorqueHelper();
+  }
 }
 
 // Paths que aparecem no SCHEMA mas são READONLY no firmware do ODrive.
@@ -10450,6 +11012,20 @@ document.getElementById('file-import').onchange = (e) => {
   }
 };
 
+// NTC calculator modal — wire-up dos botões internos + close on backdrop click.
+document.getElementById('ntc-cancel').onclick = ntcCalcClose;
+document.getElementById('ntc-apply').onclick  = ntcCalcApply;
+document.getElementById('ntc-recalc').onclick = _ntcRefreshModal;
+document.getElementById('ntc-calc-backdrop').addEventListener('click', (e) => {
+  // Click fora da box (no backdrop diretamente) fecha
+  if (e.target.id === 'ntc-calc-backdrop') ntcCalcClose();
+});
+// Recalcula em tempo real quando user muda qualquer input
+['ntc-beta', 'ntc-r25', 'ntc-rpullup', 'ntc-vref', 'ntc-tmin', 'ntc-tmax'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', _ntcRefreshModal);
+});
+
 buildTabs();
 initDebugTab();
 wireFFBLive();
@@ -10460,6 +11036,143 @@ wireFFBTestTab();
 wireOverlayTab();
 wirePerfTestTab();
 wireSetupTab();
+
+// Injeta o botão "🧮 Calcular coeficientes" do lado do campo poly_coefficient_0
+// na aba Motor. Roda após buildTabs() ter populado o DOM dos schema fields.
+(function injectNtcCalcButton() {
+  const c0Path = 'axis0.motor.motor_thermistor.config.poly_coefficient_0';
+  const inp = document.getElementById('in-' + c0Path);
+  if (!inp) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'ntc-calc-btn';
+  btn.textContent = t('ntc.calc_btn_label') || '🧮 Calcular coeficientes…';
+  btn.dataset.i18n = 'ntc.calc_btn_label';
+  btn.onclick = ntcCalcOpen;
+  // Insere depois do botão write (✓), no fim do valWrap do field
+  const valWrap = inp.parentElement;
+  if (valWrap) valWrap.appendChild(btn);
+})();
+
+// Injeta o banner de fiação do termistor — explica que o pull-up é EXTERNO
+// (STM32 não permite pull-up interno em modo ANALOG_IN). Aparece antes do
+// primeiro campo da seção "Termistor do motor (NTC offboard)".
+(function injectThermistorWiringBanner() {
+  const firstFieldPath = 'axis0.motor.motor_thermistor.config.enabled';
+  const inp = document.getElementById('in-' + firstFieldPath);
+  if (!inp) return;
+  const fieldWrap = inp.closest('.field');
+  if (!fieldWrap || !fieldWrap.parentElement) return;
+
+  const banner = document.createElement('div');
+  banner.className = 'thermistor-wiring-banner';
+  // ASCII art do divisor de tensão + nota sobre pull-up externo.
+  banner.innerHTML =
+    '<pre>'  +
+    '    3.3V\n' +
+    '      │\n' +
+    '   ┌──┴──┐\n' +
+    '   │ 10k │  ← pull-up EXTERNO (obrigatório)\n' +
+    '   └──┬──┘\n' +
+    '      │\n' +
+    '      ├──► GPIO (ANALOG_IN, no ADC)\n' +
+    '      │\n' +
+    '   ┌──┴──┐\n' +
+    '   │ NTC │  ← termistor (~10k @ 25°C)\n' +
+    '   └──┬──┘\n' +
+    '      │\n' +
+    '     GND' +
+    '</pre>' +
+    '<div class="info"><span data-i18n-html="thermistor.wiring_info"><b>⚠ Pull-up é EXTERNO</b> — obrigatório. Sem ele o ADC lê 0V e o polinômio retorna sempre c0.</span>' +
+      '<ul>' +
+        '<li data-i18n-html="thermistor.wiring_opt33">Setup padrão: <b>3.3V + 10kΩ pull-up</b> (NTC 10k @ 25°C → V≈1.65V)</li>' +
+        '<li data-i18n-html="thermistor.wiring_opt5">Alternativa: <b>5V + 47kΩ pull-up</b> (mais swing útil, ~2.5V vs 1.44V; pull-up <b>menor que 47k</b> com 5V queima o ADC em temperaturas baixas)</li>' +
+        '<li data-i18n-html="thermistor.wiring_test">Teste sem NTC: troque o termistor por um resistor fixo de mesmo valor do NTC@25°C → ADC deve ler ~50% de Vref</li>' +
+      '</ul>' +
+    '</div>';
+  fieldWrap.parentElement.insertBefore(banner, fieldWrap);
+})();
+
+// Indicador de limite físico de torque na aba FFB Wheel.
+// Mostra current_lim × torque_constant e torque_lim, e avisa em vermelho se
+// axis.maxtorque está setado acima do máximo físico (efeitos FFB saturariam).
+(function injectMaxTorqueHelper() {
+  const maxTorqueInp = document.getElementById('in-axis.maxtorque');
+  if (!maxTorqueInp) return;
+  const fieldWrap = maxTorqueInp.closest('.field');
+  if (!fieldWrap || !fieldWrap.parentElement) return;
+
+  const helper = document.createElement('div');
+  helper.id = 'maxtorque-helper';
+  helper.className = 'maxtorque-helper';
+  // Injeta DEPOIS do field do axis.maxtorque (no mesmo grid do panel)
+  fieldWrap.parentElement.insertBefore(helper, fieldWrap.nextSibling);
+
+  // IDs dos 4 fields que afetam o cálculo. axis.maxtorque é offb, os outros odrv.
+  const idMax    = 'in-axis.maxtorque';
+  const idCurLim = 'in-axis0.motor.config.current_lim';
+  const idKt     = 'in-axis0.motor.config.torque_constant';
+  const idTLim   = 'in-axis0.motor.config.torque_lim';
+
+  function refresh() {
+    const val = (id) => parseFloat(document.getElementById(id)?.value);
+    const currentLim  = val(idCurLim);
+    const torqueConst = val(idKt);
+    const torqueLim   = val(idTLim);
+    const maxTorque   = val(idMax);
+
+    if (!isFinite(currentLim) || !isFinite(torqueConst) || currentLim <= 0 || torqueConst <= 0) {
+      helper.className = 'maxtorque-helper';
+      helper.innerHTML = '<span style="opacity:0.6">' + t('ffb.maxtq_load_hint') + '</span>';
+      return;
+    }
+
+    const physicalMax = currentLim * torqueConst;
+    // torque_lim = Infinity ou NaN/0 significa "sem cap pelo controller"
+    const tLimActive = isFinite(torqueLim) && torqueLim > 0 && torqueLim < physicalMax;
+    const effectiveMax = tLimActive ? torqueLim : physicalMax;
+
+    let cssClass = '';
+    let icon = '';
+    let statusTxt = '';
+    if (isFinite(maxTorque)) {
+      if (maxTorque <= effectiveMax + 0.01) {
+        cssClass = 'ok';
+        icon = '<span class="status-ok">✓</span>';
+        statusTxt = t('ffb.maxtq_ok');
+      } else {
+        cssClass = 'error';
+        icon = '<span class="status-error">⚠</span>';
+        statusTxt = '<span class="status-error">' +
+          t('ffb.maxtq_saturate').replace('{max}', maxTorque.toFixed(1)).replace('{eff}', effectiveMax.toFixed(1)) +
+          '</span>';
+      }
+    }
+    helper.className = 'maxtorque-helper' + (cssClass ? ' ' + cssClass : '');
+
+    let html = icon + ' <b>' + t('ffb.maxtq_physical') + ':</b> ' +
+      currentLim.toFixed(2) + ' A × ' + torqueConst.toFixed(3) + ' Nm/A = ' +
+      '<b>' + physicalMax.toFixed(2) + ' Nm</b>';
+    if (tLimActive) {
+      html += ' · <b>torque_lim:</b> ' + torqueLim.toFixed(2) + ' Nm';
+    }
+    html += '<br><b>' + t('ffb.maxtq_effective') + ':</b> <b>' + effectiveMax.toFixed(2) + ' Nm</b>';
+    if (statusTxt) html += '<br>' + statusTxt;
+    helper.innerHTML = html;
+  }
+
+  // Listeners: atualiza em qualquer mudança nos 4 fields
+  [idMax, idCurLim, idKt, idTLim].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', refresh);
+      el.addEventListener('change', refresh);
+    }
+  });
+  // Expõe pra refresh externo (readAll + tab switch chamam isso)
+  window.refreshMaxTorqueHelper = refresh;
+  refresh();
+})();
 
 // i18n — wirar select de idioma e aplicar idioma persistido
 const langSelect = document.getElementById('lang-select');
@@ -10523,6 +11236,248 @@ function toastStickyClose(id) {
   if (!el) return;
   el.style.animation = 'toast-out .25s ease-in forwards';
   setTimeout(() => el.remove(), 260);
+}
+
+/* =========================================================================
+   NTC thermistor calculator — gera os 4 coeficientes do polinômio do
+   motor_thermistor.config a partir das specs do NTC (β e R@25°C).
+
+   Modelo físico:
+     R(T) = R0 × exp(β × (1/T − 1/T0))     // Steinhart simplificado
+     V_adc = V_ref × R_pullup / (R_pullup + R(T))
+     V_norm = V_adc / V_ref                // input do polinômio ODrive
+   ODrive avalia:
+     T(°C) = c0 + c1·V_norm + c2·V_norm² + c3·V_norm³
+   Geramos N pontos (V_norm, T_celsius) no range Tmin..Tmax e fazemos
+   regressão polinomial de 3ª ordem por mínimos quadrados (normal eqs).
+   ========================================================================= */
+
+// Gera pontos (V_norm, T_celsius) da curva física do NTC + divisor de tensão.
+function _ntcGenerateCurve(beta, r25, rPullup, vref, tMinC, tMaxC, nPoints) {
+  const T0 = 25 + 273.15;  // Kelvin
+  // Referência do ADC do STM32F405 = VDDA = 3.3V. O firmware do ODrive
+  // SEMPRE divide a leitura por esse valor pra gerar a entrada do polinômio
+  // (low_level.cpp: adc_measurements_[ch] / adc_full_scale). Por isso aqui
+  // normalizamos por 3.3V FIXO, independente do Vref escolhido pelo usuário.
+  const ADC_REF = 3.3;
+  const out = [];
+  // Pontos com vAdc > 3.3V (ADC saturado) DISTORCEM o fit cúbico: o polinômio
+  // tenta passar perto deles também, prejudicando precisão na região útil.
+  // Filtra esses pontos da regressão; ainda mostramos no preview (via _ntcCompute
+  // que retorna pontos full + warning), mas o FIT só usa pontos válidos.
+  // Também guardamos o range físico completo pra preview, separado do fit data.
+  const allPoints = [];
+  for (let i = 0; i < nPoints; i++) {
+    const tC = tMinC + (tMaxC - tMinC) * i / (nPoints - 1);
+    const tK = tC + 273.15;
+    const rNtc = r25 * Math.exp(beta * (1 / tK - 1 / T0));
+    // Divisor de tensão CORRETO:
+    //   Vref ── R_pullup ── V_pin ── R_NTC ── GND
+    //   V_pin = Vref × R_NTC / (R_pullup + R_NTC)
+    const vAdc = vref * rNtc / (rPullup + rNtc);
+    // Normaliza pelo limite físico do ADC, não pelo Vref escolhido.
+    const vNorm = vAdc / ADC_REF;
+    const saturated = vAdc > ADC_REF;
+    allPoints.push({ v: vNorm, t: tC, saturated });
+    // Só usa no fit pontos com vAdc <= 3.3V (sem saturação física).
+    if (!saturated) out.push({ v: vNorm, t: tC });
+  }
+  // Expõe os pontos saturados via uma prop não-enumerable (pra preview/UI)
+  out._allPoints = allPoints;
+  return out;
+}
+
+// Resolve sistema linear 4x4 por eliminação de Gauss com pivoteamento parcial.
+// Usado pra resolver as normal equations do polynomial fit. Retorna o vetor
+// solução [c0, c1, c2, c3].
+function _ntcSolve4x4(A, b) {
+  // Matriz aumentada 4x5
+  const M = A.map((row, i) => [...row, b[i]]);
+  const n = 4;
+  for (let k = 0; k < n; k++) {
+    // Pivoteamento parcial
+    let maxRow = k;
+    for (let i = k + 1; i < n; i++) {
+      if (Math.abs(M[i][k]) > Math.abs(M[maxRow][k])) maxRow = i;
+    }
+    if (maxRow !== k) [M[k], M[maxRow]] = [M[maxRow], M[k]];
+    if (Math.abs(M[k][k]) < 1e-12) throw new Error('singular matrix');
+    // Eliminação
+    for (let i = k + 1; i < n; i++) {
+      const factor = M[i][k] / M[k][k];
+      for (let j = k; j <= n; j++) M[i][j] -= factor * M[k][j];
+    }
+  }
+  // Substituição regressiva
+  const x = new Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    let sum = M[i][n];
+    for (let j = i + 1; j < n; j++) sum -= M[i][j] * x[j];
+    x[i] = sum / M[i][i];
+  }
+  return x;
+}
+
+// Faz fit polinomial de ordem 3 sobre pontos {v, t}. Retorna [c0, c1, c2, c3].
+// Normal equations: (X^T X) c = X^T y, onde X tem colunas [1, v, v², v³].
+function _ntcPolyFit(points) {
+  // Constrói X^T X (4x4) e X^T y (4) acumulando moments.
+  // moments[k] = Σ v^k para k=0..6
+  const moments = new Array(7).fill(0);
+  const yMoments = new Array(4).fill(0);
+  for (const p of points) {
+    let vk = 1;
+    for (let k = 0; k <= 6; k++) {
+      moments[k] += vk;
+      if (k < 4) yMoments[k] += p.t * vk;
+      vk *= p.v;
+    }
+  }
+  const XtX = [
+    [moments[0], moments[1], moments[2], moments[3]],
+    [moments[1], moments[2], moments[3], moments[4]],
+    [moments[2], moments[3], moments[4], moments[5]],
+    [moments[3], moments[4], moments[5], moments[6]],
+  ];
+  return _ntcSolve4x4(XtX, yMoments);
+}
+
+// Avalia o polinômio nos pontos e retorna o erro RMS em °C.
+function _ntcPolyEval(coefs, v) {
+  return coefs[0] + coefs[1] * v + coefs[2] * v * v + coefs[3] * v * v * v;
+}
+function _ntcRmsError(coefs, points) {
+  let sumSq = 0;
+  for (const p of points) {
+    const e = _ntcPolyEval(coefs, p.v) - p.t;
+    sumSq += e * e;
+  }
+  return Math.sqrt(sumSq / points.length);
+}
+
+// Wrapper que lê os 6 inputs do modal, calcula e atualiza a UI.
+// Retorna { coefs, rms, points } ou null em caso de input inválido.
+function _ntcCompute() {
+  const beta    = parseFloat(document.getElementById('ntc-beta').value);
+  const r25     = parseFloat(document.getElementById('ntc-r25').value);
+  const rPullup = parseFloat(document.getElementById('ntc-rpullup').value);
+  const vref    = parseFloat(document.getElementById('ntc-vref').value);
+  const tMin    = parseFloat(document.getElementById('ntc-tmin').value);
+  const tMax    = parseFloat(document.getElementById('ntc-tmax').value);
+  if (![beta, r25, rPullup, vref, tMin, tMax].every(isFinite)) return null;
+  if (beta <= 0 || r25 <= 0 || rPullup <= 0 || vref <= 0) return null;
+  if (tMax <= tMin) return null;
+
+  // 60 pontos no range (suficiente pra polinômio de 3a ordem).
+  // points = só os não-saturados (usados no FIT). allPoints = todos (pra UI).
+  const points = _ntcGenerateCurve(beta, r25, rPullup, vref, tMin, tMax, 60);
+  const allPoints = points._allPoints || points;
+  if (points.length < 4) return null;  // não dá pra fitar cúbico com <4 pontos
+  const coefs = _ntcPolyFit(points);
+  const rms = _ntcRmsError(coefs, points);
+  return { coefs, rms, points, allPoints, nSaturated: allPoints.length - points.length };
+}
+
+// Atualiza os displays do modal (coefs + preview + RMS).
+function _ntcRefreshModal() {
+  const r = _ntcCompute();
+  const setText = (id, s) => { const el = document.getElementById(id); if (el) el.textContent = s; };
+  // Safety: V_adc nunca pode passar de 3.3V (limite absoluto do ADC = 3.6V).
+  // Calcula V no ponto mais frio do range (NTC mais resistivo) e checa.
+  // Após o fix de normalização, vNorm já é V_adc / 3.3V — então
+  // vNorm > 1.0 significa que V_adc físico passou de 3.3V.
+  const overflowEl = document.getElementById('ntc-adc-overflow');
+  if (overflowEl) {
+    // Mostra warning vermelho se algum ponto do range gera vAdc > 3.3V
+    // (nSaturated > 0 significa que filtramos pelo menos 1 ponto do fit).
+    overflowEl.style.display = (r && r.nSaturated > 0) ? 'block' : 'none';
+  }
+  if (!r) {
+    ['ntc-c0', 'ntc-c1', 'ntc-c2', 'ntc-c3'].forEach(id => setText(id, '—'));
+    document.getElementById('ntc-preview-body').innerHTML = '';
+    setText('ntc-fit-error', t('ntc.fit_error_hint') + ' —');
+    return;
+  }
+  const [c0, c1, c2, c3] = r.coefs;
+  setText('ntc-c0', c0.toFixed(4));
+  setText('ntc-c1', c1.toFixed(4));
+  setText('ntc-c2', c2.toFixed(4));
+  setText('ntc-c3', c3.toFixed(4));
+  // Preview: pega 5 pontos espalhados no range FÍSICO (inclui saturados pra
+  // user ver a saturação). Polinômio é avaliado normalmente; pontos
+  // saturados ganham um indicador visual "SAT".
+  const body = document.getElementById('ntc-preview-body');
+  const allPts = r.allPoints;
+  const sampleIdx = [0, Math.floor(allPts.length * 0.25), Math.floor(allPts.length * 0.5),
+                     Math.floor(allPts.length * 0.75), allPts.length - 1];
+  body.innerHTML = sampleIdx.map(i => {
+    const p = allPts[i];
+    // V físico no pino (o que multímetro mede) = vNorm × 3.3V (porque
+    // _ntcGenerateCurve armazena vNorm = vAdc / 3.3 após o fix).
+    const vPin = p.v * 3.3;
+    const tPoly = _ntcPolyEval(r.coefs, p.v);
+    const delta = tPoly - p.t;
+    // Pontos saturados (vPin > 3.3V) ganham fundo vermelho + sufixo "(SAT)"
+    // pra deixar claro que o ADC físico não vai conseguir ler isso → não vão
+    // ser usados pelo polinômio na prática mesmo.
+    const rowStyle = p.saturated ? ' style="color:var(--err);background:rgba(239,68,68,0.08)"' : '';
+    const vTxt = p.saturated ? vPin.toFixed(3) + ' ⚠' : vPin.toFixed(3);
+    return '<tr' + rowStyle + '>' +
+      '<td>' + vTxt + '</td>' +
+      '<td>' + p.t.toFixed(1) + '°C</td>' +
+      '<td>' + tPoly.toFixed(1) + '°C</td>' +
+      '<td>' + (delta >= 0 ? '+' : '') + delta.toFixed(2) + '</td>' +
+    '</tr>';
+  }).join('');
+  setText('ntc-fit-error', t('ntc.fit_error_hint') + ' ' + r.rms.toFixed(3) + ' °C');
+}
+
+// Abre o modal e dispara o cálculo inicial.
+function ntcCalcOpen() {
+  document.getElementById('ntc-calc-backdrop').style.display = 'flex';
+  _ntcRefreshModal();
+}
+function ntcCalcClose() {
+  document.getElementById('ntc-calc-backdrop').style.display = 'none';
+}
+// Aplica os coeficientes computados nos inputs do schema motor_thermistor.
+function ntcCalcApply() {
+  const r = _ntcCompute();
+  if (!r) {
+    toast('NTC: inputs inválidos', 'err');
+    return;
+  }
+  // ATENÇÃO ordem: ODrive usa convenção numpy.polyfit em horner_poly_eval
+  // (utils.hpp:144): coeffs[0] é a ordem MAIS ALTA, coeffs[3] é a constante.
+  //   poly_coefficient_0 → c3 (×V³)
+  //   poly_coefficient_1 → c2 (×V²)
+  //   poly_coefficient_2 → c1 (×V)
+  //   poly_coefficient_3 → c0 (constante)
+  // Meu fit retorna r.coefs = [c0, c1, c2, c3] (constante primeiro), então
+  // INVERTE a ordem ao escrever.
+  const paths = [
+    'axis0.motor.motor_thermistor.config.poly_coefficient_0',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_1',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_2',
+    'axis0.motor.motor_thermistor.config.poly_coefficient_3',
+  ];
+  // coefsOdriveOrder[i] = coef de V^(3-i) = r.coefs[3-i]
+  const coefsOdriveOrder = [r.coefs[3], r.coefs[2], r.coefs[1], r.coefs[0]];
+  let applied = 0;
+  for (let i = 0; i < 4; i++) {
+    const inp = document.getElementById('in-' + paths[i]);
+    if (inp) {
+      inp.value = coefsOdriveOrder[i].toFixed(6);
+      markDirty(inp);
+      applied++;
+    }
+  }
+  ntcCalcClose();
+  if (applied === 4) {
+    toast('NTC: 4 coeficientes aplicados (clique ✓ pra gravar individualmente, ou Salvar pra persistir tudo)', 'ok');
+  } else {
+    toast('NTC: só consegui aplicar ' + applied + '/4 — schema fields não encontrados', 'warn');
+  }
 }
 
 /* =========================================================================
