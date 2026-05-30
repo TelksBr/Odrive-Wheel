@@ -1,19 +1,53 @@
-# Odrive-Wheel — MKS XDrive Mini FFB Firmware
+# Odrive-Wheel — MKS XDrive Mini / ODESC V4.2 FFB Firmware
 
-Custom firmware for ODrive v0.5.6 running on **MKS XDrive Mini** hardware
-(STM32F405-based clone of ODrive v3.6), adding full **HID Force Feedback**
-support to use the motor as a sim racing wheel.
+Custom firmware for ODrive v0.5.6 running on **MKS XDrive Mini** and
+**ODESC V4.2** hardware (STM32F405-based clones of ODrive v3.6), adding
+full **HID Force Feedback** support to use the motor as a sim racing wheel.
 
 <p align="center">
   <img src="docs/screenshots/MKSXdriveMini.png" alt="MKS XDrive Mini board" width="500">
 </p>
 
+<table align="center">
+  <tr>
+    <td width="50%">
+      <a href="docs/screenshots/01-Header.png">
+        <img src="docs/screenshots/01-Header.png" alt="Configuration tool — main overview"></a>
+    </td>
+    <td width="50%">
+      <a href="docs/screenshots/06-GPIOConfig.png">
+        <img src="docs/screenshots/06-GPIOConfig.png" alt="Inputs / GPIO config"></a>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <a href="docs/screenshots/07-FFB%20test.png">
+        <img src="docs/screenshots/07-FFB%20test.png" alt="FFB Test — built-in WebHID tester"></a>
+    </td>
+    <td width="50%">
+      <a href="docs/screenshots/04-Iracing%20overlay.png">
+        <img src="docs/screenshots/04-Iracing%20overlay.png" alt="iRacing overlay (Picture-in-Picture)"></a>
+    </td>
+  </tr>
+</table>
+
 <p align="center">
+  <a href="https://github.com/sponsors/eagabriel" target="_blank">
+    <img src="https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA"
+         alt="Sponsor on GitHub" height="40">
+  </a>
+  &nbsp;
   <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank">
     <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
          alt="Buy me a coffee" height="40">
   </a>
 </p>
+
+> 💛 **Open-source, maintained on personal time.** If this firmware saved
+> you a few hundred bucks on a commercial wheelbase, please consider
+> [becoming a GitHub Sponsor](https://github.com/sponsors/eagabriel) or
+> [buying a coffee](https://www.buymeacoffee.com/eduardogabq) — it really
+> helps keep the project going.
 
 Based on:
 - [ODrive Firmware v0.5.6](https://github.com/odriverobotics/ODrive) (motor control)
@@ -218,21 +252,13 @@ via [Zadig](https://zadig.akeo.ie/)). See `GETTING_STARTED.md` for details.
 ## Screenshots
 
 The HTML configuration tool runs entirely in the browser via Web Serial API
-(Chrome/Edge), with no install required.
+(Chrome/Edge), with no install required. Additional views:
 
-![HTML config tool](docs/screenshots/01-Header.png)
+![Header detail](docs/screenshots/02-Header.png)
 
-![HTML config tool](docs/screenshots/02-Header.png)
-
-![HTML config tool](docs/screenshots/03-Header.png)
-
-![iRacing overlay (Document Picture-in-Picture)](docs/screenshots/04-Iracing%20overlay.png)
+![Header sidebar](docs/screenshots/03-Header.png)
 
 ![Encoder tab — Zero wheel position + AS5047 preset](docs/screenshots/05-Zero%20e%20encoder.png)
-
-![Inputs tab — GPIO config (buttons / axes)](docs/screenshots/06-GPIOConfig.png)
-
-![FFB Test tab — WebHID effect controller](docs/screenshots/07-FFB%20test.png)
 
 ## Updating OpenFFBoard upstream
 
@@ -284,17 +310,39 @@ This project combines code from multiple sources with different licenses:
 Because GPL-licensed code from OpenFFBoard is included, the **combined work** (compiled firmware) is
 distributed under **GPLv3**. See `LICENSE` at the repo root and individual licenses in subdirectories.
 
-## Support the project
+## 💛 Support the project
 
-If Odrive-Wheel saved you time or money on a wheelbase, consider buying me a coffee.
-It is the easiest way to say thanks and keeps the project maintained on my own time.
+A commercial direct-drive wheelbase with similar specs costs **R$3,000 to
+R$10,000+**. Odrive-Wheel turns a generic BLDC motor + a $40 board into
+something that competes with that — entirely open-source, no licensing,
+no subscriptions, no firmware lock-ins.
 
-<p align="left">
+Every hour invested here came out of nights and weekends. **If this project
+saved you real money**, please consider supporting it so I can keep adding
+features, fixing bugs, and answering questions:
+
+<p align="center">
+  <a href="https://github.com/sponsors/eagabriel" target="_blank">
+    <img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=EA4AAA"
+         alt="Sponsor on GitHub" height="50">
+  </a>
+  &nbsp;&nbsp;
   <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank">
     <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-         alt="Buy me a coffee" height="40">
+         alt="Buy me a coffee" height="50">
   </a>
 </p>
+
+**GitHub Sponsors** is the easiest way for recurring support and gives you
+visibility on the repo. **Buy Me a Coffee** is great for a one-time thanks.
+Both go directly to me, and every contribution — no matter the size —
+makes a real difference.
+
+🙏 **Other ways to help, even for free:**
+- ⭐ Star the repo
+- 🐛 Open issues for bugs you find
+- 📣 Share with sim racing friends (Reddit, Discord, forums)
+- 📸 Post videos/photos of your build — tag the project
 
 ## Status
 
