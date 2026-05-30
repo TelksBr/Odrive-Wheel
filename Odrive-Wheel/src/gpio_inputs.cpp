@@ -19,19 +19,36 @@ extern "C" {
 #include <string.h>
 
 // -------------------- Pinout (hardcoded pra MKS XDrive Mini / ODrive v3.6) --------------------
-// idx 0..3 → GPIO 1..4 → PA0..PA3 → ADC1_IN0..3
+// idx 0..4 → GPIO 1, 2, 3, 4, 6 → PA0..PA3, PB2
+// adc_channel = 0xFFFF marca pino sem ADC (digital only, axis mode bloqueado).
 struct gpio_pin_t {
     GPIO_TypeDef* port;
     uint16_t pin;
-    uint16_t adc_channel;   // pra get_adc_relative_voltage_ch
+    uint16_t adc_channel;   // pra get_adc_relative_voltage_ch (0xFFFF = sem ADC)
 };
 
+#define GPIO_NO_ADC  0xFFFF
+
 static const gpio_pin_t s_pins[GPIO_INPUTS_COUNT] = {
-    { GPIOA, GPIO_PIN_0, 0 },  // GPIO 1 → PA0 → ADC1_IN0
-    { GPIOA, GPIO_PIN_1, 1 },  // GPIO 2 → PA1 → ADC1_IN1
-    { GPIOA, GPIO_PIN_2, 2 },  // GPIO 3 → PA2 → ADC1_IN2
-    { GPIOA, GPIO_PIN_3, 3 },  // GPIO 4 → PA3 → ADC1_IN3
+    { GPIOA, GPIO_PIN_0,      0 },           // GPIO 1 → PA0 → ADC1_IN0
+    { GPIOA, GPIO_PIN_1,      1 },           // GPIO 2 → PA1 → ADC1_IN1
+    { GPIOA, GPIO_PIN_2,      2 },           // GPIO 3 → PA2 → ADC1_IN2
+    { GPIOA, GPIO_PIN_3,      3 },           // GPIO 4 → PA3 → ADC1_IN3
+    { GPIOB, GPIO_PIN_2, GPIO_NO_ADC },      // GPIO 6 → PB2 → digital only
 };
+
+// Mapeamento ASCII inst (1, 2, 3, 4, 6) → idx0 interno (0..4).
+// Inst 5 retorna -1 (não suportado — PC4 não exposto no header MKS).
+static inline int inst_to_idx0(uint8_t inst) {
+    switch (inst) {
+        case 1: return 0;
+        case 2: return 1;
+        case 3: return 2;
+        case 4: return 3;
+        case 6: return 4;
+        default: return -1;
+    }
+}
 
 // -------------------- Config em RAM --------------------
 struct gpio_cfg_t {
@@ -45,9 +62,10 @@ struct gpio_cfg_t {
 static gpio_cfg_t s_cfg[GPIO_INPUTS_COUNT];
 
 // -------------------- Endereços EE por GPIO (helpers) --------------------
-static const uint16_t s_addr_cfg[GPIO_INPUTS_COUNT]  = { ADR_GPIO1_CFG,  ADR_GPIO2_CFG,  ADR_GPIO3_CFG,  ADR_GPIO4_CFG };
-static const uint16_t s_addr_amin[GPIO_INPUTS_COUNT] = { ADR_GPIO1_AMIN, ADR_GPIO2_AMIN, ADR_GPIO3_AMIN, ADR_GPIO4_AMIN };
-static const uint16_t s_addr_amax[GPIO_INPUTS_COUNT] = { ADR_GPIO1_AMAX, ADR_GPIO2_AMAX, ADR_GPIO3_AMAX, ADR_GPIO4_AMAX };
+// Mesma ordem do s_pins / inst_to_idx0: GPIO 1, 2, 3, 4, 6.
+static const uint16_t s_addr_cfg[GPIO_INPUTS_COUNT]  = { ADR_GPIO1_CFG,  ADR_GPIO2_CFG,  ADR_GPIO3_CFG,  ADR_GPIO4_CFG,  ADR_GPIO6_CFG  };
+static const uint16_t s_addr_amin[GPIO_INPUTS_COUNT] = { ADR_GPIO1_AMIN, ADR_GPIO2_AMIN, ADR_GPIO3_AMIN, ADR_GPIO4_AMIN, ADR_GPIO6_AMIN };
+static const uint16_t s_addr_amax[GPIO_INPUTS_COUNT] = { ADR_GPIO1_AMAX, ADR_GPIO2_AMAX, ADR_GPIO3_AMAX, ADR_GPIO4_AMAX, ADR_GPIO6_AMAX };
 
 // Empacota mode/idx/invert em uint16
 static inline uint16_t pack_cfg(uint8_t mode, uint8_t idx, uint8_t invert) {
@@ -82,10 +100,13 @@ static void apply_pin_mode(int idx0) {
             break;
         case GPIO_INPUT_DISABLED:
         default:
-            // Não reconfigura; deixa em hi-Z (seguro pra qualquer estado prévio).
-            init.Mode = GPIO_MODE_INPUT;
-            init.Pull = GPIO_NOPULL;
-            HAL_GPIO_Init(p->port, &init);
+            // Phase 4.x fix: quando DISABLED, NÃO reconfigurar o pino. Preserva
+            // a configuração que o ODrive setou via axis0.config.gpioN_mode
+            // (importante pra modos ANALOG_IN usados pelo motor_thermistor).
+            // O antigo "forçar GPIO_MODE_INPUT" quebrava o termistor: pino ia
+            // pra digital input, ADC lia garbage, polinômio retornava sempre c0.
+            // Se nada antes configurou o pino, ele permanece no reset state
+            // (analog hi-Z no STM32F405) — também seguro.
             break;
     }
 }
@@ -180,6 +201,9 @@ extern "C" void gpio_inputs_update_report(uint64_t *buttons,
                 *buttons |= ((uint64_t)1 << c.idx);
             }
         } else if (c.mode == GPIO_INPUT_AXIS) {
+            // Defesa: se pino sem ADC chegou aqui (não deveria, set_mode bloqueia),
+            // ignora pra não chamar get_adc_relative_voltage_ch com canal inválido.
+            if (s_pins[i].adc_channel == GPIO_NO_ADC) continue;
             // ADC1 round-robin do ODrive: get_adc_relative_voltage_ch retorna
             // 0.0 .. 1.0 (= 0 .. 4095 / 4095). Volta pra raw.
             float rel = get_adc_relative_voltage_ch(s_pins[i].adc_channel);
@@ -201,9 +225,10 @@ extern "C" void gpio_inputs_update_report(uint64_t *buttons,
 }
 
 // -------------------- Setters/getters pra ASCII --------------------
+// idx0_from_inst() agora delega pro mapeamento descontínuo definido no
+// topo do arquivo (inst_to_idx0). inst=5 retorna -1 (inválido).
 static inline int idx0_from_inst(uint8_t inst) {
-    if (inst < 1 || inst > GPIO_INPUTS_COUNT) return -1;
-    return inst - 1;
+    return inst_to_idx0(inst);
 }
 
 extern "C" uint8_t gpio_inputs_get_mode(uint8_t inst) {
@@ -213,6 +238,8 @@ extern "C" uint8_t gpio_inputs_get_mode(uint8_t inst) {
 extern "C" int gpio_inputs_set_mode(uint8_t inst, uint8_t mode) {
     int i = idx0_from_inst(inst);
     if (i < 0 || mode > GPIO_INPUT_AXIS) return -1;
+    // Bloqueia mode=AXIS em pinos sem ADC (ex: GPIO 6 = PB2).
+    if (mode == GPIO_INPUT_AXIS && s_pins[i].adc_channel == GPIO_NO_ADC) return -1;
     if (s_cfg[i].mode != mode) {
         s_cfg[i].mode = mode;
         apply_pin_mode(i);
@@ -270,6 +297,7 @@ extern "C" uint16_t gpio_inputs_read_raw(uint8_t inst) {
     if (s_cfg[i].mode == GPIO_INPUT_BUTTON) {
         return HAL_GPIO_ReadPin(s_pins[i].port, s_pins[i].pin) == GPIO_PIN_RESET ? 1 : 0;
     } else if (s_cfg[i].mode == GPIO_INPUT_AXIS) {
+        if (s_pins[i].adc_channel == GPIO_NO_ADC) return 0xFFFF;
         float rel = get_adc_relative_voltage_ch(s_pins[i].adc_channel);
         if (rel < 0) rel = 0;
         if (rel > 1) rel = 1;

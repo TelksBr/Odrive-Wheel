@@ -1,21 +1,29 @@
-// gpio_inputs.h — GPIOs 1-4 da MKS XDrive Mini configurados via EE
+// gpio_inputs.h — GPIOs 1-4 e 6 da MKS XDrive Mini configurados via EE
 // pra atuar como botões / eixos analógicos do joystick HID.
 //
 // Pinout (ODrive v3.6 / MKS XDrive Mini):
-//   GPIO 1 = PA0 (ADC1_IN0)
-//   GPIO 2 = PA1 (ADC1_IN1)
-//   GPIO 3 = PA2 (ADC1_IN2)
-//   GPIO 4 = PA3 (ADC1_IN3)
+//   GPIO 1 = PA0 (ADC1_IN0)    — button OU axis
+//   GPIO 2 = PA1 (ADC1_IN1)    — button OU axis
+//   GPIO 3 = PA2 (ADC1_IN2)    — button OU axis
+//   GPIO 4 = PA3 (ADC1_IN3)    — button OU axis
+//   GPIO 6 = PB2 (sem ADC)     — APENAS button (digital only)
 //
 // Modos por pino (cfg armazenada em EE):
 //   0 = disabled (pino não é tocado)
 //   1 = button   (digital input, pull-up interno; gera bit em rpt.buttons)
 //   2 = axis     (analog input via ADC1 round-robin do ODrive; popula
-//                 rpt.RX/RY/RZ/Slider conforme idx)
+//                 rpt.RX/RY/RZ/Slider conforme idx) — só GPIOs 1-4
 //
 // Leitura: chamada gpio_inputs_update_report() é feita pelo ffb_thread
 // a 1 kHz dentro de tud_hid_ready() — popula buttons + axes diretamente
 // na struct reportHID_t antes de tud_hid_report().
+//
+// Mapeamento de instância ASCII → índice interno:
+//   gpio.1.* → idx0 = 0
+//   gpio.2.* → idx0 = 1
+//   gpio.3.* → idx0 = 2
+//   gpio.4.* → idx0 = 3
+//   gpio.6.* → idx0 = 4   (descontínuo — gpio.5.* é inválido)
 
 #ifndef GPIO_INPUTS_H_
 #define GPIO_INPUTS_H_
@@ -32,8 +40,10 @@ extern "C" {
 #define GPIO_INPUT_BUTTON    1
 #define GPIO_INPUT_AXIS      2
 
-// Quantos GPIOs gerenciamos. Indexados internamente como 0..3 (= GPIO 1..4).
-#define GPIO_INPUTS_COUNT    4
+// Quantos GPIOs gerenciamos. Indexados internamente como 0..4
+// (= GPIO 1, 2, 3, 4, 6 — note o salto, GPIO 5 não existe externamente
+// na MKS XDrive Mini).
+#define GPIO_INPUTS_COUNT    5
 
 // Inicializa: carrega cfg da EE (se válida), configura cada pino conforme.
 // Chamar APÓS EE_Init() no boot.

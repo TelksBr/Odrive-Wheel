@@ -66,6 +66,11 @@
 #define ADR_GPIO4_CFG           0x0259
 #define ADR_GPIO4_AMIN          0x025A
 #define ADR_GPIO4_AMAX          0x025B
+// GPIO 6 (PB2) — digital only, sem ADC. AMIN/AMAX não usados na prática
+// mas reservados pra consistência de layout (e caso firmware mude).
+#define ADR_GPIO6_CFG           0x025C
+#define ADR_GPIO6_AMIN          0x025D
+#define ADR_GPIO6_AMAX          0x025E
 
 // Hardware (Phase 4.x): divisor de tensão pro VBUS sense.
 // Default 19 (MKS XDrive Mini). ODrive v3.6 oficial = 11. Range válido 1-50.
