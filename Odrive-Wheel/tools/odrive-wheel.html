@@ -2223,7 +2223,7 @@ const I18N = {
     'setup.hint.motor_type':             '0 = HIGH_CURRENT (BLDC normal)',
     'setup.hint.pole_pairs':             '4 servo · 7 outrunner · 15 hoverboard',
     'setup.hint.torque_constant':        '0.87 servo 18Nm · 0.55 hoverboard · ou 8.27/Kv',
-    'setup.hint.current_lim':            'A — comece baixo!',
+    'setup.hint.current_lim':            'A',
     'setup.hint.calibration_current':    'A — durante motor calibration',
     'setup.hint.resistance_calib_v':     'V — limita ruído na cal de R',
     'setup.hint.requested_current_range':'A — ≥ current_lim + margin',
@@ -2774,7 +2774,7 @@ const I18N = {
     'setup.hint.motor_type':             '0 = HIGH_CURRENT (regular BLDC)',
     'setup.hint.pole_pairs':             '4 servo · 7 outrunner · 15 hoverboard',
     'setup.hint.torque_constant':        '0.87 servo 18Nm · 0.55 hoverboard · or 8.27/Kv',
-    'setup.hint.current_lim':            'A — start low!',
+    'setup.hint.current_lim':            'A',
     'setup.hint.calibration_current':    'A — during motor calibration',
     'setup.hint.resistance_calib_v':     'V — limits noise during R cal',
     'setup.hint.requested_current_range':'A — ≥ current_lim + margin',
@@ -5841,7 +5841,7 @@ function buildSetupHTML() {
     _setupFormRow('config.enable_brake_resistor',           true, 'bool',   'setup.hint.enable_brake_resistor') +
     _setupFormRow('config.dc_bus_undervoltage_trip_level',  8,    'number', 'setup.hint.dc_undervoltage') +
     _setupFormRow('config.dc_bus_overvoltage_trip_level',   28,   'number', 'setup.hint.dc_overvoltage') +
-    _setupFormRow('config.dc_max_positive_current',         15,   'number', 'setup.hint.dc_max_pos') +
+    _setupFormRow('config.dc_max_positive_current',         25,   'number', 'setup.hint.dc_max_pos') +
     _setupFormRow('config.dc_max_negative_current',         -15,  'number', 'setup.hint.dc_max_neg') +
     _setupFormRow('config.max_regen_current',               0,    'number', 'setup.hint.max_regen') +
     '</div>';
@@ -5850,7 +5850,7 @@ function buildSetupHTML() {
     _setupFormRow('axis0.motor.config.motor_type',                  0,    'number', 'setup.hint.motor_type') +
     _setupFormRow('axis0.motor.config.pole_pairs',                  4,    'number', 'setup.hint.pole_pairs') +
     _setupFormRow('axis0.motor.config.torque_constant',             0.87, 'number', 'setup.hint.torque_constant') +
-    _setupFormRow('axis0.motor.config.current_lim',                 10,   'number', 'setup.hint.current_lim') +
+    _setupFormRow('axis0.motor.config.current_lim',                 20,   'number', 'setup.hint.current_lim') +
     _setupFormRow('axis0.motor.config.calibration_current',         5,    'number', 'setup.hint.calibration_current') +
     _setupFormRow('axis0.motor.config.resistance_calib_max_voltage', 12.0, 'number', 'setup.hint.resistance_calib_v') +
     _setupFormRow('axis0.motor.config.requested_current_range',     25,   'number', 'setup.hint.requested_current_range') +
