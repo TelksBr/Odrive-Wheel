@@ -82,7 +82,9 @@
 // Armazenado como uint16 mas só usa os 8 LSBs.
 #define ADR_VBUS_DIVIDER        0x0260
 
-#define NB_OF_VAR 43
+// 45 entradas: 4 system + 7 ffb + 12 axis (10 + 2 ZEROOFS) + 5 odrive
+//             + 15 gpio (5 pinos × 3 campos) + 1 vbus_divider + 1 reserve
+#define NB_OF_VAR 45
 extern const uint16_t VirtAddVarTab[NB_OF_VAR];
 
 #endif
