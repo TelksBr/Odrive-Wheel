@@ -223,8 +223,8 @@ static int h_sys_eeformat(uint8_t, CmdType t, const char*, char *r, size_t s) {
 
 // ==================== GPIO inputs (1-4) — handlers ====================
 // Sintaxe: gpio.<inst>.<field>?/= onde inst = 1..4 (= GPIO 1..4).
-// Fields: mode (0/1/2 = off/button/axis), idx (botão 0-63 ou eixo 0-3),
-// invert (0/1), amin/amax (0-4095, só axis), cur (read-only, valor raw).
+// Fields: mode (0/1/2/3 = off/button/axis/zerowheel), idx (botão 0-63 ou
+// eixo 0-3), invert (0/1), amin/amax (0-4095, só axis), cur (read-only).
 extern "C" {
 #include "gpio_inputs.h"
 }
@@ -235,7 +235,7 @@ static int h_gpio_mode(uint8_t inst, CmdType t, const char *v, char *r, size_t s
         return 0;
     } else if (t == CMD_TYPE_SET) {
         long val = parse_long(v, -1);
-        if (val < 0 || val > 2) return -1;
+        if (val < 0 || val > GPIO_INPUT_ZEROWHEEL) return -1;
         if (gpio_inputs_set_mode(inst, (uint8_t)val) != 0) return -1;
         snprintf(r, s, "%ld", val);
         return 0;
@@ -808,7 +808,7 @@ const CmdEntry cmdtable[] = {
     { "sys",   "eeformat",     h_sys_eeformat },      // EEPROM force format (escape hatch)
     { "sys",   "vbusdiv",      h_sys_vbusdiv },       // VBUS voltage divider (1-50)
     // GPIO inputs (1-4) — sintaxe: gpio.<inst>.<field>
-    { "gpio",  "mode",         h_gpio_mode },         // 0/1/2 = off/button/axis
+    { "gpio",  "mode",         h_gpio_mode },         // 0/1/2/3 = off/button/axis/zerowheel
     { "gpio",  "idx",          h_gpio_idx },          // 0-63 botão, 0-3 eixo
     { "gpio",  "invert",       h_gpio_invert },       // 0/1
     { "gpio",  "amin",         h_gpio_amin },         // 0-4095 (só axis)

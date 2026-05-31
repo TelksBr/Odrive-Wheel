@@ -274,12 +274,17 @@ public:
         return inverted_ ? -metrics_.pos_scaled_16b : metrics_.pos_scaled_16b;
     }
 
+    // zeroOffset_ é public pra ffb_load/save_flash conseguir persistir.
+    // Mesma convenção dos outros axis params com persistência (axisInertia_,
+    // axisFriction_, etc). Outros campos só de cálculo (metrics_, pending_torque_)
+    // ficam private abaixo.
+    float zeroOffset_         = 0.0f;    // offset (graus) aplicado em update()
+
 private:
     metric_t metrics_{};
     float pending_torque_     = 0.0f;
     int32_t axisEffectTorque_ = 0;       // calculado em calculateAxisEffects
     int32_t lastTorque_       = 0;       // pra slew rate limit
-    float zeroOffset_         = 0.0f;    // offset (graus) aplicado em update()
 
 public:
     void reset_ffb_state() {
@@ -526,6 +531,22 @@ static void ffb_load_axis_params_internal(void) {
     // Phase 4.x — bitfield de flags do axis (ADR_AXIS1_CONFIG)
     if (Flash_Read(ADR_AXIS1_CONFIG, &v, false) && v != 0xFFFF) {
         s_axis_raw->inverted_ = (v & 0x0001) != 0;
+    }
+    // zeroOffset_ — split em 2 slots uint16 reconstruindo um float32.
+    // Inicial 0.0f no construtor é o default seguro (sem offset).
+    // Se ambos slots = 0xFFFF (EE virgem), preserva o default.
+    {
+        uint16_t lo, hi;
+        bool okLo = Flash_Read(ADR_AXIS1_ZEROOFS_LO, &lo, false);
+        bool okHi = Flash_Read(ADR_AXIS1_ZEROOFS_HI, &hi, false);
+        if (okLo && okHi && !(lo == 0xFFFF && hi == 0xFFFF)) {
+            union { uint32_t u; float f; } u;
+            u.u = ((uint32_t)hi << 16) | (uint32_t)lo;
+            // Sanity check: NaN/Inf → ignora (mantém default 0.0)
+            if (__builtin_isfinite(u.f)) {
+                s_axis_raw->zeroOffset_ = u.f;
+            }
+        }
     }
 }
 
@@ -847,6 +868,18 @@ extern "C" int ffb_save_flash(void) {
         uint16_t cfgFlags = (s_axis_raw->inverted_ ? 0x0001 : 0x0000);
         if (!Flash_Write(ADR_AXIS1_CONFIG, cfgFlags)) s_last_save_errors++;
         s_last_save_writes++;
+
+        // zeroOffset_ (float32) split em 2 slots uint16. Reconstruído no load
+        // como union{uint32, float}. Permite que o "Zero wheel position"
+        // sobreviva reboots após Save — corrige o deslocamento residual da
+        // encoder_offset_calibration sem precisar zerar a cada boot.
+        {
+            union { uint32_t u; float f; } u;
+            u.f = s_axis_raw->zeroOffset_;
+            if (!Flash_Write(ADR_AXIS1_ZEROOFS_LO, (uint16_t)(u.u & 0xFFFF))) s_last_save_errors++;
+            if (!Flash_Write(ADR_AXIS1_ZEROOFS_HI, (uint16_t)(u.u >> 16)))    s_last_save_errors++;
+            s_last_save_writes += 2;
+        }
     }
 
     // Phase 4.x — GPIO inputs config (12 writes: 3 entries × 4 GPIOs)

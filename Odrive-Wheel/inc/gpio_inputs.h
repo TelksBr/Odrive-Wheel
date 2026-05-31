@@ -13,6 +13,8 @@
 //   1 = button   (digital input, pull-up interno; gera bit em rpt.buttons)
 //   2 = axis     (analog input via ADC1 round-robin do ODrive; popula
 //                 rpt.RX/RY/RZ/Slider conforme idx) — só GPIOs 1-4
+//   3 = zerowheel(digital input, pull-up interno; edge-detect high→low
+//                 chama ffb_axis_zeroenc() — zera posição do volante)
 //
 // Leitura: chamada gpio_inputs_update_report() é feita pelo ffb_thread
 // a 1 kHz dentro de tud_hid_ready() — popula buttons + axes diretamente
@@ -36,9 +38,14 @@ extern "C" {
 #include <stdbool.h>
 
 // Modos
-#define GPIO_INPUT_DISABLED  0
-#define GPIO_INPUT_BUTTON    1
-#define GPIO_INPUT_AXIS      2
+#define GPIO_INPUT_DISABLED   0
+#define GPIO_INPUT_BUTTON     1
+#define GPIO_INPUT_AXIS       2
+// ZEROWHEEL: pulse edge detection. Quando o pino vai de high→low (botão
+// pressionado pra GND), dispara ffb_axis_zeroenc() — captura o offset
+// atual em RAM (igual ao botão "Zero wheel position" do tool). NÃO
+// persiste em flash automaticamente — só com sys.save! explícito.
+#define GPIO_INPUT_ZEROWHEEL  3
 
 // Quantos GPIOs gerenciamos. Indexados internamente como 0..4
 // (= GPIO 1, 2, 3, 4, 6 — note o salto, GPIO 5 não existe externamente

@@ -12,6 +12,10 @@
 // que usa channel (uint16_t), declaro aqui. Símbolo no .o é C-mangled.
 extern "C" float get_adc_relative_voltage_ch(uint16_t channel);
 
+// Pra modo ZEROWHEEL — chama o mesmo handler do botão Zero do tool.
+// Captura zeroOffset_ em RAM (NÃO persiste; user salva manualmente).
+extern "C" void ffb_axis_zeroenc(void);
+
 extern "C" {
 #include "eeprom.h"
 }
@@ -89,6 +93,7 @@ static void apply_pin_mode(int idx0) {
 
     switch (s_cfg[idx0].mode) {
         case GPIO_INPUT_BUTTON:
+        case GPIO_INPUT_ZEROWHEEL:    // mesma config de pin: digital pull-up
             init.Mode = GPIO_MODE_INPUT;
             init.Pull = GPIO_PULLUP;   // botão pra GND quando pressionado
             HAL_GPIO_Init(p->port, &init);
@@ -128,8 +133,8 @@ extern "C" void gpio_inputs_init(void) {
         if (Flash_Read(s_addr_cfg[i], &v, false) && v != 0xFFFF) {
             uint8_t m, idx, inv;
             unpack_cfg(v, &m, &idx, &inv);
-            // Sanity: mode válido
-            if (m <= GPIO_INPUT_AXIS) {
+            // Sanity: mode válido (0..3 = DISABLED, BUTTON, AXIS, ZEROWHEEL)
+            if (m <= GPIO_INPUT_ZEROWHEEL) {
                 s_cfg[i].mode = m;
                 s_cfg[i].idx = idx;
                 s_cfg[i].invert = inv;
@@ -189,6 +194,13 @@ extern "C" void gpio_inputs_update_report(uint64_t *buttons,
                                            int16_t *RZ, int16_t *Slider) {
     if (!buttons) return;
 
+    // Edge detection per-GPIO pra modo ZEROWHEEL.
+    // Inicializa true = "estava solto" → primeira leitura como pressed dispara.
+    // Reset implícito: ao mudar pra outro modo, próximo set_mode chama
+    // apply_pin_mode que não toca aqui, mas a transição de mode no s_cfg
+    // já desliga a lógica do botão. State stale = ok (não dispara duplicado).
+    static bool s_zerowheel_was_high[GPIO_INPUTS_COUNT] = { true, true, true, true, true };
+
     for (int i = 0; i < GPIO_INPUTS_COUNT; i++) {
         const gpio_cfg_t &c = s_cfg[i];
         if (c.mode == GPIO_INPUT_BUTTON) {
@@ -200,6 +212,18 @@ extern "C" void gpio_inputs_update_report(uint64_t *buttons,
             if (pressed && c.idx < 64) {
                 *buttons |= ((uint64_t)1 << c.idx);
             }
+        } else if (c.mode == GPIO_INPUT_ZEROWHEEL) {
+            // Edge detection high→low (botão pressionado pra GND).
+            // Dispara ffb_axis_zeroenc() uma vez na borda, não enquanto segura.
+            // invert=1 inverte (trigger no release em vez do press).
+            GPIO_PinState st = HAL_GPIO_ReadPin(s_pins[i].port, s_pins[i].pin);
+            bool isHigh = (st == GPIO_PIN_SET);
+            bool isHigh_logical = c.invert ? !isHigh : isHigh;
+            // Trigger no edge: estava high (idle, pull-up) → agora low (pressed)
+            if (s_zerowheel_was_high[i] && !isHigh_logical) {
+                ffb_axis_zeroenc();
+            }
+            s_zerowheel_was_high[i] = isHigh_logical;
         } else if (c.mode == GPIO_INPUT_AXIS) {
             // Defesa: se pino sem ADC chegou aqui (não deveria, set_mode bloqueia),
             // ignora pra não chamar get_adc_relative_voltage_ch com canal inválido.
@@ -237,8 +261,9 @@ extern "C" uint8_t gpio_inputs_get_mode(uint8_t inst) {
 }
 extern "C" int gpio_inputs_set_mode(uint8_t inst, uint8_t mode) {
     int i = idx0_from_inst(inst);
-    if (i < 0 || mode > GPIO_INPUT_AXIS) return -1;
+    if (i < 0 || mode > GPIO_INPUT_ZEROWHEEL) return -1;
     // Bloqueia mode=AXIS em pinos sem ADC (ex: GPIO 6 = PB2).
+    // ZEROWHEEL é digital → funciona em qualquer GPIO (com ou sem ADC).
     if (mode == GPIO_INPUT_AXIS && s_pins[i].adc_channel == GPIO_NO_ADC) return -1;
     if (s_cfg[i].mode != mode) {
         s_cfg[i].mode = mode;
@@ -294,7 +319,8 @@ extern "C" int gpio_inputs_set_amax(uint8_t inst, uint16_t v) {
 extern "C" uint16_t gpio_inputs_read_raw(uint8_t inst) {
     int i = idx0_from_inst(inst);
     if (i < 0) return 0xFFFF;
-    if (s_cfg[i].mode == GPIO_INPUT_BUTTON) {
+    if (s_cfg[i].mode == GPIO_INPUT_BUTTON || s_cfg[i].mode == GPIO_INPUT_ZEROWHEEL) {
+        // Mesma leitura digital: 1 = pressionado (pino em GND), 0 = solto (pull-up high)
         return HAL_GPIO_ReadPin(s_pins[i].port, s_pins[i].pin) == GPIO_PIN_RESET ? 1 : 0;
     } else if (s_cfg[i].mode == GPIO_INPUT_AXIS) {
         if (s_pins[i].adc_channel == GPIO_NO_ADC) return 0xFFFF;

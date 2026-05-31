@@ -43,6 +43,11 @@
 #define ADR_AXIS1_ENC_RATIO     0x0208
 #define ADR_AXIS1_SPEEDACCEL_FILTER 0x0209
 #define ADR_AXIS1_POSTPROCESS1  0x020A
+// zeroOffset_ persistente — em graus, armazenado como float32 split em 2 slots
+// uint16. O Zero Position button captura a posição atual e Salvar persiste,
+// corrigindo o pequeno deslocamento residual após encoder_offset_calibration.
+#define ADR_AXIS1_ZEROOFS_LO    0x020B   // 16 LSB do float32
+#define ADR_AXIS1_ZEROOFS_HI    0x020C   // 16 MSB do float32
 
 // ODrive (config retrieval pela ODriveCAN do OpenFFBoard, ainda referenciada)
 #define ADR_ODRIVE_CANID        0x0300
