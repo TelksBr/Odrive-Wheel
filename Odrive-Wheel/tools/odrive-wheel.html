@@ -8498,9 +8498,27 @@ function wireDFUTab() {
           .replace('{name}', binAsset.name)
           .replace('{size}', sizeKB)
           .replace('{tag}', rel.tag_name), 'info');
-        // Download do .bin via browser_download_url (redireciona pra objects.githubusercontent.com).
-        // CORS habilitado pra public assets — funciona direto no fetch.
-        const dl = await fetch(binAsset.browser_download_url);
+        // Download do .bin. NÃO usamos binAsset.browser_download_url porque
+        // ele redireciona pra objects.githubusercontent.com sem CORS aberto
+        // (quebra em ferramentas hospedadas online — file:// às vezes passa).
+        // Usar a URL da API do asset com Accept: application/octet-stream
+        // resolve: api.github.com serve CORS aberto e o redirect S3-signed
+        // que ela emite TAMBÉM serve Access-Control-Allow-Origin: *.
+        // Accept é header CORS-safelisted, então não dispara preflight.
+        const assetUrl = 'https://api.github.com/repos/eagabriel/Odrive-Wheel/releases/assets/' + binAsset.id;
+        let dl;
+        try {
+          dl = await fetch(assetUrl, { headers: { 'Accept': 'application/octet-stream' } });
+        } catch (e1) {
+          // Fallback: tenta browser_download_url direto (funciona em file:// ou
+          // se o usuário tiver extensão CORS-disabler instalada).
+          dfuLog('Tentando fallback browser_download_url…', 'info');
+          try {
+            dl = await fetch(binAsset.browser_download_url);
+          } catch (e2) {
+            throw new Error('CORS bloqueou os 2 endpoints. Baixe manualmente: ' + binAsset.browser_download_url);
+          }
+        }
         if (!dl.ok) throw new Error('Download falhou: HTTP ' + dl.status);
         const buf = await dl.arrayBuffer();
         // Sanity check de tamanho (igual file pick local)
