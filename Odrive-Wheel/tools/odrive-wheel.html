@@ -2045,6 +2045,7 @@ const I18N = {
     'inputs.mode_button': 'Botão',
     'inputs.mode_axis':   'Eixo',
     'inputs.mode_thermistor': 'Termistor (NTC)',
+    'inputs.mode_zerowheel':  'Zero Wheel',
     'inputs.button_idx':  'Botão #',
     'inputs.axis_idx':    'Eixo',
     'inputs.invert':      'Inverter',
@@ -2067,6 +2068,8 @@ const I18N = {
     'inputs.thermistor_hint':       '🌡 GPIO reservado pra NTC do motor. Ajuste limites, polinômio e leia temperatura ao vivo na aba Motor.',
     'inputs.thermistor_go_motor':   'Ir pra aba Motor →',
     'inputs.thermistor_activated':  '🌡 GPIO {n} configurado como NTC do motor. Configure o polinômio e limites na aba Motor.',
+    'inputs.badge_zerowheel':       '🎯 Zero Wheel',
+    'inputs.zerowheel_hint':        '🎯 <b>Zero Wheel</b> — pressionar o botão neste GPIO captura a posição atual como novo centro (igual ao botão Zero do tool). NÃO persiste automaticamente: clique <b>Salvar</b> pra gravar em flash.',
     // DFU section (PT)
     'dfu.title': 'Atualização de Firmware via DFU',
     'dfu.subtitle': 'Reboota a placa pro bootloader STM32 e grava o .bin pelo navegador (sem dfu-util).',
@@ -2079,8 +2082,15 @@ const I18N = {
     'dfu.step2.btn': 'Procurar bootloader',
     'dfu.step2.hint': 'No Windows, pode ser preciso instalar driver WinUSB no bootloader (uma vez só) — use Zadig: https://zadig.akeo.ie/.',
     'dfu.step3.title': '3. Selecionar firmware (.bin)',
-    'dfu.step3.desc': 'Escolha o arquivo odrive-wheel.bin (~400 KB).',
+    'dfu.step3.desc': 'Escolha o arquivo odrive-wheel.bin (~400 KB), ou baixe a última versão diretamente do GitHub.',
     'dfu.step3.btn': 'Escolher arquivo',
+    'dfu.step3.btn_fetch': '⇩ Baixar último release do GitHub',
+    'dfu.fetch.starting':    'Buscando último release no GitHub…',
+    'dfu.fetch.no_releases': '⚠ Nenhum release publicado no GitHub. Use "Escolher arquivo" pra carregar localmente.',
+    'dfu.fetch.no_bin':      '⚠ Release encontrada ({tag}) mas sem .bin anexado. Use "Escolher arquivo" ou peça pro autor publicar o binário.',
+    'dfu.fetch.downloading': 'Baixando {name} ({size}) do release {tag}…',
+    'dfu.fetch.done':        '✓ {name} ({size}) baixado do release {tag}',
+    'dfu.fetch.error':       '✕ Erro buscando release: {msg}',
     'dfu.step4.title': '4. Gravar',
     'dfu.step4.desc': 'Apaga os setores de aplicação e grava o novo firmware. A placa reboota sozinha ao final.',
     'dfu.step4.btn': 'Gravar firmware',
@@ -2261,7 +2271,9 @@ const I18N = {
     // Encoder tab actions
     'encoder.zero_btn':        '⊙ Zerar posição do volante',
     'encoder.zero_label':      'Zerar posição:',
-    'encoder.zero_hint':       'Captura a posição atual como o novo zero (centro lógico). HID position passa a reportar 0 imediatamente. Não toca no encoder do ODrive — só no offset virtual da camada FFB. NÃO persiste após reboot; pra centro permanente use phase_offset + index search.',
+    'encoder.cal_explainer':   '📍 <b>Sobre a calibração do encoder:</b> esse procedimento alinha eletricamente as fases do motor com a leitura do encoder — NÃO tem relação com o "centro mecânico" do volante. Durante a calibração o motor gira ~1 volta e para em uma posição arbitrária (depende dos polos magnéticos do motor). Se você quer que o volante volte automaticamente ao centro após a cal (ou sempre que o jogo desligar o FFB), ative <b>idleSpring</b> na aba <b>FFB Wheel</b> — essa mola centralizadora fica sempre ativa e puxa o volante pro zero lógico.',
+    'encoder.zero_hint':       'Captura a posição atual como o novo zero (centro lógico). HID position passa a reportar 0 imediatamente. Não toca no encoder do ODrive — só no offset virtual da camada FFB. Clique <b>Salvar</b> pra persistir em flash (sobrevive reboots). Também é possível associar essa ação a um GPIO físico (modo "Zero Wheel" na aba Inputs).',
+    'encoder.zero_warn_inc':   '⚠ <b>Encoder incremental sem index Z detectado.</b> Pra essa configuração, o "zero" do contador é wherever the motor estava no boot. O Zero persistido só vai dar resultado correto se você ligar a placa SEMPRE com o volante no centro mecânico. Soluções permanentes: (1) conectar o pino Z do encoder + use_index=true, ou (2) usar encoder absoluto AS5047 (preset disponível ao lado).',
     'encoder.preset_as5047_btn':    '⚙ Ativar AS5047 (preset)',
     'encoder.preset_as5047_label':  'Preset AS5047:',
     'encoder.preset_as5047_hint':   'Configura encoder absoluto AS5047P (montado na MKS XDrive Mini): mode=SPI_ABS_AMS, cpr=16384, abs_spi_cs_gpio_pin=7, use_index=False, pre_calibrated=False. Os campos ficam destacados em vermelho — clique Salvar pra persistir+reboot, depois rode ENCODER_OFFSET_CALIBRATION na aba Debug; se OK, marque pre_calibrated=True e Salvar de novo.',
@@ -2604,6 +2616,7 @@ const I18N = {
     'inputs.mode_button': 'Button',
     'inputs.mode_axis':   'Axis',
     'inputs.mode_thermistor': 'Thermistor (NTC)',
+    'inputs.mode_zerowheel':  'Zero Wheel',
     'inputs.button_idx':  'Button #',
     'inputs.axis_idx':    'Axis',
     'inputs.invert':      'Invert',
@@ -2626,6 +2639,8 @@ const I18N = {
     'inputs.thermistor_hint':       '🌡 GPIO reserved for motor NTC. Adjust limits, polynomial and read live temperature in the Motor tab.',
     'inputs.thermistor_go_motor':   'Go to Motor tab →',
     'inputs.thermistor_activated':  '🌡 GPIO {n} configured as motor NTC. Configure the polynomial and limits in the Motor tab.',
+    'inputs.badge_zerowheel':       '🎯 Zero Wheel',
+    'inputs.zerowheel_hint':        '🎯 <b>Zero Wheel</b> — pressing the button on this GPIO captures the current position as the new center (same as the Zero button in the tool). Does NOT persist automatically: click <b>Save</b> to write it to flash.',
     // DFU section (EN)
     'dfu.title': 'Firmware Update via DFU',
     'dfu.subtitle': 'Reboots the board into the STM32 bootloader and flashes the .bin from the browser (no dfu-util needed).',
@@ -2638,8 +2653,15 @@ const I18N = {
     'dfu.step2.btn': 'Find bootloader',
     'dfu.step2.hint': 'On Windows you may need to install a WinUSB driver on the bootloader (one-time) using Zadig: https://zadig.akeo.ie/.',
     'dfu.step3.title': '3. Select firmware (.bin)',
-    'dfu.step3.desc': 'Pick the odrive-wheel.bin file (~400 KB).',
+    'dfu.step3.desc': 'Pick the odrive-wheel.bin file (~400 KB), or fetch the latest version directly from GitHub.',
     'dfu.step3.btn': 'Choose file',
+    'dfu.step3.btn_fetch': '⇩ Fetch latest release from GitHub',
+    'dfu.fetch.starting':    'Fetching latest release from GitHub…',
+    'dfu.fetch.no_releases': '⚠ No release published on GitHub yet. Use "Choose file" to load locally.',
+    'dfu.fetch.no_bin':      '⚠ Release found ({tag}) but no .bin attached. Use "Choose file" or ask the author to attach the binary.',
+    'dfu.fetch.downloading': 'Downloading {name} ({size}) from release {tag}…',
+    'dfu.fetch.done':        '✓ {name} ({size}) downloaded from release {tag}',
+    'dfu.fetch.error':       '✕ Error fetching release: {msg}',
     'dfu.step4.title': '4. Flash',
     'dfu.step4.desc': 'Erases the application sectors and writes the new firmware. The board reboots automatically when finished.',
     'dfu.step4.btn': 'Flash firmware',
@@ -2812,7 +2834,9 @@ const I18N = {
     // Encoder tab actions
     'encoder.zero_btn':        '⊙ Zero wheel position',
     'encoder.zero_label':      'Zero position:',
-    'encoder.zero_hint':       'Captures current position as the new zero (logical center). HID position reports 0 immediately. Does not touch ODrive encoder — only the virtual offset in the FFB layer. Does NOT persist across reboot; for permanent center use phase_offset + index search.',
+    'encoder.cal_explainer':   '📍 <b>About encoder calibration:</b> this procedure electrically aligns the motor phases with the encoder reading — it has NOTHING to do with the wheel\'s "mechanical center". During calibration the motor spins ~1 turn and stops at an arbitrary position (depends on the motor\'s magnetic poles). If you want the wheel to automatically return to center after cal (or every time the game stops sending FFB), enable <b>idleSpring</b> in the <b>FFB Wheel</b> tab — that centering spring stays always active and pulls the wheel back to the logical zero.',
+    'encoder.zero_hint':       'Captures the current position as the new zero (logical center). HID position reports 0 immediately. Does not touch the ODrive encoder — only the virtual offset in the FFB layer. Click <b>Save</b> to persist to flash (survives reboots). The same action can also be triggered by a physical GPIO ("Zero Wheel" mode in the Inputs tab).',
+    'encoder.zero_warn_inc':   '⚠ <b>Incremental encoder without Z index detected.</b> For this configuration, the encoder counter "zero" is wherever the motor was at boot time. The persisted Zero will only give correct results if you ALWAYS power on with the wheel at mechanical center. Permanent fixes: (1) wire the encoder Z pin + use_index=true, or (2) use an absolute AS5047 encoder (preset available next to this button).',
     'encoder.preset_as5047_btn':    '⚙ Activate AS5047 (preset)',
     'encoder.preset_as5047_label':  'AS5047 preset:',
     'encoder.preset_as5047_hint':   'Configures the absolute AS5047P encoder (mounted on MKS XDrive Mini): mode=SPI_ABS_AMS, cpr=16384, abs_spi_cs_gpio_pin=7, use_index=False, pre_calibrated=False. Fields turn red — click Save to persist+reboot, then run ENCODER_OFFSET_CALIBRATION from the Debug tab; if it succeeds, set pre_calibrated=True and Save again.',
@@ -4499,9 +4523,10 @@ function buildDFUHTML() {
         <span data-i18n="dfu.step3.title">3. Selecionar firmware (.bin)</span>
         <span class="badge">—</span>
       </h3>
-      <p data-i18n="dfu.step3.desc">Escolha o arquivo odrive-wheel.bin (~400 KB).</p>
-      <div class="row">
+      <p data-i18n="dfu.step3.desc">Escolha o arquivo odrive-wheel.bin (~400 KB), ou baixe a última versão diretamente do GitHub.</p>
+      <div class="row" style="flex-wrap:wrap;gap:8px">
         <button id="dfu-btn-pick" data-i18n="dfu.step3.btn">Escolher arquivo</button>
+        <button id="dfu-btn-fetch-latest" class="primary" data-i18n="dfu.step3.btn_fetch">⇩ Baixar último release do GitHub</button>
         <input type="file" id="dfu-file" accept=".bin" style="display:none;">
         <span id="dfu-file-info" class="file-info"></span>
       </div>
@@ -4584,6 +4609,7 @@ function buildInputsHTML() {
           <option value="1" data-i18n="inputs.mode_button">Button</option>
           ${axisOption}
           ${thermistorOption}
+          <option value="4" data-i18n="inputs.mode_zerowheel">Zero Wheel</option>
         </select>
       </div>
       <div class="row" data-show-when="thermistor" style="background:rgba(245,158,11,.08);padding:8px 10px;border-radius:6px;border:1px solid rgba(245,158,11,.3)">
@@ -4595,6 +4621,11 @@ function buildInputsHTML() {
             Ir pra aba Motor →
           </button>
         </div>
+      </div>
+      <div class="row" data-show-when="zerowheel" style="background:rgba(34,197,94,.08);padding:8px 10px;border-radius:6px;border:1px solid rgba(34,197,94,.3)">
+        <span style="font-size:13px;color:var(--fg)" data-i18n-html="inputs.zerowheel_hint">
+          🎯 <b>Zero Wheel</b> — pressionar o botão neste GPIO captura a posição atual como novo centro (igual ao botão Zero do tool). NÃO persiste automaticamente: clique Salvar pra gravar em flash.
+        </span>
       </div>
       <div class="row" data-show-when="button">
         <label data-i18n="inputs.button_idx">Button #</label>
@@ -4664,14 +4695,18 @@ function wireInputsTab() {
   if (!document.getElementById('gpio-card-1')) return;
 
   // Helper pra atualizar visibilidade dos rows + badge baseado no modo.
-  // Modes: 0=Off, 1=Button, 2=Axis, 3=Thermistor(UI-only — escreve motor_thermistor).
+  // Modes (UI):
+  //   0=Off, 1=Button, 2=Axis (ADC only),
+  //   3=Thermistor (UI-only, mapped to motor_thermistor),
+  //   4=Zero Wheel (firmware mode 3, edge-detect trigger → ffb_axis_zeroenc).
   const refreshVisibility = (cardEl, mode) => {
     cardEl.classList.toggle('active', mode !== '0');
     cardEl.querySelectorAll('[data-show-when]').forEach(el => {
       const want = el.dataset.showWhen;
       const show = (want === 'button'     && mode === '1')
                 || (want === 'axis'       && mode === '2')
-                || (want === 'thermistor' && mode === '3');
+                || (want === 'thermistor' && mode === '3')
+                || (want === 'zerowheel'  && mode === '4');
       el.style.display = show ? '' : 'none';
     });
     // Badge no header do card
@@ -4680,6 +4715,7 @@ function wireInputsTab() {
       const key = mode === '1' ? 'inputs.badge_button'
                 : mode === '2' ? 'inputs.badge_axis'
                 : mode === '3' ? 'inputs.badge_thermistor'
+                : mode === '4' ? 'inputs.badge_zerowheel'
                 : 'inputs.badge_off';
       badge.dataset.i18n = key;
       badge.textContent = t(key);
@@ -4750,12 +4786,14 @@ function wireInputsTab() {
       const parse = (r) => { if (!r) return null; const x = r.match(/\|(-?\d+)\]/); return x ? x[1] : null; };
       const mv = parse(m), ixv = parse(ix), ivv = parse(iv), amv = parse(am), axv = parse(ax);
 
-      // Se motor_thermistor.gpio_pin aponta pra ESTE GPIO e está enabled,
-      // override visual: mostra como mode=3 (Thermistor), mesmo que firmware
-      // diga 0/1/2 (UI-only mode).
+      // Translate firmware mode -> UI mode:
+      //   firmware 0/1/2 -> UI 0/1/2 (Off/Button/Axis)
+      //   firmware 3     -> UI 4 (Zero Wheel)
+      //   motor_thermistor flagged -> UI 3 (Thermistor, overrides above)
       let effectiveMode = mv;
+      if (mv === '3') effectiveMode = '4';   // firmware ZEROWHEEL -> UI 4
       if (thermistorGpio === i && INPUTS_GPIO_CAPS[i] && INPUTS_GPIO_CAPS[i].adc) {
-        effectiveMode = '3';
+        effectiveMode = '3';                  // thermistor override (UI-only)
       }
       if (effectiveMode !== null) {
         const modeSel = card.querySelector('[data-field="mode"]');
@@ -4840,18 +4878,23 @@ function wireInputsTab() {
       refreshVisibility(card, newMode);
       modeSel.dataset.lastMode = newMode;
 
-      // Transição PARA Thermistor (mode=3 UI-only):
-      //   1. desativa GPIO no firmware (gpio.N.mode=0) pra liberar o pino
-      //   2. configura motor_thermistor.gpio_pin = N + enabled = True
-      //   3. troca pra aba Motor + toast com instruções
+      // Mapeamento UI → firmware:
+      //   UI 0/1/2 = firmware 0/1/2 (Off, Button, Axis) — direto
+      //   UI 3 (Thermistor) = firmware 0 (DISABLED) + motor_thermistor.enabled=True
+      //   UI 4 (Zero Wheel) = firmware 3 (GPIO_INPUT_ZEROWHEEL)
+      const uiToFw = (uiMode) => {
+        if (uiMode === '3') return '0';   // thermistor UI → firmware disabled
+        if (uiMode === '4') return '3';   // zero wheel UI 4 → firmware 3
+        return uiMode;                    // 0/1/2 direto
+      };
+
+      // Transição PARA Thermistor (UI=3):
       if (newMode === '3') {
         await sendSet(i, 'mode', '0');   // firmware GPIO = disabled
         const ok = await setThermistor(i, true);
         if (ok) {
           toast(t('inputs.thermistor_activated').replace('{n}', i), 'ok');
-          // Vai pra aba Motor — usuário ajusta polinômio + limites lá
           selectTab('motor');
-          // Scroll até a seção do termistor
           setTimeout(() => {
             const el = document.getElementById('in-axis0.motor.motor_thermistor.config.enabled');
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -4860,12 +4903,11 @@ function wireInputsTab() {
         return;
       }
 
-      // Transição DE Thermistor pra outro modo:
-      // Desabilita motor_thermistor primeiro (libera o ODrive), depois aplica novo mode no firmware.
+      // Transição DE Thermistor pra outro modo: desabilita motor_thermistor.
       if (oldMode === '3') {
         await setThermistor(i, false);
       }
-      await sendSet(i, 'mode', newMode);
+      await sendSet(i, 'mode', uiToFw(newMode));
     });
     idxBtn.addEventListener('change', () => sendSet(i, 'idx', idxBtn.value));
     idxAxis.addEventListener('change', () => sendSet(i, 'idx', idxAxis.value));
@@ -5418,19 +5460,16 @@ function wireFFBTestTab() {
     const H = cssH - padT - padB;
     if (W <= 0 || H <= 0) return;
 
-    // Auto-scale: torque eixo esquerdo (Nm), posição eixo direito (graus)
+    // Auto-scale: torque eixo esquerdo (Nm), posição eixo direito (graus).
+    // Ambos bidirecionais → força ZERO NO CENTRO (eixo simétrico ± max(|min|, |max|)).
     const tArr = fbtChartHist.trq;
     const pArr = fbtChartHist.pos;
-    let tMin = tArr.length ? _fbtMin(tArr) : -1;
-    let tMax = tArr.length ? _fbtMax(tArr) :  1;
-    let pMin = pArr.length ? _fbtMin(pArr) : -180;
-    let pMax = pArr.length ? _fbtMax(pArr) :  180;
-    const tPad = Math.max((tMax - tMin) * 0.1, 0.2);
-    tMin -= tPad; tMax += tPad;
-    const pPad = Math.max((pMax - pMin) * 0.1, 5);
-    pMin -= pPad; pMax += pPad;
-    if (tMax === tMin) tMax = tMin + 0.5;
-    if (pMax === pMin) pMax = pMin + 10;
+    let tAbs = tArr.length ? Math.max(Math.abs(_fbtMin(tArr)), Math.abs(_fbtMax(tArr))) : 1;
+    let pAbs = pArr.length ? Math.max(Math.abs(_fbtMin(pArr)), Math.abs(_fbtMax(pArr))) : 180;
+    tAbs = Math.max(tAbs * 1.1, 0.2);
+    pAbs = Math.max(pAbs * 1.1, 5);
+    let tMin = -tAbs, tMax = tAbs;
+    let pMin = -pAbs, pMax = pAbs;
 
     // Linha do zero (torque) — destaca valor central pra ver simetria
     ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
@@ -6649,16 +6688,16 @@ function drawOvlBusChart() {
     ...(showQ ? overlayState.bus.iq   : []),
     ...(showB ? overlayState.bus.ibr  : [])
   ];
+  // Mesma lógica do drawChart() do Debug — vbus unidirecional (0..max),
+  // ibus/iq/ibr no eixo simétrico (zero centralizado).
   let vMin = vArr.length ? _ovlMin(vArr) : 0;
   let vMax = vArr.length ? _ovlMax(vArr) : 30;
-  let aMin = aArr.length ? _ovlMin(aArr) : -1;
-  let aMax = aArr.length ? _ovlMax(aArr) : 1;
+  let aAbs = aArr.length ? Math.max(Math.abs(_ovlMin(aArr)), Math.abs(_ovlMax(aArr))) : 1;
   const vPad = Math.max((vMax - vMin) * 0.1, 0.5);
   vMin -= vPad; vMax += vPad;
-  const aPad = Math.max((aMax - aMin) * 0.1, 0.5);
-  aMin -= aPad; aMax += aPad;
+  aAbs = Math.max(aAbs * 1.1, 0.5);
+  let aMin = -aAbs, aMax = aAbs;
   if (vMax === vMin) vMax = vMin + 1;
-  if (aMax === aMin) aMax = aMin + 1;
 
   // Grid + axis labels (cores via tema)
   const th = _ovlThemeColors();
@@ -6722,18 +6761,16 @@ function drawOvlWhlChart() {
   const H = cssH - padT - padB;
   if (W <= 0 || H <= 0) return;
 
+  // Torque + posição: ambos bidirecionais → força zero no centro
+  // (eixo simétrico ± max(|min|, |max|)).
   const tArr = overlayState.whl.trq;
   const pArr = overlayState.whl.pos;
-  let tMin = tArr.length ? _ovlMin(tArr) : -1;
-  let tMax = tArr.length ? _ovlMax(tArr) :  1;
-  let pMin = pArr.length ? _ovlMin(pArr) : -180;
-  let pMax = pArr.length ? _ovlMax(pArr) :  180;
-  const tPad = Math.max((tMax - tMin) * 0.1, 0.2);
-  tMin -= tPad; tMax += tPad;
-  const pPad = Math.max((pMax - pMin) * 0.1, 5);
-  pMin -= pPad; pMax += pPad;
-  if (tMax === tMin) tMax = tMin + 0.5;
-  if (pMax === pMin) pMax = pMin + 10;
+  let tAbs = tArr.length ? Math.max(Math.abs(_ovlMin(tArr)), Math.abs(_ovlMax(tArr))) : 1;
+  let pAbs = pArr.length ? Math.max(Math.abs(_ovlMin(pArr)), Math.abs(_ovlMax(pArr))) : 180;
+  tAbs = Math.max(tAbs * 1.1, 0.2);
+  pAbs = Math.max(pAbs * 1.1, 5);
+  let tMin = -tAbs, tMax = tAbs;
+  let pMin = -pAbs, pMax = pAbs;
 
   // Linha do zero (torque) + grid via cores do tema
   const th = _ovlThemeColors();
@@ -8417,6 +8454,84 @@ function wireDFUTab() {
     }
   });
 
+  // Step 3a: fetch latest release from GitHub.
+  // Usa GitHub Releases API pública (60 req/h sem auth — suficiente).
+  // Pega `/releases` (não `/releases/latest`) pra incluir pre-releases (rcN).
+  // Procura asset com extensão .bin no primeiro release retornado.
+  // Resultado é tratado IGUAL ao file pick manual — mesma dfuState.fileBuf.
+  const btnFetch = document.getElementById('dfu-btn-fetch-latest');
+  if (btnFetch) {
+    btnFetch.addEventListener('click', async () => {
+      const info = document.getElementById('dfu-file-info');
+      const orig = btnFetch.textContent;
+      btnFetch.disabled = true;
+      btnFetch.textContent = '…';
+      info.innerHTML = '';
+      dfuLog(t('dfu.fetch.starting'), 'info');
+      try {
+        // Lista releases (inclui pre-releases). O primeiro é o mais recente.
+        // Fetch SEM headers customizados: header "Accept: application/vnd.github+json"
+        // trigga CORS preflight (OPTIONS request) que GitHub não responde corretamente
+        // pra esse tipo de header → resulta em "Failed to fetch".
+        // GitHub API retorna JSON por default, então não precisamos forçar Accept.
+        const apiUrl = 'https://api.github.com/repos/eagabriel/Odrive-Wheel/releases';
+        const resp = await fetch(apiUrl);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status + ' — ' + resp.statusText);
+        const releases = await resp.json();
+        if (!Array.isArray(releases) || releases.length === 0) {
+          dfuLog(t('dfu.fetch.no_releases'), 'err');
+          info.innerHTML = '<span style="color:var(--warn)">' + t('dfu.fetch.no_releases') + '</span>';
+          dfuStepError(document.getElementById('dfu-step3'));
+          return;
+        }
+        const rel = releases[0];
+        const binAsset = (rel.assets || []).find(a => a.name && a.name.toLowerCase().endsWith('.bin'));
+        if (!binAsset) {
+          const msg = t('dfu.fetch.no_bin').replace('{tag}', rel.tag_name || rel.name || '?');
+          dfuLog(msg, 'err');
+          info.innerHTML = '<span style="color:var(--warn)">' + msg + '</span>';
+          dfuStepError(document.getElementById('dfu-step3'));
+          return;
+        }
+        const sizeKB = (binAsset.size / 1024).toFixed(1) + ' KB';
+        dfuLog(t('dfu.fetch.downloading')
+          .replace('{name}', binAsset.name)
+          .replace('{size}', sizeKB)
+          .replace('{tag}', rel.tag_name), 'info');
+        // Download do .bin via browser_download_url (redireciona pra objects.githubusercontent.com).
+        // CORS habilitado pra public assets — funciona direto no fetch.
+        const dl = await fetch(binAsset.browser_download_url);
+        if (!dl.ok) throw new Error('Download falhou: HTTP ' + dl.status);
+        const buf = await dl.arrayBuffer();
+        // Sanity check de tamanho (igual file pick local)
+        if (buf.byteLength < 50 * 1024) {
+          dfuLog('AVISO: arquivo muito pequeno (<50 KB). Verifique se o release tem o .bin certo.', 'err');
+        }
+        if (buf.byteLength > 768 * 1024) {
+          dfuLog('AVISO: arquivo muito grande (>768 KB) — invade S10/S11 (ODrive NVM).', 'err');
+        }
+        dfuState.fileBuf = buf;
+        dfuState.fileName = binAsset.name;
+        info.innerHTML = '✓ <b>' + rel.tag_name + '</b> · ' + binAsset.name +
+          ' <span class="sub">(' + sizeKB + ')</span>';
+        dfuLog(t('dfu.fetch.done')
+          .replace('{name}', binAsset.name)
+          .replace('{size}', sizeKB)
+          .replace('{tag}', rel.tag_name), 'ok');
+        dfuStepDone(document.getElementById('dfu-step3'));
+        updateFlashEnabled();
+      } catch (e) {
+        const msg = t('dfu.fetch.error').replace('{msg}', e.message);
+        dfuLog(msg, 'err');
+        info.innerHTML = '<span style="color:var(--err)">' + msg + '</span>';
+        dfuStepError(document.getElementById('dfu-step3'));
+      } finally {
+        btnFetch.disabled = false;
+        btnFetch.textContent = orig;
+      }
+    });
+  }
+
   // Step 3: pick file
   btnPick.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', async (e) => {
@@ -9043,6 +9158,9 @@ function buildTabs() {
       actionBar.className = 'encoder-actions';
       actionBar.style.cssText = 'grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin-bottom:12px;padding:10px 12px;background:#1a1a1a;border:1px solid var(--border);border-radius:6px';
       actionBar.innerHTML = `
+        <div style="color:var(--fg);font-size:13px;line-height:1.55;background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.25);border-radius:4px;padding:10px 12px;margin-bottom:4px" data-i18n-html="encoder.cal_explainer">
+          📍 <b>Sobre a calibração do encoder:</b> esse procedimento alinha eletricamente as fases do motor com a leitura do encoder — NÃO tem relação com o "centro mecânico" do volante. Durante a calibração o motor gira ~1 volta e para em uma posição arbitrária (depende dos polos magnéticos do motor). Se você quer que o volante volte automaticamente ao centro após a cal (ou sempre que o jogo desligar o FFB), ative <b>idleSpring</b> na aba <b>FFB Wheel</b> — essa mola centralizadora fica sempre ativa e puxa o volante pro zero lógico.
+        </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button id="btn-zero-wheel" class="primary"
                   style="padding:8px 16px;font-size:16px"
@@ -9051,10 +9169,13 @@ function buildTabs() {
                   style="padding:8px 16px;font-size:16px"
                   data-i18n="encoder.preset_as5047_btn">⚙ Ativar AS5047 (preset)</button>
         </div>
+        <div id="encoder-zero-warn" style="display:none;color:var(--err);font-size:13px;line-height:1.5;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.4);border-radius:4px;padding:8px 12px" data-i18n-html="encoder.zero_warn_inc">
+          ⚠ <b>Encoder incremental sem index Z detectado.</b>
+        </div>
         <div style="color:var(--muted);font-size:13px;line-height:1.5">
           <p style="margin:2px 0">
             <b data-i18n="encoder.zero_label">Zerar posição:</b>
-            <span data-i18n="encoder.zero_hint">Captura a posição atual como o novo zero (centro lógico). HID position passa a reportar 0 imediatamente. Não toca no encoder do ODrive — só no offset virtual da camada FFB. NÃO persiste após reboot; pra centro permanente use phase_offset + index search.</span>
+            <span data-i18n-html="encoder.zero_hint">Captura a posição atual como o novo zero (centro lógico). HID position passa a reportar 0 imediatamente.</span>
           </p>
           <p style="margin:2px 0">
             <b data-i18n="encoder.preset_as5047_label">Preset AS5047:</b>
@@ -9621,19 +9742,20 @@ function drawFFBChart() {
   const showP = document.getElementById('ffb-chart-show-pos')?.checked ?? true;
 
   // Auto-scale: torque (Nm) eixo esquerdo, posição (graus) eixo direito.
+  // AMBOS são bidirecionais — força ZERO NO CENTRO (eixo simétrico).
+  // Range = ± max(|min|, |max|). Sem isso, o eixo escala assimétrico e
+  // o zero "flutua", dificultando interpretar visualmente se torque/posição
+  // estão equilibrados pros dois lados.
   // Traces invisíveis NÃO entram no cálculo de min/max.
   const tArr = showT ? ffbChartHistory.trq : [];
   const pArr = showP ? ffbChartHistory.pos : [];
-  let tMin = tArr.length ? _ffbMin(tArr) : -1;
-  let tMax = tArr.length ? _ffbMax(tArr) :  1;
-  let pMin = pArr.length ? _ffbMin(pArr) : -180;
-  let pMax = pArr.length ? _ffbMax(pArr) :  180;
-  const tPad = Math.max((tMax - tMin) * 0.1, 0.2);
-  tMin -= tPad; tMax += tPad;
-  const pPad = Math.max((pMax - pMin) * 0.1, 5);
-  pMin -= pPad; pMax += pPad;
-  if (tMax === tMin) tMax = tMin + 0.5;
-  if (pMax === pMin) pMax = pMin + 10;
+  let tAbs = tArr.length ? Math.max(Math.abs(_ffbMin(tArr)), Math.abs(_ffbMax(tArr))) : 1;
+  let pAbs = pArr.length ? Math.max(Math.abs(_ffbMin(pArr)), Math.abs(_ffbMax(pArr))) : 180;
+  // Padding visual + minimum range
+  tAbs = Math.max(tAbs * 1.1, 0.2);
+  pAbs = Math.max(pAbs * 1.1, 5);
+  let tMin = -tAbs, tMax = tAbs;
+  let pMin = -pAbs, pMax = pAbs;
 
   // Linha do zero (torque) — destaca valor central pra ver simetria
   ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
@@ -10275,8 +10397,13 @@ function drawChart() {
   const showQ  = document.getElementById('chart-show-iq')?.checked   ?? true;
   const showB  = document.getElementById('chart-show-ibr')?.checked  ?? true;
 
-  // Auto-scale: vbus separado (left axis), ibus+iq+ibrake juntos (right axis).
-  // Traces invisíveis NÃO entram no cálculo de min/max — escala foca no que está visível.
+  // Auto-scale: vbus separado (left axis, unidirecional), ibus+iq+ibrake
+  // juntos (right axis, bidirecional — força ZERO NO CENTRO).
+  // Vbus é sempre positivo → escala 0..max é correta.
+  // Eixo de corrente combina ibus (consumo+regen), iq (motor +/-) e ibr
+  // (brake, só positivo). Como pelo menos 2 dos 3 são bidirecionais, força
+  // simétrico — zero centralizado fica visualmente correto pros 3.
+  // Traces invisíveis NÃO entram no cálculo de min/max.
   const vArr = showV ? chartHistory.vbus : [];
   const aArr = [
     ...(showI ? chartHistory.ibus : []),
@@ -10285,15 +10412,13 @@ function drawChart() {
   ];
   let vMin = vArr.length ? _trMin(vArr) : 0;
   let vMax = vArr.length ? _trMax(vArr) : 30;
-  let aMin = aArr.length ? _trMin(aArr) : -1;
-  let aMax = aArr.length ? _trMax(aArr) : 1;
-  // Padding visual de 5% e mínimo de range pra não ter linha "achatada"
+  let aAbs = aArr.length ? Math.max(Math.abs(_trMin(aArr)), Math.abs(_trMax(aArr))) : 1;
+  // Padding visual + mínimo de range
   const vPad = Math.max((vMax - vMin) * 0.1, 0.5);
   vMin -= vPad; vMax += vPad;
-  const aPad = Math.max((aMax - aMin) * 0.1, 0.5);
-  aMin -= aPad; aMax += aPad;
+  aAbs = Math.max(aAbs * 1.1, 0.5);
+  let aMin = -aAbs, aMax = aAbs;
   if (vMax === vMin) vMax = vMin + 1;
-  if (aMax === aMin) aMax = aMin + 1;
 
   // Grid + axes labels
   ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
@@ -10653,6 +10778,10 @@ async function readAll() {
   // Atualiza o helper de Max Torque (precisa dos valores recém-lidos do motor)
   if (typeof window.refreshMaxTorqueHelper === 'function') {
     window.refreshMaxTorqueHelper();
+  }
+  // Atualiza warning do encoder (incremental sem index Z) baseado nos campos lidos
+  if (typeof window.refreshEncoderZeroWarn === 'function') {
+    window.refreshEncoderZeroWarn();
   }
 }
 
@@ -11171,6 +11300,36 @@ wireSetupTab();
   });
   // Expõe pra refresh externo (readAll + tab switch chamam isso)
   window.refreshMaxTorqueHelper = refresh;
+  refresh();
+})();
+
+// Warning condicional na aba Encoder: aparece quando o encoder é incremental
+// (mode == 0) e use_index = false. Pra esses setups, o "zero" do contador
+// é wherever the motor estava no boot — sem ponto de referência fixo no
+// espaço — o que torna o persistent zero pouco confiável.
+(function injectEncoderZeroWarn() {
+  const warnEl = document.getElementById('encoder-zero-warn');
+  if (!warnEl) return;
+  const idMode = 'in-axis0.encoder.config.mode';
+  const idIdx  = 'in-axis0.encoder.config.use_index';
+
+  function refresh() {
+    const modeInp = document.getElementById(idMode);
+    const idxInp  = document.getElementById(idIdx);
+    if (!modeInp || !idxInp) return;
+    const isIncremental = (modeInp.value === '0');
+    const useIndex      = !!idxInp.checked;
+    // Mostra warning só pra incremental sem index Z
+    warnEl.style.display = (isIncremental && !useIndex) ? 'block' : 'none';
+  }
+  [idMode, idIdx].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', refresh);
+      el.addEventListener('change', refresh);
+    }
+  });
+  window.refreshEncoderZeroWarn = refresh;
   refresh();
 })();
 
