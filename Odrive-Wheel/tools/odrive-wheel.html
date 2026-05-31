@@ -8498,28 +8498,45 @@ function wireDFUTab() {
           .replace('{name}', binAsset.name)
           .replace('{size}', sizeKB)
           .replace('{tag}', rel.tag_name), 'info');
-        // Download do .bin. NÃO usamos binAsset.browser_download_url porque
-        // ele redireciona pra objects.githubusercontent.com sem CORS aberto
-        // (quebra em ferramentas hospedadas online — file:// às vezes passa).
-        // Usar a URL da API do asset com Accept: application/octet-stream
-        // resolve: api.github.com serve CORS aberto e o redirect S3-signed
-        // que ela emite TAMBÉM serve Access-Control-Allow-Origin: *.
-        // Accept é header CORS-safelisted, então não dispara preflight.
+        // Download do .bin. Estratégia em cascata porque ambos endpoints da
+        // GitHub (browser_download_url e API asset) redirecionam pra signed
+        // URLs em objects.githubusercontent.com que NÃO servem CORS pra
+        // origens hospedadas — só funcionam em file:// (origem null).
+        // Cascata: API asset → browser_download_url direto → CORS proxy.
+        // Se TUDO falhar, dispara download manual via <a download> e
+        // instrui o usuário a usar o file picker.
         const assetUrl = 'https://api.github.com/repos/eagabriel/Odrive-Wheel/releases/assets/' + binAsset.id;
-        let dl;
+        const tryFetch = async (url, opts) => {
+          const r = await fetch(url, opts);
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r;
+        };
+        let dl = null, lastErr = null;
+        // Tier 1: API asset URL com Accept octet-stream (CORS-safelisted, sem preflight)
         try {
-          dl = await fetch(assetUrl, { headers: { 'Accept': 'application/octet-stream' } });
-        } catch (e1) {
-          // Fallback: tenta browser_download_url direto (funciona em file:// ou
-          // se o usuário tiver extensão CORS-disabler instalada).
-          dfuLog('Tentando fallback browser_download_url…', 'info');
-          try {
-            dl = await fetch(binAsset.browser_download_url);
-          } catch (e2) {
-            throw new Error('CORS bloqueou os 2 endpoints. Baixe manualmente: ' + binAsset.browser_download_url);
-          }
+          dl = await tryFetch(assetUrl, { headers: { 'Accept': 'application/octet-stream' } });
+        } catch (e) { lastErr = e; dfuLog('API asset bloqueado por CORS, tentando direto…', 'info'); }
+        // Tier 2: browser_download_url direto
+        if (!dl) try {
+          dl = await tryFetch(binAsset.browser_download_url);
+        } catch (e) { lastErr = e; dfuLog('Download direto bloqueado, tentando via proxy CORS…', 'info'); }
+        // Tier 3: CORS proxy público (corsproxy.io — sem dependência de API key)
+        if (!dl) try {
+          const proxied = 'https://corsproxy.io/?' + encodeURIComponent(binAsset.browser_download_url);
+          dl = await tryFetch(proxied);
+        } catch (e) { lastErr = e; }
+        // Tier 4: fallback final — dispara download manual e instrui
+        if (!dl) {
+          const a = document.createElement('a');
+          a.href = binAsset.browser_download_url;
+          a.download = binAsset.name;
+          a.rel = 'noopener';
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          throw new Error('Todos os endpoints CORS bloquearam. Iniciei download direto — salve o .bin e use "Choose file" pra carregar.');
         }
-        if (!dl.ok) throw new Error('Download falhou: HTTP ' + dl.status);
         const buf = await dl.arrayBuffer();
         // Sanity check de tamanho (igual file pick local)
         if (buf.byteLength < 50 * 1024) {
