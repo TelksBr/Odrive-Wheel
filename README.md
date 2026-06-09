@@ -33,13 +33,13 @@ full **HID Force Feedback** support to use the motor as a sim racing wheel.
 
 <p align="center">
   <a href="https://github.com/sponsors/eagabriel" target="_blank">
-    <img src="https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA"
-         alt="Sponsor on GitHub" height="40">
+    <img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=EA4AAA"
+         alt="Sponsor on GitHub" height="80">
   </a>
-  &nbsp;
+  &nbsp;&nbsp;
   <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank">
     <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-         alt="Buy me a coffee" height="40">
+         alt="Buy me a coffee" height="80">
   </a>
 </p>
 
@@ -324,12 +324,12 @@ features, fixing bugs, and answering questions:
 <p align="center">
   <a href="https://github.com/sponsors/eagabriel" target="_blank">
     <img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=EA4AAA"
-         alt="Sponsor on GitHub" height="50">
+         alt="Sponsor on GitHub" height="80">
   </a>
   &nbsp;&nbsp;
   <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank">
     <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-         alt="Buy me a coffee" height="50">
+         alt="Buy me a coffee" height="80">
   </a>
 </p>
 
