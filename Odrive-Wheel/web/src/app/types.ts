@@ -6,11 +6,13 @@ export type TabId =
   | 'motor'
   | 'tune'
   | 'ffb-test'
+  | 'perf-test'
   | 'inputs'
   | 'observe'
   | 'maintain'
   | 'commands'
-  | 'console';
+  | 'console'
+  | 'about';
 
 export interface LogEntry {
   id: number;
@@ -35,6 +37,7 @@ export interface AppState {
   dirtyPaths: string[];
   fieldValues: Record<string, string>;
   logs: LogEntry[];
+  focusFieldPath?: string;
 }
 
 export type AppAction =
@@ -51,4 +54,6 @@ export type AppAction =
   | { type: 'clear-dirty' }
   | { type: 'append-log'; direction: LogEntry['direction']; message: string }
   | { type: 'clear-log' }
-  | { type: 'hydrate-fields'; values: Record<string, string>; dirty?: boolean };
+  | { type: 'hydrate-fields'; values: Record<string, string>; dirty?: boolean }
+  | { type: 'focus-field'; path: string }
+  | { type: 'clear-focus-field' };

@@ -8,13 +8,13 @@ export const busSeries: TelemetrySeries[] = [
 ];
 
 export const wheelSeries: TelemetrySeries[] = [
-  { key: 'torqueNm',    label: 'Torque',   unit: 'Nm',    color: '#ef4444', axis: 'left',  visible: true },
-  { key: 'positionDeg', label: 'Position', unit: 'deg',   color: '#a78bfa', axis: 'right', visible: true },
+  { key: 'positionDeg', label: 'Position', unit: 'deg',   color: '#a78bfa', axis: 'left',  visible: true },
+  { key: 'torqueNm',    label: 'Torque',   unit: 'Nm',    color: '#ef4444', axis: 'right', visible: true },
 ];
 
 export const motionSeries: TelemetrySeries[] = [
-  { key: 'torqueNm',    label: 'Torque',   unit: 'Nm',  color: '#ef4444', axis: 'left',  visible: true },
-  { key: 'positionDeg', label: 'Position', unit: 'deg', color: '#a78bfa', axis: 'right', visible: true },
+  { key: 'positionDeg', label: 'Position', unit: 'deg', color: '#a78bfa', axis: 'left',  visible: true },
+  { key: 'torqueNm',    label: 'Torque',   unit: 'Nm',  color: '#ef4444', axis: 'right', visible: true },
 ];
 
 /** All series keys used across charts — for stats computation */

@@ -1,15 +1,24 @@
 import { DfuPage } from '../dfu/DfuPage';
+import { useAppState } from '../../app/AppState';
+import { translate } from '../../i18n/messages';
 import { Card } from '../../shared/ui';
 import { ProfileActions } from '../board/ProfileActions';
 import { QuickActions } from '../board/QuickActions';
 
 export function MaintainWorkspace() {
+  const { state } = useAppState();
   return (
     <div className="page-stack">
-      <Card title="Persistence and profiles" description="Save board state, export profiles, reboot, or clear configuration.">
+      <Card
+        title={translate(state.locale, 'maintainPersistenceTitle')}
+        description={translate(state.locale, 'maintainPersistenceDescription')}
+      >
         <ProfileActions />
       </Card>
-      <Card title="System commands" description="Maintenance operations that are not tied to a specific form.">
+      <Card
+        title={translate(state.locale, 'maintainSystemTitle')}
+        description={translate(state.locale, 'maintainSystemDescription')}
+      >
         <QuickActions categories={['system', 'diagnostics']} />
       </Card>
       <DfuPage />

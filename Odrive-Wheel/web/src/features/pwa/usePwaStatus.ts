@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
+function isStandaloneDisplay(): boolean {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+    ('standalone' in navigator && (navigator as Navigator & { standalone?: boolean }).standalone === true)
+  );
+}
+
 export function usePwaStatus() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(() => window.matchMedia('(display-mode: standalone)').matches);
+  const [installed, setInstalled] = useState(() => isStandaloneDisplay());
   const [online, setOnline] = useState(navigator.onLine);
-
   const {
     offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
@@ -21,6 +28,7 @@ export function usePwaStatus() {
     function handleInstalled() {
       setInstalled(true);
       setInstallPrompt(null);
+      document.documentElement.dataset.displayMode = 'standalone';
     }
 
     function handleOnline() {
@@ -35,6 +43,10 @@ export function usePwaStatus() {
     window.addEventListener('appinstalled', handleInstalled);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    if (isStandaloneDisplay()) {
+      document.documentElement.dataset.displayMode = 'standalone';
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

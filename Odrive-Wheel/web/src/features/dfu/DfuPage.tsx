@@ -11,7 +11,7 @@ export function DfuPage() {
   const [firmware, setFirmware] = useState<ArrayBuffer | null>(null);
   const [firmwareName, setFirmwareName] = useState('');
   const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState('Idle');
+  const [message, setMessage] = useState(translate(state.locale, 'dfuIdle'));
 
   function report(nextMessage: string, nextProgress = progress) {
     setMessage(nextMessage);
@@ -31,15 +31,15 @@ export function DfuPage() {
   }
 
   return (
-    <Card title={translate(state.locale, 'dfu')} description="Browser-based STM32 DfuSe flashing flow.">
+    <Card title={translate(state.locale, 'dfu')} description={translate(state.locale, 'dfuDescription')}>
       {!state.usbSupported ? <p className="warning">{translate(state.locale, 'noUsb')}</p> : null}
       <div className="status-row">
-        <Pill tone={bootloader ? 'ok' : 'neutral'}>{bootloader || 'Bootloader not selected'}</Pill>
-        <Pill tone={firmware ? 'ok' : 'neutral'}>{firmwareName || 'No firmware selected'}</Pill>
+        <Pill tone={bootloader ? 'ok' : 'neutral'}>{bootloader || translate(state.locale, 'dfuBootloaderNotSelected')}</Pill>
+        <Pill tone={firmware ? 'ok' : 'neutral'}>{firmwareName || translate(state.locale, 'dfuNoFirmwareSelected')}</Pill>
       </div>
       <div className="toolbar">
         <button type="button" disabled={!state.connected || state.busy} onClick={() => void run(() => rebootToDfu())}>
-          Reboot to DFU
+          {translate(state.locale, 'dfuRebootToDfu')}
         </button>
         <button
           type="button"

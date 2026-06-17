@@ -18,7 +18,7 @@ export function ConsolePage() {
   }
 
   return (
-    <Card title={translate(state.locale, 'console')} description="Raw serial log and command sender.">
+    <Card title={translate(state.locale, 'console')} description={translate(state.locale, 'consoleDescription')}>
       <div className="console-input">
         <input
           value={command}
@@ -34,7 +34,7 @@ export function ConsolePage() {
           {translate(state.locale, 'send')}
         </button>
         <button type="button" onClick={() => dispatch({ type: 'clear-log' })}>
-          Clear
+          {translate(state.locale, 'consoleClear')}
         </button>
       </div>
       <div className="console-log">

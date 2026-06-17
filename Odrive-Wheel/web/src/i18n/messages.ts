@@ -1,5 +1,14 @@
 export type Locale = 'pt' | 'en';
 
+import { uiPt, uiEn } from './bundles/ui';
+import { ffbTestPt, ffbTestEn } from './bundles/ffbTest';
+import { liveDebugPt, liveDebugEn } from './bundles/liveDebug';
+import { torqueAdvisorPt, torqueAdvisorEn } from './bundles/torqueAdvisor';
+import { fieldsPt, fieldsEn } from './bundles/fields';
+import { aboutPt, aboutEn } from './bundles/about';
+import { perfTestPt, perfTestEn } from './bundles/perfTest';
+import { calibrationPt, calibrationEn } from './bundles/calibration';
+
 type MessageMap = Record<string, string>;
 
 export const messages: Record<Locale, MessageMap> = {
@@ -36,21 +45,29 @@ export const messages: Record<Locale, MessageMap> = {
     busy: 'Ocupado',
     reconnecting: 'Reconectando',
     refreshed: 'Atualizado',
-    autoRefresh: 'Auto refresh',
-    autoReconnect: 'Auto reconnect',
+    refreshPage: '↻ Ler página',
+    autoRefresh: 'Auto',
+    autoReconnect: 'Reconectar',
     language: 'Idioma',
-    navSearch: 'Buscar area...',
-    pwaInstall: 'Instalar app',
-    pwaInstalled: 'Instalado',
-    pwaInstallUnavailable: 'Instalacao indisponivel',
+    navSearch: 'Buscar paginas, campos, comandos...',
+    navSearchPages: 'Paginas',
+    navSearchFields: 'Campos de configuracao',
+    navSearchCommands: 'Comandos',
+    navSearchEmpty: 'Nenhum resultado encontrado.',
+    navSearchKindPage: 'Pagina',
+    navSearchKindField: 'Campo',
+    navSearchKindCommand: 'Comando',
+    pwaInstall: 'Instalar no desktop',
+    pwaInstalled: 'App instalado',
+    pwaInstallUnavailable: 'Instalar indisponivel',
     pwaOfflineReady: 'Offline pronto',
     pwaUpdateReady: 'Atualizacao pronta',
     pwaUpdate: 'Atualizar',
     pwaOnline: 'Online',
     pwaOffline: 'Offline',
     pwaDismiss: 'Dispensar',
-    pwaPanelTitle: 'PWA pronto para box',
-    pwaPanelDescription: 'Instale o configurador para abrir em janela propria e manter a interface disponivel mesmo sem rede.',
+    pwaPanelTitle: 'PWA pronta para desktop',
+    pwaPanelDescription: 'Instale o configurador para abrir em janela propria no Windows, Linux ou macOS — ideal para o pit lane, mesmo offline.',
     serialConnectedLog: 'Serial conectado',
     serialDisconnectedLog: 'Serial desconectado',
     noKnownPortLog: 'Nenhuma porta serial autorizada anteriormente foi encontrada',
@@ -66,6 +83,8 @@ export const messages: Record<Locale, MessageMap> = {
     statusReady: 'pronto',
     statusBlocked: 'bloqueado',
     statusWaiting: 'aguardando',
+    wheelPosition: 'Posição',
+    centerWheel: 'Centralizar volante',
     flowTitle: 'Fluxo recomendado',
     flowDescription: 'Use o app da esquerda para a direita: setup, ajuste, observacao e manutencao.',
     flowSetupTitle: 'Fluxo de setup',
@@ -143,6 +162,7 @@ export const messages: Record<Locale, MessageMap> = {
     readAll: 'Ler tudo',
     save: 'Salvar',
     erase: 'Apagar config',
+    eraseConfirm: 'Apaga config + reboot. Confirma?',
     reboot: 'Reboot',
     export: 'Exportar',
     import: 'Importar',
@@ -185,6 +205,14 @@ export const messages: Record<Locale, MessageMap> = {
     flashFirmware: 'Gravar firmware',
     chooseFirmware: 'Escolher firmware .bin',
     setupHint: 'Wizard guiado para flash, calibracao, configuracao e teste FFB.',
+    ...uiPt,
+    ...ffbTestPt,
+    ...liveDebugPt,
+    ...torqueAdvisorPt,
+    ...fieldsPt,
+    ...aboutPt,
+    ...perfTestPt,
+    ...calibrationPt,
   },
   en: {
     appTitle: 'Odrive-Wheel',
@@ -219,12 +247,20 @@ export const messages: Record<Locale, MessageMap> = {
     busy: 'Busy',
     reconnecting: 'Reconnecting',
     refreshed: 'Refreshed',
-    autoRefresh: 'Auto refresh',
-    autoReconnect: 'Auto reconnect',
+    refreshPage: '↻ Read page',
+    autoRefresh: 'Auto',
+    autoReconnect: 'Reconnect',
     language: 'Language',
-    navSearch: 'Search area...',
-    pwaInstall: 'Install app',
-    pwaInstalled: 'Installed',
+    navSearch: 'Search pages, fields, commands...',
+    navSearchPages: 'Pages',
+    navSearchFields: 'Config fields',
+    navSearchCommands: 'Commands',
+    navSearchEmpty: 'No results found.',
+    navSearchKindPage: 'Page',
+    navSearchKindField: 'Field',
+    navSearchKindCommand: 'Command',
+    pwaInstall: 'Install to desktop',
+    pwaInstalled: 'App installed',
     pwaInstallUnavailable: 'Install unavailable',
     pwaOfflineReady: 'Offline ready',
     pwaUpdateReady: 'Update ready',
@@ -232,8 +268,8 @@ export const messages: Record<Locale, MessageMap> = {
     pwaOnline: 'Online',
     pwaOffline: 'Offline',
     pwaDismiss: 'Dismiss',
-    pwaPanelTitle: 'PWA ready for the pit lane',
-    pwaPanelDescription: 'Install the configurator to launch in its own window and keep the interface available even without network.',
+    pwaPanelTitle: 'Desktop-ready PWA',
+    pwaPanelDescription: 'Install the configurator to launch in its own window on Windows, Linux, or macOS — ideal for the pit lane, even offline.',
     serialConnectedLog: 'Serial connected',
     serialDisconnectedLog: 'Serial disconnected',
     noKnownPortLog: 'No previously authorized serial port found',
@@ -249,6 +285,8 @@ export const messages: Record<Locale, MessageMap> = {
     statusReady: 'ready',
     statusBlocked: 'blocked',
     statusWaiting: 'waiting',
+    wheelPosition: 'Position',
+    centerWheel: 'Center wheel',
     flowTitle: 'Recommended flow',
     flowDescription: 'Use the app from left to right: setup, tune, observe, maintain.',
     flowSetupTitle: 'Setup Flow',
@@ -326,6 +364,7 @@ export const messages: Record<Locale, MessageMap> = {
     readAll: 'Read all',
     save: 'Save',
     erase: 'Erase config',
+    eraseConfirm: 'Erases config + reboot. Confirm?',
     reboot: 'Reboot',
     export: 'Export',
     import: 'Import',
@@ -368,9 +407,27 @@ export const messages: Record<Locale, MessageMap> = {
     flashFirmware: 'Flash firmware',
     chooseFirmware: 'Choose firmware .bin',
     setupHint: 'Guided wizard for flashing, calibration, configuration, and FFB testing.',
+    ...uiEn,
+    ...ffbTestEn,
+    ...liveDebugEn,
+    ...torqueAdvisorEn,
+    ...fieldsEn,
+    ...aboutEn,
+    ...perfTestEn,
+    ...calibrationEn,
   },
 };
 
-export function translate(locale: Locale, key: string): string {
-  return messages[locale][key] ?? messages.en[key] ?? key;
+export function translate(
+  locale: Locale,
+  key: string,
+  params?: Record<string, string | number>,
+): string {
+  let text = messages[locale][key] ?? messages.en[key] ?? key;
+  if (params) {
+    for (const [name, value] of Object.entries(params)) {
+      text = text.replaceAll(`{${name}}`, String(value));
+    }
+  }
+  return text;
 }

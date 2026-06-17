@@ -1,7 +1,13 @@
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useAppState } from '../../app/AppState';
-import { readField, writeField } from '../board/BoardProtocol';
+import { readField, applyField } from '../board/BoardProtocol';
 import { flatFields, type ConfigField } from '../config/fieldCatalog';
+import { isButtonPressed } from '../inputs/analogAxisMath';
+import {
+  ButtonInputControl,
+  LinearAnalogAxis,
+  ZeroWheelInputControl,
+} from '../inputs/InputControls';
 import { ConfigPage } from '../config/ConfigPage';
 import { translate } from '../../i18n/messages';
 import { Card, Pill, SectionHeader } from '../../shared/ui';
@@ -22,6 +28,7 @@ interface InputChannel {
 function useInputsLivePoller(
   channels: InputChannel[],
   connected: boolean,
+  paused = false,
 ): { curValues: Record<string, string>; polling: boolean } {
   const [curValues, setCurValues] = useState<Record<string, string>>({});
   const [polling, setPolling] = useState(false);
@@ -61,7 +68,7 @@ function useInputsLivePoller(
   }, [curFields]);
 
   useEffect(() => {
-    if (!connected) {
+    if (!connected || paused) {
       activeRef.current = false;
       setPolling(false);
       cancelAnimationFrame(rafRef.current);
@@ -77,7 +84,7 @@ function useInputsLivePoller(
       setPolling(false);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [connected, runLoop]);
+  }, [connected, paused, runLoop]);
 
   return { curValues, polling };
 }
@@ -85,7 +92,7 @@ function useInputsLivePoller(
 export function InputsWorkspace() {
   const { state, dispatch } = useAppState();
   const channels = useMemo(() => GPIO_CHANNELS.map(createChannel), []);
-  const { curValues, polling } = useInputsLivePoller(channels, state.connected);
+  const { curValues, polling } = useInputsLivePoller(channels, state.connected, state.busy);
   // Merge live cur values over global field values so components always see
   // the latest reading without the global store receiving high-frequency updates.
   const mergedValues = useMemo(
@@ -131,10 +138,10 @@ export function InputsWorkspace() {
     dispatch({ type: 'set-busy', busy: true });
     try {
       for (const field of writableFields(channel)) {
-        await writeField(field, state.fieldValues[field.path] ?? '');
-        dispatch({ type: 'set-field', path: field.path, value: state.fieldValues[field.path] ?? '', dirty: false });
+        const applied = await applyField(field, state.fieldValues[field.path] ?? '');
+        dispatch({ type: 'set-field', path: field.path, value: applied, dirty: false });
       }
-      dispatch({ type: 'append-log', direction: 'info', message: `GPIO ${channel.gpio} applied` });
+      dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'logGpioApplied', { n: channel.gpio }) });
     } catch (error) {
       dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -164,7 +171,7 @@ export function InputsWorkspace() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {polling && (
               <span className="pill pill-ok" style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>
-                ⬤ live
+                {translate(state.locale, 'inputsLiveBadge')}
               </span>
             )}
             <button type="button" disabled={!state.connected || state.busy} onClick={() => void readAllInputs()}>
@@ -236,26 +243,20 @@ function InputChannelCard({
   const raw = numberValue(valueFor(channel, 'cur', values));
   const min = numberValue(valueFor(channel, 'amin', values)) ?? 0;
   const max = numberValue(valueFor(channel, 'amax', values)) ?? 4095;
-  const normalized = raw === undefined || max <= min ? undefined : Math.max(0, Math.min(100, ((raw - min) / (max - min)) * 100));
   const dirty = Object.values(channel.fields).some((field) => dirtyPaths.includes(field.path));
+  const emptyLabel = translate(locale, 'metricEmpty');
 
   return (
-    <Card title={`GPIO ${channel.gpio}`} description={modeLabel(locale, mode)}>
-      <div className="input-meter">
-        <div className="input-meter-readout">
-          <span>{translate(locale, 'inputsRaw')}</span>
-          <strong>{raw ?? translate(locale, 'inputsNoValue')}</strong>
-          <Pill tone={dirty ? 'warn' : mode === '2' ? 'ok' : 'neutral'}>{dirty ? 'modified' : modeLabel(locale, mode)}</Pill>
-        </div>
-        <div className="input-meter-track" aria-label={`${translate(locale, 'inputsNormalized')} ${normalized?.toFixed(0) ?? 0}%`}>
-          <div style={{ width: `${normalized ?? 0}%` }} />
-        </div>
-        <div className="input-meter-scale">
-          <span>{min}</span>
-          <span>{normalized === undefined ? '--' : `${normalized.toFixed(0)}%`}</span>
-          <span>{max}</span>
-        </div>
-      </div>
+    <Card title={translate(locale, 'inputsGpioTitle', { n: channel.gpio })} description={modeLabel(locale, mode)}>
+      <InputLiveDisplay
+        mode={mode}
+        raw={raw ?? null}
+        min={min}
+        max={max}
+        locale={locale}
+        emptyLabel={emptyLabel}
+        dirty={dirty}
+      />
 
       <div className="input-control-grid">
         <label>
@@ -276,8 +277,8 @@ function InputChannelCard({
           <span>{translate(locale, 'inputsInvert')}</span>
           <select value={valueFor(channel, 'invert', values)} onChange={(event) => onChange(channel.fields.invert, event.target.value)}>
             <option value="">-</option>
-            <option value="false">False</option>
-            <option value="true">True</option>
+            <option value="false">{translate(locale, 'inputsInvertFalse')}</option>
+            <option value="true">{translate(locale, 'inputsInvertTrue')}</option>
           </select>
         </label>
         <label>
@@ -305,6 +306,93 @@ function InputChannelCard({
         </button>
       </div>
     </Card>
+  );
+}
+
+function InputLiveDisplay({
+  mode,
+  raw,
+  min,
+  max,
+  locale,
+  emptyLabel,
+  dirty,
+}: {
+  mode: string;
+  raw: number | null;
+  min: number;
+  max: number;
+  locale: 'pt' | 'en';
+  emptyLabel: string;
+  dirty: boolean;
+}) {
+  const label = translate(locale, 'inputsLiveSignal');
+
+  if (mode === '2') {
+    return (
+      <div className="input-live-wrap">
+        <LinearAnalogAxis label={label} value={raw} min={min} max={max} tone="ok" smooth={false} emptyLabel={emptyLabel} />
+        <InputStatusPill locale={locale} mode={mode} dirty={dirty} />
+      </div>
+    );
+  }
+
+  if (mode === '1') {
+    return (
+      <div className="input-live-wrap">
+        <ButtonInputControl
+          label={label}
+          pressed={isButtonPressed(raw, min, max)}
+          raw={raw}
+          pressedLabel={translate(locale, 'inputButtonPressed')}
+          releasedLabel={translate(locale, 'inputButtonReleased')}
+          emptyLabel={emptyLabel}
+        />
+        <InputStatusPill locale={locale} mode={mode} dirty={dirty} />
+      </div>
+    );
+  }
+
+  if (mode === '3') {
+    return (
+      <div className="input-live-wrap">
+        <ZeroWheelInputControl
+          label={label}
+          active={isButtonPressed(raw, min, max)}
+          raw={raw}
+          readyLabel={translate(locale, 'inputZeroReady')}
+          triggeredLabel={translate(locale, 'inputZeroTriggered')}
+          hint={translate(locale, 'inputZeroHint')}
+          emptyLabel={emptyLabel}
+        />
+        <InputStatusPill locale={locale} mode={mode} dirty={dirty} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="input-live-wrap">
+      <p className="dashboard-analog-empty">{translate(locale, 'inputModeDisabled')}</p>
+      <InputStatusPill locale={locale} mode={mode} dirty={dirty} />
+    </div>
+  );
+}
+
+function InputStatusPill({
+  locale,
+  mode,
+  dirty,
+}: {
+  locale: 'pt' | 'en';
+  mode: string;
+  dirty: boolean;
+}) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+      <Pill tone={dirty ? 'warn' : mode === '2' ? 'ok' : 'neutral'}>
+        {dirty ? translate(locale, 'inputsModified') : modeLabel(locale, mode)}
+      </Pill>
+    </div>
   );
 }
 

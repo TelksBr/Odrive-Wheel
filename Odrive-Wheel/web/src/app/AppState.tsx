@@ -11,7 +11,7 @@ const savedLocale = localStorage.getItem('odrive-wheel-locale') as Locale | null
 const savedAutoReconnect = localStorage.getItem('odrive-wheel-auto-reconnect');
 const savedAutoRefresh = localStorage.getItem('odrive-wheel-auto-refresh');
 const savedRefreshInterval = Number(localStorage.getItem('odrive-wheel-refresh-interval'));
-const tabIds: TabId[] = ['dashboard', 'setup', 'motor', 'tune', 'ffb-test', 'inputs', 'observe', 'maintain', 'commands', 'console'];
+const tabIds: TabId[] = ['dashboard', 'setup', 'motor', 'tune', 'ffb-test', 'perf-test', 'inputs', 'observe', 'maintain', 'commands', 'console', 'about'];
 
 function initialTab(): TabId {
   const tab = new URLSearchParams(window.location.search).get('tab');
@@ -98,6 +98,10 @@ function reducer(state: AppState, action: AppAction): AppState {
       };
     case 'clear-log':
       return { ...state, logs: [] };
+    case 'focus-field':
+      return { ...state, focusFieldPath: action.path };
+    case 'clear-focus-field':
+      return { ...state, focusFieldPath: undefined };
     default:
       return state;
   }
@@ -116,4 +120,17 @@ export function useAppState(): AppContextValue {
     throw new Error('useAppState must be used inside AppStateProvider');
   }
   return value;
+}
+
+/** Safe locale read — works inside PiP / secondary React roots. */
+export function useAppLocale(override?: Locale): Locale {
+  if (override) {
+    return override;
+  }
+  const value = useContext(AppContext);
+  if (value) {
+    return value.state.locale;
+  }
+  const saved = localStorage.getItem('odrive-wheel-locale');
+  return saved === 'en' || saved === 'pt' ? saved : 'pt';
 }

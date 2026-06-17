@@ -40,11 +40,17 @@ export function useTelemetry({
   enabled,
   intervalMs,
   windowMs = 60_000,
+  maxTorqueNm,
+  holdPolling = false,
 }: {
   connected: boolean;
   enabled: boolean;
   intervalMs: number;
   windowMs?: number;
+  /** axis.maxtorque value — used to convert raw HID torque counts (lt) to Nm. */
+  maxTorqueNm?: number;
+  /** Pause polling while serial is busy (e.g. unified save). */
+  holdPolling?: boolean;
 }): TelemetryHandle {
   const [samples, setSamples] = useState<TelemetrySample[]>([]);
   const [brakePower, setBrakePower] = useState<BrakePowerState>({ resistance: null, watts: null, sampleCount: 0 });
@@ -77,7 +83,7 @@ export function useTelemetry({
   }, []);
 
   const pollOnce = useCallback(async () => {
-    if (!connected || inFlight.current) {
+    if (!connected || inFlight.current || holdPolling) {
       return;
     }
     inFlight.current = true;
@@ -91,7 +97,7 @@ export function useTelemetry({
         readField(odriveField('ibus')).catch(() => undefined),
         readField(odriveField('axis0.motor.current_control.Iq_measured')).catch(() => undefined),
         readField(odriveField('brake_resistor_current')).catch(() => undefined),
-        serialService.sendCommand('T', true, 2000).catch(() => undefined),
+        serialService.sendCommand('T', true, 2000, false).catch(() => undefined),
         readField(odriveField('axis.curpos')).catch(() => undefined),
         readField(odriveField('axis.curspd')).catch(() => undefined),
       ]);
@@ -103,7 +109,7 @@ export function useTelemetry({
         ibus: parseNumber(ibus),
         iq: parseNumber(iq),
         ibrake: parseNumber(ibrake),
-        torqueNm: parseTorque(torqueRaw),
+        torqueNm: parseTorque(torqueRaw, maxTorqueNm),
         positionDeg: parseNumber(posRaw),
         velocityDegS: parseNumber(velRaw),
       };
@@ -119,7 +125,7 @@ export function useTelemetry({
     } finally {
       inFlight.current = false;
     }
-  }, [connected, readBrakeResistance]);
+  }, [connected, holdPolling, maxTorqueNm, readBrakeResistance]);
 
   useEffect(() => {
     if (!connected || !enabled) {
@@ -208,12 +214,26 @@ function parseNumber(raw: string | undefined): number | undefined {
   return Number.isFinite(value) ? value : undefined;
 }
 
-function parseTorque(raw: string | undefined): number | undefined {
+/**
+ * Parse torque from the `T` diagnostic command reply: "lt=<int> nm=<float>"
+ *
+ * Some firmware versions output the raw HID count (0–32767) in the `nm=` field
+ * instead of actual Nm, so we prefer the `lt` count + `maxTorqueNm` conversion.
+ * Falls back to the `nm=` field when `maxTorqueNm` is not yet loaded.
+ */
+function parseTorque(raw: string | undefined, maxTorqueNm?: number): number | undefined {
   if (!raw) {
     return undefined;
   }
-  const match = raw.match(/nm=(-?\d+(?:\.\d+)?)/);
-  return match ? Number(match[1]) : undefined;
+  // Primary: parse raw HID count (lt) and convert to Nm using the configured scale.
+  const ltMatch = raw.match(/lt=(-?\d+(?:\.\d+)?)/);
+  if (ltMatch && maxTorqueNm !== undefined && maxTorqueNm > 0) {
+    const lt = Number(ltMatch[1]);
+    return Number.isFinite(lt) ? (lt / 32767) * maxTorqueNm : undefined;
+  }
+  // Fallback: read nm= field directly (older firmware that reports correct Nm).
+  const nmMatch = raw.match(/nm=(-?\d+(?:\.\d+)?)/);
+  return nmMatch ? Number(nmMatch[1]) : undefined;
 }
 
 function updateBrakePower(

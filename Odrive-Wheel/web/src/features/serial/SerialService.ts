@@ -1,7 +1,7 @@
 export type SerialEvent =
   | { type: 'connected' }
   | { type: 'disconnected' }
-  | { type: 'rx'; line: string }
+  | { type: 'rx'; line: string; command?: string }
   | { type: 'tx'; line: string }
   | { type: 'error'; message: string };
 
@@ -10,6 +10,7 @@ type SerialListener = (event: SerialEvent) => void;
 interface PendingCommand {
   command: string;
   expectReply: boolean;
+  log: boolean;
   resolve: (line: string) => void;
   reject: (error: Error) => void;
   timeoutId: number;
@@ -17,6 +18,7 @@ interface PendingCommand {
 
 export class SerialService {
   private port: SerialPort | null = null;
+  private authorizedPort: SerialPort | null = null;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
   private listeners = new Set<SerialListener>();
@@ -41,7 +43,12 @@ export class SerialService {
       throw new Error('Web Serial is not available');
     }
 
+    if (this.isConnected) {
+      await this.disconnect();
+    }
+
     this.port = existingPort ?? (await navigator.serial.requestPort());
+    this.authorizedPort = this.port;
     await this.port.open({ baudRate: 115200, bufferSize: 4096 });
 
     if (!this.port.readable || !this.port.writable) {
@@ -59,13 +66,30 @@ export class SerialService {
     if (!navigator.serial) {
       return false;
     }
-    const ports = await navigator.serial.getPorts();
-    const port = ports[0];
-    if (!port) {
-      return false;
+    if (this.isConnected) {
+      return true;
     }
-    await this.connect(port);
-    return true;
+
+    const candidates: SerialPort[] = [];
+    if (this.authorizedPort) {
+      candidates.push(this.authorizedPort);
+    }
+    const ports = await navigator.serial.getPorts();
+    for (const port of ports) {
+      if (!candidates.includes(port)) {
+        candidates.push(port);
+      }
+    }
+
+    for (const port of candidates) {
+      try {
+        await this.connect(port);
+        return true;
+      } catch {
+        // Port may still be rebooting or busy — try next candidate / retry later
+      }
+    }
+    return false;
   }
 
   async disconnect(): Promise<void> {
@@ -91,8 +115,17 @@ export class SerialService {
     this.emit({ type: 'disconnected' });
   }
 
-  async sendCommand(command: string, expectReply = true, timeoutMs = 2000): Promise<string> {
-    return this.enqueue(() => this.sendCommandNow(command, expectReply, timeoutMs));
+  async sendCommand(command: string, expectReply = true, timeoutMs = 2000, log = true): Promise<string> {
+    return this.enqueue(() => this.sendCommandNow(command, expectReply, timeoutMs, log));
+  }
+
+  /** Runs as one queue item — use commandNow() inside to avoid interleaved polling. */
+  runAtomic<T>(operation: () => Promise<T>): Promise<T> {
+    return this.enqueue(operation);
+  }
+
+  commandNow(command: string, expectReply = true, timeoutMs = 2000, log = true): Promise<string> {
+    return this.sendCommandNow(command, expectReply, timeoutMs, log);
   }
 
   private enqueue<T>(operation: () => Promise<T>): Promise<T> {
@@ -101,7 +134,7 @@ export class SerialService {
     return next;
   }
 
-  private async sendCommandNow(command: string, expectReply = true, timeoutMs = 2000): Promise<string> {
+  private async sendCommandNow(command: string, expectReply = true, timeoutMs = 2000, log = true): Promise<string> {
     if (!this.writer) {
       throw new Error('Serial is not connected');
     }
@@ -111,7 +144,9 @@ export class SerialService {
       return '';
     }
 
-    this.emit({ type: 'tx', line: cleanCommand });
+    if (log) {
+      this.emit({ type: 'tx', line: cleanCommand });
+    }
     await this.writer.write(this.encoder.encode(`${cleanCommand}\n`));
 
     if (!expectReply) {
@@ -127,6 +162,7 @@ export class SerialService {
       this.pending.push({
         command: cleanCommand,
         expectReply,
+        log,
         resolve,
         reject,
         timeoutId,
@@ -167,7 +203,6 @@ export class SerialService {
       if (!line) {
         continue;
       }
-      this.emit({ type: 'rx', line });
       this.resolveNext(line);
     }
   }
@@ -175,9 +210,13 @@ export class SerialService {
   private resolveNext(line: string): void {
     const next = this.pending.shift();
     if (!next) {
+      this.emit({ type: 'rx', line });
       return;
     }
     window.clearTimeout(next.timeoutId);
+    if (next.log) {
+      this.emit({ type: 'rx', line, command: next.command });
+    }
     next.resolve(line);
   }
 

@@ -4,13 +4,12 @@ import { translate } from '../../i18n/messages';
 import { flatFields } from '../config/fieldCatalog';
 import {
   createProfile,
-  eraseBoardConfiguration,
   parseProfile,
   readField,
   rebootBoard,
-  saveBoardConfiguration,
-  writeField,
 } from './BoardProtocol';
+import { eraseAndReconnect } from '../calibration/calibrationPresets';
+import { unifiedSave } from './unifiedSave';
 
 export function ProfileActions() {
   const { state, dispatch } = useAppState();
@@ -31,18 +30,29 @@ export function ProfileActions() {
   }
 
   async function writeDirty() {
+    if (!state.connected || state.busy) {
+      return;
+    }
     dispatch({ type: 'set-busy', busy: true });
     try {
-      for (const path of state.dirtyPaths) {
-        const field = flatFields.find((item) => item.path === path);
-        if (!field || field.readonly) {
-          continue;
+      const result = await unifiedSave({
+        dirtyPaths: state.dirtyPaths,
+        fieldValues: state.fieldValues,
+      });
+      if (result.reconnected && result.values) {
+        for (const [path, value] of Object.entries(result.values)) {
+          dispatch({ type: 'set-field', path, value, dirty: false });
         }
-        await writeField(field, state.fieldValues[path] ?? '');
+        dispatch({ type: 'clear-dirty' });
+        dispatch({ type: 'mark-refreshed' });
+        dispatch({
+          type: 'append-log',
+          direction: 'info',
+          message: translate(state.locale, 'toastSaveComplete'),
+        });
+      } else if (!result.reconnected) {
+        dispatch({ type: 'append-log', direction: 'error', message: translate(state.locale, 'saveReconnectFailed') });
       }
-      await saveBoardConfiguration();
-      dispatch({ type: 'clear-dirty' });
-      dispatch({ type: 'append-log', direction: 'info', message: 'Profile saved' });
     } catch (error) {
       dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -51,9 +61,22 @@ export function ProfileActions() {
   }
 
   async function erase() {
+    if (!window.confirm(translate(state.locale, 'eraseConfirm'))) {
+      return;
+    }
     dispatch({ type: 'set-busy', busy: true });
     try {
-      await eraseBoardConfiguration();
+      const result = await eraseAndReconnect();
+      if (result.reconnected && result.values) {
+        for (const [path, value] of Object.entries(result.values)) {
+          dispatch({ type: 'set-field', path, value, dirty: false });
+        }
+        dispatch({ type: 'clear-dirty' });
+        dispatch({ type: 'mark-refreshed' });
+        dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'setupToastErasedOk') });
+      } else {
+        dispatch({ type: 'append-log', direction: 'error', message: translate(state.locale, 'setupToastErasedNoReconnect') });
+      }
     } catch (error) {
       dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -93,7 +116,7 @@ export function ProfileActions() {
         {translate(state.locale, 'readAll')}
       </button>
       <button type="button" disabled={!state.connected || state.busy} onClick={() => void writeDirty()}>
-        {translate(state.locale, 'save')} ({state.dirtyPaths.length})
+        {translate(state.locale, 'save')}{state.dirtyPaths.length > 0 ? ` (${state.dirtyPaths.length})` : ''}
       </button>
       <button type="button" className="danger" disabled={!state.connected || state.busy} onClick={() => void erase()}>
         {translate(state.locale, 'erase')}

@@ -1,19 +1,21 @@
 import { useMemo, useState } from 'react';
 import { useAppState } from '../../app/AppState';
+import { translate } from '../../i18n/messages';
 import { boardCommands } from '../../domain/commands/commandRegistry';
 import { serialService } from '../serial/SerialService';
 import { Card } from '../../shared/ui';
 
-const categoryLabels = {
-  safety: 'Safety',
-  calibration: 'Calibration',
-  ffb: 'FFB',
-  system: 'System',
-  diagnostics: 'Diagnostics',
-};
+const categoryKeys = {
+  safety: 'commandCategorySafety',
+  calibration: 'commandCategoryCalibration',
+  ffb: 'commandCategoryFfb',
+  system: 'commandCategorySystem',
+  diagnostics: 'commandCategoryDiagnostics',
+} as const;
 
 export function CommandCenterPage() {
   const { state, dispatch } = useAppState();
+  const locale = state.locale;
   const [query, setQuery] = useState('');
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -25,9 +27,9 @@ export function CommandCenterPage() {
           command.label.toLowerCase().includes(normalizedQuery) ||
           command.command.toLowerCase().includes(normalizedQuery) ||
           command.description.toLowerCase().includes(normalizedQuery) ||
-          categoryLabels[command.category].toLowerCase().includes(normalizedQuery),
+          translate(locale, categoryKeys[command.category]).toLowerCase().includes(normalizedQuery),
       ),
-    [normalizedQuery],
+    [locale, normalizedQuery],
   );
 
   async function run(command: (typeof boardCommands)[number]) {
@@ -42,10 +44,14 @@ export function CommandCenterPage() {
   }
 
   return (
-    <Card title="Command Center" description="Firmware commands as a searchable, reusable operation layer.">
+    <Card title={translate(locale, 'commandCenterTitle')} description={translate(locale, 'commandCenterDescription')}>
       <div className="config-filterbar">
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search commands, categories or raw strings" />
-        <span>{commands.length} commands</span>
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={translate(locale, 'commandCenterSearchPlaceholder')}
+        />
+        <span>{translate(locale, 'commandCenterCount', { n: commands.length })}</span>
       </div>
       <div className="command-grid">
         {commands.map((command) => (
@@ -56,7 +62,7 @@ export function CommandCenterPage() {
             disabled={!state.connected || state.busy}
             onClick={() => void run(command)}
           >
-            <span>{categoryLabels[command.category]}</span>
+            <span>{translate(locale, categoryKeys[command.category])}</span>
             <strong>{command.label}</strong>
             <p>{command.description}</p>
             <code>{command.command}</code>

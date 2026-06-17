@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { useAppState } from '../../app/AppState';
+import { translate } from '../../i18n/messages';
 import { TimeSeriesChart } from './TimeSeriesChart';
 import { busSeries, motionSeries } from './series';
 import { computeStats } from './types';
@@ -20,52 +22,95 @@ const WINDOW_OPTIONS = [
   { label: '2 min', ms: 120_000 },
 ];
 
+function renderOverlayRoot(
+  root: Root,
+  props: Required<TelemetryOverlayProps> & { locale: import('../../i18n/messages').Locale },
+) {
+  root.render(<OverlayWindow {...props} />);
+}
+
 export function TelemetryOverlay({ connected, samples, brakePower, windowMs: externalWindowMs = 60_000 }: TelemetryOverlayProps) {
+  const { state, dispatch } = useAppState();
+  const locale = state.locale;
   const [pipOpen, setPipOpen] = useState(false);
   const [overlayWindowMs, setOverlayWindowMs] = useState(externalWindowMs);
+  const [overlayError, setOverlayError] = useState<string | null>(null);
   const pipRef = useRef<Window | null>(null);
   const rootRef = useRef<Root | null>(null);
 
-  async function openOverlay() {
+  useEffect(() => {
+    setOverlayWindowMs(externalWindowMs);
+  }, [externalWindowMs]);
+
+  const overlayProps = {
+    connected,
+    samples,
+    brakePower,
+    windowMs: overlayWindowMs,
+    locale,
+  };
+  const propsRef = useRef(overlayProps);
+  propsRef.current = overlayProps;
+
+  const openOverlay = useCallback(async () => {
+    setOverlayError(null);
     if (!window.documentPictureInPicture) {
-      throw new Error('Document Picture-in-Picture is not available in this browser');
+      const message = translate(locale, 'overlayPipError');
+      setOverlayError(message);
+      dispatch({ type: 'append-log', direction: 'error', message });
+      return;
+    }
+    if (!connected) {
+      const message = translate(locale, 'overlayConnectFirst');
+      setOverlayError(message);
+      return;
     }
     if (pipRef.current && !pipRef.current.closed) {
       pipRef.current.focus();
       return;
     }
 
-    const pip = await window.documentPictureInPicture.requestWindow({ width: 660, height: 620 });
-    pip.document.title = 'Odrive-Wheel Telemetry';
-    const style = pip.document.createElement('style');
-    style.textContent = overlayCss;
-    pip.document.head.appendChild(style);
-    const mount = pip.document.createElement('div');
-    mount.id = 'overlay-root';
-    pip.document.body.appendChild(mount);
+    try {
+      const pip = await window.documentPictureInPicture.requestWindow({ width: 680, height: 640 });
+      pip.document.title = translate(locale, 'overlayPipTitle');
 
-    pipRef.current = pip;
-    rootRef.current = createRoot(mount);
-    setPipOpen(true);
-    pip.addEventListener('pagehide', () => {
-      rootRef.current?.unmount();
-      rootRef.current = null;
-      pipRef.current = null;
-      setPipOpen(false);
-    });
-  }
+      const style = pip.document.createElement('style');
+      style.textContent = overlayCss;
+      pip.document.head.appendChild(style);
 
-  // Push updated data into the PiP window every render
+      const mount = pip.document.createElement('div');
+      mount.id = 'overlay-root';
+      mount.style.height = '100%';
+      pip.document.body.appendChild(mount);
+      pip.document.body.style.margin = '0';
+      pip.document.body.style.height = '100%';
+      pip.document.body.style.overflow = 'hidden';
+
+      const root = createRoot(mount);
+      pipRef.current = pip;
+      rootRef.current = root;
+      renderOverlayRoot(root, propsRef.current);
+      setPipOpen(true);
+
+      pip.addEventListener('pagehide', () => {
+        rootRef.current?.unmount();
+        rootRef.current = null;
+        pipRef.current = null;
+        setPipOpen(false);
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setOverlayError(message);
+      dispatch({ type: 'append-log', direction: 'error', message: `PiP: ${message}` });
+    }
+  }, [connected, dispatch, locale]);
+
   useEffect(() => {
-    rootRef.current?.render(
-      <OverlayWindow
-        connected={connected}
-        samples={samples}
-        brakePower={brakePower}
-        windowMs={overlayWindowMs}
-      />,
-    );
-  }, [brakePower, connected, samples, overlayWindowMs]);
+    if (!rootRef.current) {
+      return;
+    }
+    renderOverlayRoot(rootRef.current, propsRef.current);
+  }, [connected, samples, brakePower, overlayWindowMs, locale]);
 
   const pipAvailable = Boolean(window.documentPictureInPicture);
 
@@ -76,12 +121,12 @@ export function TelemetryOverlay({ connected, samples, brakePower, windowMs: ext
         disabled={!connected || !pipAvailable}
         onClick={() => void openOverlay()}
       >
-        {pipOpen ? '⎙ Focar overlay iRacing' : '⎙ Abrir overlay iRacing'}
+        {pipOpen ? translate(locale, 'overlayFocus') : translate(locale, 'overlayOpen')}
       </button>
 
       {pipOpen && (
         <>
-          <span className="eyebrow" style={{ alignSelf: 'center' }}>Janela overlay</span>
+          <span className="eyebrow" style={{ alignSelf: 'center' }}>{translate(locale, 'overlayWindowLabel')}</span>
           {WINDOW_OPTIONS.map((opt) => (
             <button
               key={opt.ms}
@@ -97,14 +142,24 @@ export function TelemetryOverlay({ connected, samples, brakePower, windowMs: ext
 
       <span className="muted" style={{ fontSize: 12 }}>
         {pipAvailable
-          ? 'Document PiP — histórico de telemetria compartilhado em tempo real.'
-          : 'Document PiP indisponível. Use Chrome/Edge 116+.'}
+          ? translate(locale, 'overlayPipAvailable')
+          : translate(locale, 'overlayPipUnavailable')}
       </span>
+
+      {overlayError && (
+        <span style={{ fontSize: 12, color: 'var(--error)', width: '100%' }}>{overlayError}</span>
+      )}
     </div>
   );
 }
 
-function OverlayWindow({ connected, samples, brakePower, windowMs }: Required<TelemetryOverlayProps>) {
+function OverlayWindow({
+  connected,
+  samples,
+  brakePower,
+  windowMs,
+  locale,
+}: Required<TelemetryOverlayProps> & { locale: import('../../i18n/messages').Locale }) {
   const stats = computeStats(samples, allSeriesKeys);
   const hz = (() => {
     const last5s = samples.filter((s) => s.t >= (samples.at(-1)?.t ?? 0) - 5000);
@@ -115,68 +170,69 @@ function OverlayWindow({ connected, samples, brakePower, windowMs }: Required<Te
   const brakePowerLabel = brakePower.watts !== null
     ? `${brakePower.watts.toFixed(1)} W`
     : brakePower.resistance !== null
-    ? 'idle'
-    : 'set R';
+    ? translate(locale, 'overlayBrakeIdle')
+    : translate(locale, 'overlayBrakeSetR');
 
   return (
     <main className="pip-shell">
-      {/* ── Header ──────────────────────────────────────────────────── */}
       <header>
-        <strong>Odrive-Wheel</strong>
-        <span className={connected ? 'ok' : 'err'}>{connected ? '● online' : '○ offline'}</span>
+        <strong>{translate(locale, 'appTitle')}</strong>
+        <span className={connected ? 'ok' : 'err'}>{connected ? translate(locale, 'overlayOnline') : translate(locale, 'overlayOffline')}</span>
         <span className="sep" />
         <span>{hz} Hz</span>
-        <span>P brake: {brakePowerLabel}</span>
-        <span>janela: {windowLabel}</span>
-        <span style={{ marginLeft: 'auto', color: '#888896' }}>{samples.length} pts</span>
+        <span>{translate(locale, 'overlayPBrake')} {brakePowerLabel}</span>
+        <span>{translate(locale, 'overlayWindow')} {windowLabel}</span>
+        <span style={{ marginLeft: 'auto', color: '#888896' }}>{translate(locale, 'overlayPoints', { n: samples.length })}</span>
       </header>
 
-      {/* ── Stats row ───────────────────────────────────────────────── */}
       <div className="stats-row">
-        <StatPill label="VBUS" value={stats.vbus?.current} unit="V" color="#60a5fa" />
-        <StatPill label="IBUS" value={stats.ibus?.current} unit="A" color="#f59e0b" />
-        <StatPill label="Iq" value={stats.iq?.current} unit="A" color="#22c55e" />
-        <StatPill label="Iq pk" value={stats.iq?.peak} unit="A" color="#22c55e" muted />
-        <StatPill label="Tq" value={stats.torqueNm?.current} unit="Nm" color="#ef4444" />
-        <StatPill label="Tq pk" value={stats.torqueNm?.peak} unit="Nm" color="#ef4444" muted />
-        <StatPill label="Vel" value={stats.velocityDegS?.current} unit="°/s" color="#fb923c" />
+        <StatPill locale={locale} label={translate(locale, 'metricVbus')} value={stats.vbus?.current} unit="V" color="#60a5fa" />
+        <StatPill locale={locale} label={translate(locale, 'metricIbus')} value={stats.ibus?.current} unit="A" color="#f59e0b" />
+        <StatPill locale={locale} label={translate(locale, 'metricIqMotor')} value={stats.iq?.current} unit="A" color="#22c55e" />
+        <StatPill locale={locale} label={translate(locale, 'overlayStatIqPeak')} value={stats.iq?.peak} unit="A" color="#22c55e" muted />
+        <StatPill locale={locale} label={translate(locale, 'observeStatTorque')} value={stats.torqueNm?.current} unit="Nm" color="#ef4444" />
+        <StatPill locale={locale} label={translate(locale, 'overlayStatTorquePeak')} value={stats.torqueNm?.peak} unit="Nm" color="#ef4444" muted />
+        <StatPill locale={locale} label={translate(locale, 'overlayStatVelocity')} value={stats.velocityDegS?.current} unit="°/s" color="#fb923c" />
       </div>
 
-      {/* ── Charts ──────────────────────────────────────────────────── */}
       <TimeSeriesChart
-        title="DC bus"
+        title={translate(locale, 'overlayChartDcBus')}
         samples={samples}
         series={busSeries}
         windowMs={windowMs}
         height={190}
         compact
+        locale={locale}
       />
       <TimeSeriesChart
-        title="Volante — torque e posição"
+        title={translate(locale, 'overlayChartWheel')}
         samples={samples}
         series={motionSeries}
         windowMs={windowMs}
         height={190}
         compact
+        locale={locale}
       />
     </main>
   );
 }
 
 function StatPill({
+  locale,
   label,
   value,
   unit,
   color,
   muted = false,
 }: {
+  locale: import('../../i18n/messages').Locale;
   label: string;
   value: number | null | undefined;
   unit: string;
   color: string;
   muted?: boolean;
 }) {
-  const display = value !== null && value !== undefined ? `${value.toFixed(1)} ${unit}` : '-';
+  const display = value !== null && value !== undefined ? `${value.toFixed(1)} ${unit}` : translate(locale, 'overlayEmptyValue');
   return (
     <div className={`stat-pill${muted ? ' muted' : ''}`}>
       <span style={{ color: muted ? '#55555f' : color }}>{label}</span>
@@ -188,6 +244,9 @@ function StatPill({
 const overlayCss = `
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
+  html, body, #overlay-root {
+    height: 100%;
+  }
   body {
     margin: 0;
     background: #0c0c0e;
@@ -196,9 +255,9 @@ const overlayCss = `
     overflow: hidden;
   }
   .pip-shell {
-    height: 100vh;
+    height: 100%;
     display: grid;
-    grid-template-rows: auto auto 1fr 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1fr);
     gap: 5px;
     padding: 6px;
   }
@@ -255,7 +314,8 @@ const overlayCss = `
     border-radius: 8px;
     padding: 6px;
     display: grid;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
   }
   .chart-card header {
     border: 0;
@@ -268,6 +328,12 @@ const overlayCss = `
     margin: 0;
     font-size: 12px;
     white-space: nowrap;
+    color: #ededf0;
+  }
+  .chart-stage {
+    position: relative;
+    min-height: 0;
+    height: 100%;
   }
   .chart-legend {
     margin-left: auto;
@@ -286,9 +352,42 @@ const overlayCss = `
     align-items: center;
     gap: 3px;
     font-size: 10px;
+    color: #ededf0;
+  }
+  .chart-tooltip {
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: rgba(12, 12, 14, 0.94);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 11px;
+    min-width: 140px;
+  }
+  .chart-tooltip-time {
+    color: #888896;
+    margin-bottom: 4px;
+    font-family: ui-monospace, monospace;
+  }
+  .chart-tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chart-tooltip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .chart-tooltip-label { color: #a0a0ac; flex: 1; }
+  .chart-tooltip-value {
+    color: #ededf0;
+    font-family: ui-monospace, monospace;
   }
   canvas {
-    width: 100%;
+    width: 100% !important;
     min-height: 0;
     height: 100% !important;
     display: block;

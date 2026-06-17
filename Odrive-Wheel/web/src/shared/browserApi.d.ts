@@ -29,6 +29,8 @@ interface Serial {
 interface HIDDevice {
   readonly opened: boolean;
   readonly productName: string;
+  readonly vendorId?: number;
+  readonly productId?: number;
   open(): Promise<void>;
   close(): Promise<void>;
   sendReport(reportId: number, data: Uint8Array): Promise<void>;

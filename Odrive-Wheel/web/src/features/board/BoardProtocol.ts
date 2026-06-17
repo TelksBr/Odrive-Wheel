@@ -21,8 +21,14 @@ export function writeCommandFor(field: ConfigField, value: string): string {
   return `w ${field.path} ${normalizeValue(field, value)}`;
 }
 
-export async function readField(field: ConfigField): Promise<string> {
-  const reply = await serialService.sendCommand(readCommandFor(field), true);
+export async function readField(field: ConfigField, log = false): Promise<string> {
+  const reply = await serialService.sendCommand(readCommandFor(field), true, 2000, log);
+  return normalizeReply(reply);
+}
+
+/** Same as readField but for use inside serialService.runAtomic(). */
+export async function readFieldNow(field: ConfigField, log = false): Promise<string> {
+  const reply = await serialService.commandNow(readCommandFor(field), true, 2000, log);
   return normalizeReply(reply);
 }
 
@@ -30,18 +36,35 @@ export async function writeField(field: ConfigField, value: string): Promise<str
   return serialService.sendCommand(writeCommandFor(field, value), true);
 }
 
+/** Same as writeField but for use inside serialService.runAtomic(). */
+export async function writeFieldNow(field: ConfigField, value: string): Promise<string> {
+  return serialService.commandNow(writeCommandFor(field, value), true);
+}
+
+/** Write then read back the applied value (matches HTML writeOne). */
+export async function applyField(field: ConfigField, value: string, log = false): Promise<string> {
+  await writeField(field, value);
+  return readField(field, log);
+}
+
+/** Same as applyField but for use inside serialService.runAtomic(). */
+export async function applyFieldNow(field: ConfigField, value: string, log = false): Promise<string> {
+  await writeFieldNow(field, value);
+  return readFieldNow(field, log);
+}
+
 export async function executeOpenFFBoard(command: string): Promise<string> {
   return serialService.sendCommand(command.endsWith('!') ? command : `${command}!`, true);
 }
 
 export async function saveBoardConfiguration(): Promise<void> {
-  await serialService.sendCommand('sys.save!', true, 5000);
   await serialService.sendCommand('w axis0.requested_state 1', true, 2000);
-  await serialService.sendCommand('ss', true, 8000);
+  await serialService.sendCommand('sys.save!', true, 5000);
+  await serialService.sendCommand('ss', false);
 }
 
 export async function eraseBoardConfiguration(): Promise<void> {
-  await serialService.sendCommand('es', true, 8000);
+  await serialService.sendCommand('se', true, 8000);
 }
 
 export async function rebootBoard(): Promise<void> {
@@ -68,7 +91,7 @@ export function parseProfile(raw: string): BoardProfile {
   return parsed as BoardProfile;
 }
 
-function normalizeReply(reply: string): string {
+export function normalizeReply(reply: string): string {
   const trimmed = reply.trim();
   const openFfBoardMatch = trimmed.match(/^\[[^|]*\|(.*)\]$/);
   if (openFfBoardMatch) {

@@ -1,71 +1,139 @@
+import { lazy, Suspense } from 'react';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
-import { Card, Pill, SectionHeader } from '../../shared/ui';
+import { Pill, SectionHeader } from '../../shared/ui';
 import { QuickActions } from '../board/QuickActions';
+import { serialService } from '../serial/SerialService';
+import { useDashboardLivePoll } from './useDashboardLivePoll';
+import { DashboardLiveMetrics } from './DashboardLiveMetrics';
+import { DashboardAnalogAxes } from './DashboardAnalogAxes';
+
+// Lazy-load the heavy Three.js bundle into a separate chunk
+const WheelViewer = lazy(() => import('./WheelViewer').then((m) => ({ default: m.WheelViewer })));
 
 export function DashboardPage() {
-  const { state } = useAppState();
+  const { state, dispatch } = useAppState();
+  const live = useDashboardLivePoll(state.connected, state.fieldValues, state.busy);
+
+  async function centerWheel() {
+    dispatch({ type: 'set-busy', busy: true });
+    try {
+      await serialService.sendCommand('axis.zeroenc!', true, 2000);
+      dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'dashboardWheelCenteredLog') });
+    } catch (error) {
+      dispatch({
+        type: 'append-log',
+        direction: 'error',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      dispatch({ type: 'set-busy', busy: false });
+    }
+  }
 
   return (
-    <div className="overview-page">
+    <div className="dashboard-main">
       <SectionHeader
         eyebrow={translate(state.locale, 'heroEyebrow')}
         title={translate(state.locale, 'heroTitle')}
         description={translate(state.locale, 'heroDescription')}
       />
 
-      <div className="hero-status">
-        <StatusTile label={translate(state.locale, 'statusBoard')} value={translate(state.locale, state.connected ? 'connected' : 'disconnected')} tone={state.connected ? 'ok' : 'neutral'} locale={state.locale} />
-        <StatusTile label={translate(state.locale, 'statusSerial')} value={translate(state.locale, state.serialSupported ? 'statusAvailable' : 'statusUnavailable')} tone={state.serialSupported ? 'ok' : 'error'} locale={state.locale} />
-        <StatusTile label={translate(state.locale, 'statusWebHid')} value={translate(state.locale, state.hidSupported ? 'statusAvailable' : 'statusUnavailable')} tone={state.hidSupported ? 'ok' : 'error'} locale={state.locale} />
-        <StatusTile label={translate(state.locale, 'statusWebUsb')} value={translate(state.locale, state.usbSupported ? 'statusAvailable' : 'statusUnavailable')} tone={state.usbSupported ? 'ok' : 'error'} locale={state.locale} />
-      </div>
+      <div className="dashboard-body">
+        {/* ── Left — 3D viewer ──────────────────────────────────────── */}
+        <div className="wheel-panel">
+          <Suspense
+            fallback={
+              <div
+                className="wheel-viewer"
+                style={{
+                  height: 340,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: 'var(--muted-2)',
+                  fontSize: 12,
+                  fontFamily: 'var(--mono)',
+                }}
+              >
+                {translate(state.locale, 'wheelModelLoading')}
+              </div>
+            }
+          >
+            <WheelViewer positionDegRef={live.positionDegRef} connected={state.connected} height={340} />
+          </Suspense>
 
-      <section className="overview-grid">
-        <Card title={translate(state.locale, 'flowTitle')} description={translate(state.locale, 'flowDescription')}>
-          <div className="flow-list">
-            <FlowItem index="1" title={translate(state.locale, 'flowSetupTitle')} text={translate(state.locale, 'flowSetupText')} />
-            <FlowItem index="2" title={translate(state.locale, 'flowMotorTitle')} text={translate(state.locale, 'flowMotorText')} />
-            <FlowItem index="3" title={translate(state.locale, 'flowTuneTitle')} text={translate(state.locale, 'flowTuneText')} />
-            <FlowItem index="4" title={translate(state.locale, 'flowObserveTitle')} text={translate(state.locale, 'flowObserveText')} />
+          <DashboardAnalogAxes
+            connected={state.connected}
+            positionDeg={live.positionDeg}
+            torqueNm={live.torqueNm}
+            maxTorqueNm={live.maxTorqueNm}
+            gpioInputs={live.gpioInputs}
+            polling={live.polling}
+          />
+
+          <div className="wheel-readout">
+            <div className="wheel-actions">
+              <button
+                type="button"
+                disabled={!state.connected || state.busy}
+                onClick={() => void centerWheel()}
+                title={translate(state.locale, 'centerWheelTitle')}
+              >
+                ⊙ {translate(state.locale, 'centerWheel')}
+              </button>
+
+              <div className="wheel-api-pills">
+                <Pill tone={state.serialSupported ? 'ok' : 'error'}>
+                  {translate(state.locale, 'apiWebSerial')} {state.serialSupported ? '✓' : '✗'}
+                </Pill>
+                <Pill tone={state.hidSupported ? 'ok' : 'neutral'}>
+                  {translate(state.locale, 'apiWebHid')} {state.hidSupported ? '✓' : '✗'}
+                </Pill>
+                <Pill tone={state.usbSupported ? 'ok' : 'neutral'}>
+                  {translate(state.locale, 'apiWebUsb')} {state.usbSupported ? '✓' : '✗'}
+                </Pill>
+              </div>
+            </div>
           </div>
-        </Card>
+        </div>
 
-        <Card title={translate(state.locale, 'safetyTitle')} description={translate(state.locale, 'safetyDescription')}>
-          <ol className="number-list compact">
-            <li>{translate(state.locale, 'safetyStep1')}</li>
-            <li>{translate(state.locale, 'safetyStep2')}</li>
-            <li>{translate(state.locale, 'safetyStep3')}</li>
-            <li>{translate(state.locale, 'safetyStep4')}</li>
-          </ol>
-        </Card>
-      </section>
+        {/* ── Right — status + metrics + actions ──────────────────── */}
+        <div className="dashboard-side">
+          {/* Connection status */}
+          <div className="dashboard-connection">
+            <span className="eyebrow">{translate(state.locale, 'statusBoard')}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: state.connected ? 'var(--ok)' : 'var(--muted-2)',
+                  flexShrink: 0,
+                }}
+              />
+              <strong style={{ fontSize: 14 }}>
+                {translate(state.locale, state.connected ? 'connected' : 'disconnected')}
+              </strong>
+              {state.reconnecting && (
+                <span style={{ color: 'var(--warn)', fontSize: 12 }}>{translate(state.locale, 'reconnectingEllipsis')}</span>
+              )}
+            </div>
+          </div>
 
-      <Card title={translate(state.locale, 'quickActionsTitle')} description={translate(state.locale, 'quickActionsDescription')}>
-        <QuickActions />
-      </Card>
-    </div>
-  );
-}
+          {/* Live metrics */}
+          <div className="dashboard-section">
+            <span className="eyebrow">{translate(state.locale, 'dashboardLiveMetrics')}</span>
+            <DashboardLiveMetrics connected={state.connected} />
+          </div>
 
-function StatusTile({ label, value, tone, locale }: { label: string; value: string; tone: 'ok' | 'error' | 'neutral'; locale: 'pt' | 'en' }) {
-  return (
-    <div className={`status-tile ${tone}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <Pill tone={tone}>{translate(locale, tone === 'ok' ? 'statusReady' : tone === 'error' ? 'statusBlocked' : 'statusWaiting')}</Pill>
-    </div>
-  );
-}
-
-function FlowItem({ index, title, text }: { index: string; title: string; text: string }) {
-  return (
-    <article className="flow-item">
-      <span>{index}</span>
-      <div>
-        <strong>{title}</strong>
-        <p>{text}</p>
+          {/* Quick actions */}
+          <div className="dashboard-section">
+            <span className="eyebrow">{translate(state.locale, 'dashboardQuickActions')}</span>
+            <QuickActions categories={['safety', 'ffb']} />
+          </div>
+        </div>
       </div>
-    </article>
+    </div>
   );
 }

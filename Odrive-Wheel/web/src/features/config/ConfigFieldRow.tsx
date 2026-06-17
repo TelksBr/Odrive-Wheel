@@ -1,98 +1,80 @@
 import type { ConfigField } from './fieldCatalog';
-import { readField, writeField } from '../board/BoardProtocol';
+import { applyField } from '../board/BoardProtocol';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
+import { localizeOptionLabel } from '../../i18n/fieldMeta';
 import { getFieldHelp } from './fieldHelp';
+import { isFieldInertInTorque, isFieldPartialInTorque } from '../calibration/controllerInert';
+
+/** Normalizes any board reply to a JS boolean. Handles 'true'/'1'/truthy strings. */
+function parseBool(raw: string): boolean {
+  const v = raw.trim().toLowerCase();
+  return v === 'true' || v === '1' || v === 'yes' || v === 'on';
+}
 
 export function ConfigFieldRow({ field }: { field: ConfigField }) {
   return field.readonly ? <ReadonlyRow field={field} /> : <EditableRow field={field} />;
 }
 
-/* ── Readonly — just a live readout ──────────────────────────────────────── */
+/* ── Readonly — value shown, no per-field read button (use header ↻) ─────── */
 function ReadonlyRow({ field }: { field: ConfigField }) {
-  const { state, dispatch } = useAppState();
+  const { state } = useAppState();
   const value = state.fieldValues[field.path] ?? '';
-
-  async function handleRead() {
-    dispatch({ type: 'set-busy', busy: true });
-    try {
-      const next = await readField(field);
-      dispatch({ type: 'set-field', path: field.path, value: next, dirty: false });
-    } catch (error) {
-      dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
-    } finally {
-      dispatch({ type: 'set-busy', busy: false });
-    }
-  }
+  const isBool = field.type === 'bool';
 
   return (
-    <div className="field-row" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '6px 12px', alignItems: 'start' }}>
-      <div>
-        <div className="field-title-row">
-          <label style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>{field.label}</label>
-          <span className={`protocol-badge ${field.protocol}`}>{field.protocol === 'openffboard' ? 'OFFB' : 'ODrive'}</span>
-          <span className="pill" style={{ fontSize: 10, padding: '1px 6px', color: 'var(--muted-2)', borderColor: 'var(--border)' }}>read-only</span>
-        </div>
-        <code style={{ fontSize: 11, color: 'var(--muted-2)' }}>{field.path}</code>
+    <div className="field-row readonly-field-row" id={`config-field-${field.path}`}>
+      <div className="field-title-row">
+        <label style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>{field.label}</label>
+        <span className={`protocol-badge ${field.protocol}`}>
+          {translate(state.locale, field.protocol === 'openffboard' ? 'protocolOffb' : 'protocolOdrive')}
+        </span>
+        <span className="pill" style={{ fontSize: 10, padding: '1px 6px', color: 'var(--muted-2)', borderColor: 'var(--border)' }}>
+          {translate(state.locale, 'fieldReadonly')}
+        </span>
       </div>
-
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <code style={{ fontSize: 11, color: 'var(--muted-2)' }}>{field.path}</code>
+      {field.description && (
+        <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--muted-2)', lineHeight: 1.4 }}>
+          {field.description}
+        </p>
+      )}
+      {isBool && value ? (
+        <BoolBadge value={parseBool(value)} />
+      ) : (
         <strong
           style={{
             fontFamily: 'var(--mono)',
             fontSize: 15,
             color: value ? 'var(--text)' : 'var(--muted-2)',
             letterSpacing: '-0.02em',
-            whiteSpace: 'nowrap',
+            marginTop: 4,
           }}
         >
-          {value || '—'}
+          {value || translate(state.locale, 'fieldEmptyValue')}
         </strong>
-        <button
-          type="button"
-          className="compact-button ghost-button"
-          disabled={!state.connected || state.busy}
-          onClick={() => void handleRead()}
-          title={field.description}
-        >
-          {translate(state.locale, 'readField')}
-        </button>
-      </div>
-
-      {field.description && (
-        <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 11, color: 'var(--muted-2)', lineHeight: 1.4 }}>
-          {field.description}
-        </p>
       )}
     </div>
   );
 }
 
-/* ── Editable — full edit/apply controls ─────────────────────────────────── */
+/* ── Editable — edit/apply controls (no per-field "Read" — use header ↻) ─── */
 function EditableRow({ field }: { field: ConfigField }) {
   const { state, dispatch } = useAppState();
   const value = state.fieldValues[field.path] ?? '';
   const dirty = state.dirtyPaths.includes(field.path);
   const help = getFieldHelp(field, state.locale);
-
-  async function handleRead() {
-    dispatch({ type: 'set-busy', busy: true });
-    try {
-      const next = await readField(field);
-      dispatch({ type: 'set-field', path: field.path, value: next, dirty: false });
-    } catch (error) {
-      dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
-    } finally {
-      dispatch({ type: 'set-busy', busy: false });
-    }
-  }
+  const controlMode = state.fieldValues['axis0.controller.config.control_mode'];
+  const inert = isFieldInertInTorque(field.path, controlMode);
+  const partial = isFieldPartialInTorque(field.path, controlMode);
+  const disabled = !state.connected || state.busy || inert;
 
   async function handleWrite() {
     dispatch({ type: 'set-busy', busy: true });
     try {
-      const reply = await writeField(field, value);
-      dispatch({ type: 'append-log', direction: 'info', message: `${field.path}: ${reply}` });
-      dispatch({ type: 'set-field', path: field.path, value, dirty: false });
+      const applied = await applyField(field, value);
+      dispatch({ type: 'append-log', direction: 'rx', message: `${field.path} = ${applied}` });
+      dispatch({ type: 'set-field', path: field.path, value: applied, dirty: false });
     } catch (error) {
       dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -101,12 +83,21 @@ function EditableRow({ field }: { field: ConfigField }) {
   }
 
   return (
-    <div className={`field-row ${dirty ? 'dirty' : ''}`}>
+    <div className={`field-row ${dirty ? 'dirty' : ''}${inert ? ' ignored-in-torque' : ''}${partial ? ' partial-in-torque' : ''}`} id={`config-field-${field.path}`}>
       <div className="field-copy">
         <div className="field-title-row">
-          <label htmlFor={`field-${field.path}`}>{field.label}</label>
-          <span className={`protocol-badge ${field.protocol}`}>{field.protocol === 'openffboard' ? 'OFFB' : 'ODrive'}</span>
-          {dirty && <span className="dirty-badge">modified</span>}
+          <label htmlFor={`field-${field.path}`}>
+            {field.label}
+            {inert ? (
+              <span className="inert-tag"> [{translate(state.locale, 'ctrlTagIgnored')}]</span>
+            ) : partial ? (
+              <span className="inert-tag partial"> [{translate(state.locale, 'ctrlTagPartial')}]</span>
+            ) : null}
+          </label>
+          <span className={`protocol-badge ${field.protocol}`}>
+            {translate(state.locale, field.protocol === 'openffboard' ? 'protocolOffb' : 'protocolOdrive')}
+          </span>
+          {dirty && <span className="dirty-badge">{translate(state.locale, 'fieldModified')}</span>}
         </div>
         <code>{field.path}</code>
         <p>{field.description}</p>
@@ -131,15 +122,26 @@ function EditableRow({ field }: { field: ConfigField }) {
       </div>
 
       <div className="field-control">
-        {field.type === 'enum' || field.type === 'bool' ? (
+        {field.type === 'bool' ? (
+          <BoolToggle
+            value={value ? parseBool(value) : false}
+            disabled={disabled}
+            onChange={(next) =>
+              dispatch({ type: 'set-field', path: field.path, value: next ? 'true' : 'false' })
+            }
+          />
+        ) : field.type === 'enum' ? (
           <select
             id={`field-${field.path}`}
             value={value}
+            disabled={disabled}
             onChange={(e) => dispatch({ type: 'set-field', path: field.path, value: e.target.value })}
           >
-            <option value="">-</option>
+            <option value="">{translate(state.locale, 'enumEmptyOption')}</option>
             {field.options?.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>
+                {localizeOptionLabel(state.locale, field, opt.value, opt.label)}
+              </option>
             ))}
           </select>
         ) : (
@@ -150,14 +152,12 @@ function EditableRow({ field }: { field: ConfigField }) {
             max={field.max}
             step={field.step}
             value={value}
+            disabled={disabled}
             onChange={(e) => dispatch({ type: 'set-field', path: field.path, value: e.target.value })}
           />
         )}
         <div className="field-actions">
-          <button type="button" disabled={!state.connected || state.busy} onClick={() => void handleRead()}>
-            {translate(state.locale, 'readField')}
-          </button>
-          <button type="button" disabled={!state.connected || state.busy || !dirty} onClick={() => void handleWrite()}>
+          <button type="button" disabled={disabled || !dirty} onClick={() => void handleWrite()}>
             {translate(state.locale, 'applyField')}
           </button>
         </div>
@@ -171,6 +171,47 @@ function HelpItem({ label, value }: { label: string; value: string }) {
     <span className="field-help-item">
       <b>{label}</b>
       <code>{value}</code>
+    </span>
+  );
+}
+
+/* ── Toggle switch for boolean fields ─────────────────────────────────────── */
+function BoolToggle({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: boolean;
+  disabled: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  const { state } = useAppState();
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={value}
+      disabled={disabled}
+      className="bool-toggle"
+      onClick={() => onChange(!value)}
+      style={{ background: 'none', border: 'none', padding: 0, opacity: disabled ? 0.45 : 1 }}
+    >
+      <span className={`bool-toggle-track${value ? ' on' : ''}`}>
+        <span className="bool-toggle-thumb" />
+      </span>
+      <span className="bool-toggle-state">
+        {value ? translate(state.locale, 'boolOn') : translate(state.locale, 'boolOff')}
+      </span>
+    </button>
+  );
+}
+
+/* ── Status badge for readonly boolean values ─────────────────────────────── */
+function BoolBadge({ value }: { value: boolean }) {
+  const { state } = useAppState();
+  return (
+    <span className={`bool-badge ${value ? 'bool-on' : 'bool-off'}`}>
+      {value ? translate(state.locale, 'boolOnBadge') : translate(state.locale, 'boolOffBadge')}
     </span>
   );
 }

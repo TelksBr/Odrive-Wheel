@@ -1,181 +1,317 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppState } from '../../app/AppState';
-import { translate } from '../../i18n/messages';
-import { Card, Pill, SectionHeader } from '../../shared/ui';
-import { hidFfbService } from './HidFfbService';
+import { translate, type Locale } from '../../i18n/messages';
+import { Card, SectionHeader } from '../../shared/ui';
+import { TimeSeriesChart } from '../telemetry/TimeSeriesChart';
+import { TelemetryControlPanel } from '../telemetry/TelemetryControlPanel';
+import { motionSeries } from '../telemetry/series';
+import { useTelemetry } from '../telemetry/useTelemetry';
+import { FfbPidReference } from './FfbPidReference';
+import { HidConnectionToolbar } from './HidConnectionToolbar';
+import { hidFfbService, type EffectKey } from './HidFfbService';
+import { useHidConnection } from './useHidConnection';
 
-type TestPresetId = 'spring' | 'constant-left' | 'constant-right' | 'pulse';
-type LabStatus = 'idle' | 'running' | 'stopped' | 'disconnected';
+type EffectDef = {
+  key: EffectKey;
+  title: string;
+  description: string;
+  sliderLabel: string;
+  sliderMin: number;
+  sliderMax: number;
+  sliderDefault: number;
+  formatValue: (v: number) => string;
+};
+
+function getEffects(locale: Locale): EffectDef[] {
+  return [
+    {
+      key: 'cf',
+      title: translate(locale, 'ffbEffectCfTitle'),
+      description: translate(locale, 'ffbEffectCfDescription'),
+      sliderLabel: translate(locale, 'ffbEffectCfSlider'),
+      sliderMin: -100,
+      sliderMax: 100,
+      sliderDefault: 0,
+      formatValue: (v) => `${v > 0 ? '+' : ''}${v}%`,
+    },
+    {
+      key: 'sp',
+      title: translate(locale, 'ffbEffectSpTitle'),
+      description: translate(locale, 'ffbEffectSpDescription'),
+      sliderLabel: translate(locale, 'ffbEffectIntensity'),
+      sliderMin: 0,
+      sliderMax: 100,
+      sliderDefault: 50,
+      formatValue: (v) => `${v}%`,
+    },
+    {
+      key: 'da',
+      title: translate(locale, 'ffbEffectDaTitle'),
+      description: translate(locale, 'ffbEffectDaDescription'),
+      sliderLabel: translate(locale, 'ffbEffectIntensity'),
+      sliderMin: 0,
+      sliderMax: 100,
+      sliderDefault: 50,
+      formatValue: (v) => `${v}%`,
+    },
+    {
+      key: 'fr',
+      title: translate(locale, 'ffbEffectFrTitle'),
+      description: translate(locale, 'ffbEffectFrDescription'),
+      sliderLabel: translate(locale, 'ffbEffectIntensity'),
+      sliderMin: 0,
+      sliderMax: 100,
+      sliderDefault: 50,
+      formatValue: (v) => `${v}%`,
+    },
+  ];
+}
+
+function readRunningFromService(): Record<EffectKey, boolean> {
+  return {
+    cf: hidFfbService.isRunning('cf'),
+    sp: hidFfbService.isRunning('sp'),
+    da: hidFfbService.isRunning('da'),
+    fr: hidFfbService.isRunning('fr'),
+  };
+}
+
+function countActiveEffects(running: Record<EffectKey, boolean>): number {
+  return Object.values(running).filter(Boolean).length;
+}
 
 export function FfbTestPage() {
   const { state, dispatch } = useAppState();
-  const [deviceName, setDeviceName] = useState('');
-  const [magnitude, setMagnitude] = useState(48);
-  const [durationMs, setDurationMs] = useState(900);
-  const [selectedPreset, setSelectedPreset] = useState<TestPresetId>('spring');
-  const [status, setStatus] = useState<LabStatus>('disconnected');
+  const locale = state.locale;
+  const effects = getEffects(locale);
+  const hid = useHidConnection(locale);
+  const [running, setRunning] = useState<Record<EffectKey, boolean>>(readRunningFromService);
+  const [values, setValues] = useState<Record<EffectKey, number>>({ cf: 0, sp: 50, da: 50, fr: 50 });
+  const [telemetryEnabled, setTelemetryEnabled] = useState(true);
+  const [intervalMs, setIntervalMs] = useState(250);
+  const [windowMs, setWindowMs] = useState(60_000);
 
-  const presets = [
-    {
-      id: 'spring',
-      title: translate(state.locale, 'ffbPresetSpring'),
-      description: translate(state.locale, 'ffbPresetSpringDescription'),
-      direction: 'center',
-      duration: 1500,
-    },
-    {
-      id: 'constant-left',
-      title: translate(state.locale, 'ffbPresetConstantLeft'),
-      description: translate(state.locale, 'ffbPresetConstantLeftDescription'),
-      direction: '-',
-      duration: 1000,
-    },
-    {
-      id: 'constant-right',
-      title: translate(state.locale, 'ffbPresetConstantRight'),
-      description: translate(state.locale, 'ffbPresetConstantRightDescription'),
-      direction: '+',
-      duration: 1000,
-    },
-    {
-      id: 'pulse',
-      title: translate(state.locale, 'ffbPresetPulse'),
-      description: translate(state.locale, 'ffbPresetPulseDescription'),
-      direction: '+',
-      duration: 250,
-    },
-  ] satisfies Array<{ id: TestPresetId; title: string; description: string; direction: string; duration: number }>;
+  const maxTorqueNm = Number(state.fieldValues['axis.maxtorque'] ?? '');
+  const telemetry = useTelemetry({
+    connected: state.connected,
+    enabled: telemetryEnabled,
+    intervalMs,
+    windowMs,
+    maxTorqueNm: Number.isFinite(maxTorqueNm) && maxTorqueNm > 0 ? maxTorqueNm : undefined,
+    holdPolling: state.busy,
+  });
 
-  const activePreset = presets.find((preset) => preset.id === selectedPreset) ?? presets[0];
-  const connected = Boolean(deviceName);
+  useEffect(() => {
+    return hidFfbService.onConnectionChange(() => {
+      setRunning(readRunningFromService());
+    });
+  }, []);
 
-  async function run(action: () => Promise<void>) {
+  useEffect(() => {
+    return () => {
+      if (hidFfbService.connected) {
+        void hidFfbService.stopAll();
+      }
+    };
+  }, []);
+
+  async function wrapAsync(fn: () => Promise<void>) {
+    hid.clearError();
     try {
-      await action();
-    } catch (error) {
-      dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
+      await fn();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      hid.setError(msg);
+      dispatch({ type: 'append-log', direction: 'error', message: msg });
     }
   }
 
-  async function connect() {
-    const name = await hidFfbService.connect();
-    setDeviceName(name);
-    setStatus('idle');
+  async function handleConnect() {
+    await wrapAsync(async () => {
+      await hid.connect();
+    });
   }
 
-  async function disconnect() {
-    await hidFfbService.disconnect();
-    setDeviceName('');
-    setStatus('disconnected');
+  async function handleDisconnect() {
+    await wrapAsync(async () => {
+      await hid.disconnect();
+    });
   }
 
-  async function stop() {
-    await hidFfbService.stopAll();
-    setStatus('stopped');
+  async function panicStop() {
+    await wrapAsync(async () => {
+      await hidFfbService.stopAll();
+      setRunning(readRunningFromService());
+    });
   }
 
-  async function playPreset() {
-    setStatus('running');
-    const duration = selectedPreset === 'pulse' ? Math.min(durationMs, 450) : durationMs;
-    if (selectedPreset === 'spring') {
-      await hidFfbService.playSpring(magnitude * 2, duration);
-    } else if (selectedPreset === 'constant-left') {
-      await hidFfbService.playConstantForce(-magnitude, duration);
-    } else if (selectedPreset === 'constant-right') {
-      await hidFfbService.playConstantForce(magnitude, duration);
-    } else {
-      await hidFfbService.playPulse(magnitude, duration);
+  async function toggleEffect(key: EffectKey, enable: boolean) {
+    await wrapAsync(async () => {
+      if (enable) {
+        const param = key === 'cf' ? { magnitudePct: values[key] } : { pct: values[key] };
+        await hidFfbService.startEffect(key, param);
+      } else {
+        await hidFfbService.stopEffect(key);
+      }
+      setRunning(readRunningFromService());
+    });
+  }
+
+  async function updateValue(key: EffectKey, value: number) {
+    setValues((prev) => ({ ...prev, [key]: value }));
+    if (running[key] && hidFfbService.connected) {
+      await wrapAsync(async () => {
+        const param = key === 'cf' ? { magnitudePct: value } : { pct: value };
+        await hidFfbService.startEffect(key, param);
+      });
     }
-    window.setTimeout(() => setStatus((current) => (current === 'running' ? 'idle' : current)), duration + 80);
   }
 
   return (
-    <div className="ffb-lab-page">
+    <div className="page-stack">
       <SectionHeader
-        eyebrow={translate(state.locale, 'ffbLabEyebrow')}
-        title={translate(state.locale, 'ffbLabTitle')}
-        description={translate(state.locale, 'ffbLabDescription')}
+        eyebrow={translate(locale, 'ffbTestEyebrow')}
+        title={translate(locale, 'ffbTestTitle')}
+        description={translate(locale, 'ffbTestDescription')}
       />
 
-      <div className="ffb-device-card">
-        <span>{translate(state.locale, 'ffbHidDevice')}</span>
-        <strong>{deviceName || translate(state.locale, 'ffbNoDevice')}</strong>
-        <Pill tone={connected ? 'ok' : 'neutral'}>{translate(state.locale, statusKey(status))}</Pill>
+      <Card title={translate(locale, 'ffbHidCardTitle')} description={translate(locale, 'ffbHidCardDescription')}>
+        <HidConnectionToolbar
+          locale={locale}
+          hidSupported={state.hidSupported}
+          connected={hid.connected}
+          deviceName={hid.deviceName}
+          error={hid.error}
+          onConnect={handleConnect}
+          onDisconnect={handleDisconnect}
+          showStopAll
+          onStopAll={panicStop}
+          stopAllDisabled={!hid.connected}
+        />
+        {state.connected && (
+          <p className="ffb-inline-warn" style={{ marginTop: 10 }}>
+            {translate(locale, 'ffbMotorClosedLoopWarning')}
+          </p>
+        )}
+        {!state.connected && (
+          <p className="ffb-inline-hint" style={{ marginTop: 10 }}>
+            {translate(locale, 'ffbSerialHint')}
+          </p>
+        )}
+      </Card>
+
+      <Card title={translate(locale, 'ffbEffectsCardTitle')} description={translate(locale, 'ffbEffectsCardDescription')}>
+        <div className="ffb-effect-grid">
+          {effects.map((effect) => (
+            <EffectCard
+              key={effect.key}
+              locale={locale}
+              effect={effect}
+              enabled={running[effect.key]}
+              value={values[effect.key]}
+              disabled={!hid.connected}
+              onToggle={(en) => void toggleEffect(effect.key, en)}
+              onValueChange={(v) => void updateValue(effect.key, v)}
+            />
+          ))}
+        </div>
+        <p className="ffb-inline-hint" style={{ marginTop: 12, marginBottom: 0 }}>
+          {translate(locale, 'ffbRealForcesNote')}
+        </p>
+      </Card>
+
+      <Card title={translate(locale, 'ffbChartTitle')} description={translate(locale, 'ffbChartDescription')}>
+        <TelemetryControlPanel
+          locale={locale}
+          connected={state.connected}
+          enabled={telemetryEnabled}
+          onEnabledChange={setTelemetryEnabled}
+          intervalMs={intervalMs}
+          onIntervalChange={setIntervalMs}
+          windowMs={windowMs}
+          onWindowChange={setWindowMs}
+          telemetry={telemetry}
+          extraKpis={(
+            <div>
+              <span>{translate(locale, 'ffbKpiActiveEffects')}</span>
+              <strong>{countActiveEffects(running)}</strong>
+            </div>
+          )}
+        />
+      </Card>
+
+      <div className="chart-grid">
+        <TimeSeriesChart
+          title={translate(locale, 'observeChartWheel')}
+          samples={telemetry.displaySamples}
+          series={motionSeries}
+          windowMs={windowMs}
+        />
       </div>
 
-      {!state.hidSupported ? <p className="warning">{translate(state.locale, 'noHid')}</p> : null}
+      <Card title={translate(locale, 'ffbHowItWorksTitle')} description={translate(locale, 'ffbHowItWorksDescription')}>
+        <p className="ffb-pid-intro">{translate(locale, 'ffbPidIntro')}</p>
+        <FfbPidReference locale={locale} running={running} values={values} hidConnected={hid.connected} />
+      </Card>
 
-      <section className="ffb-lab-grid">
-        <Card title={translate(state.locale, 'ffbLivePlan')} description={translate(state.locale, 'ffbSerialNote')}>
-          <div className="ffb-preset-grid">
-            {presets.map((preset) => (
-              <button
-                type="button"
-                key={preset.id}
-                className={`ffb-preset-card ${selectedPreset === preset.id ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedPreset(preset.id);
-                  setDurationMs(preset.duration);
-                }}
-              >
-                <strong>{preset.title}</strong>
-                <span>{preset.description}</span>
-                <code>{preset.direction} · {preset.duration}{translate(state.locale, 'ffbDurationMs')}</code>
-              </button>
-            ))}
-          </div>
-        </Card>
-
-        <Card title={activePreset.title} description={activePreset.description}>
-          <div className="ffb-control-stack">
-            <label>
-              <span>{translate(state.locale, 'ffbMagnitude')}</span>
-              <input type="range" min="0" max="127" value={magnitude} onChange={(event) => setMagnitude(Number(event.target.value))} />
-              <strong>{magnitude}/127</strong>
-            </label>
-            <label>
-              <span>{translate(state.locale, 'ffbDuration')}</span>
-              <input type="range" min="100" max="3000" step="50" value={durationMs} onChange={(event) => setDurationMs(Number(event.target.value))} />
-              <strong>{durationMs}{translate(state.locale, 'ffbDurationMs')}</strong>
-            </label>
-          </div>
-          <div className="ffb-lab-actions">
-            <button type="button" disabled={!state.hidSupported || connected} onClick={() => void run(connect)}>
-              {translate(state.locale, 'ffbConnectHid')}
-            </button>
-            <button type="button" disabled={!connected || status === 'running'} onClick={() => void run(playPreset)}>
-              {translate(state.locale, 'ffbRunPreset')}
-            </button>
-            <button type="button" className="danger" disabled={!connected} onClick={() => void run(stop)}>
-              {translate(state.locale, 'ffbStopNow')}
-            </button>
-            <button type="button" disabled={!connected} onClick={() => void run(disconnect)}>
-              {translate(state.locale, 'ffbDisconnectHid')}
-            </button>
-          </div>
-        </Card>
-
-        <Card title={translate(state.locale, 'ffbSafetyTitle')}>
-          <ol className="number-list compact">
-            <li>{translate(state.locale, 'ffbSafety1')}</li>
-            <li>{translate(state.locale, 'ffbSafety2')}</li>
-            <li>{translate(state.locale, 'ffbSafety3')}</li>
-          </ol>
-        </Card>
-      </section>
+      <Card title={translate(locale, 'ffbPerfLinkTitle')} description={translate(locale, 'ffbPerfLinkDescription')}>
+        <button type="button" onClick={() => dispatch({ type: 'set-tab', tab: 'perf-test' })}>
+          {translate(locale, 'ffbPerfLinkBtn')}
+        </button>
+      </Card>
     </div>
   );
 }
 
-function statusKey(status: LabStatus) {
-  if (status === 'running') {
-    return 'ffbStatusRunning';
-  }
-  if (status === 'stopped') {
-    return 'ffbStatusStopped';
-  }
-  if (status === 'disconnected') {
-    return 'ffbStatusDisconnected';
-  }
-  return 'ffbStatusIdle';
+function EffectCard({
+  locale,
+  effect,
+  enabled,
+  value,
+  disabled,
+  onToggle,
+  onValueChange,
+}: {
+  locale: Locale;
+  effect: EffectDef;
+  enabled: boolean;
+  value: number;
+  disabled: boolean;
+  onToggle: (enable: boolean) => void;
+  onValueChange: (value: number) => void;
+}) {
+  return (
+    <div className={`field-row ffb-effect-card${enabled ? ' field-row--highlight' : ''}`}>
+      <div className="field-title-row">
+        <div className="field-copy">
+          <label>{effect.title}</label>
+          <small>{effect.description}</small>
+        </div>
+        <label className="toggle-label" style={{ cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1 }}>
+          <input type="checkbox" checked={enabled} disabled={disabled} onChange={(e) => onToggle(e.target.checked)} />
+          {enabled ? translate(locale, 'ffbEffectOn') : translate(locale, 'ffbEffectOff')}
+        </label>
+      </div>
+
+      <label className="ffb-slider-row">
+        <span>{effect.sliderLabel}</span>
+        <strong>{effect.formatValue(value)}</strong>
+        <input
+          type="range"
+          min={effect.sliderMin}
+          max={effect.sliderMax}
+          step={1}
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onValueChange(Number(e.target.value))}
+        />
+        {effect.key === 'cf' && (
+          <div className="ffb-slider-ends">
+            <span>{translate(locale, 'ffbCfLeft')}</span>
+            <span>{translate(locale, 'ffbCfRight')}</span>
+          </div>
+        )}
+      </label>
+    </div>
+  );
 }

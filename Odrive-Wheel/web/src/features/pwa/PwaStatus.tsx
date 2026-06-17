@@ -1,6 +1,7 @@
 import type { Locale } from '../../i18n/messages';
 import { translate } from '../../i18n/messages';
 import { Pill } from '../../shared/ui';
+import { AppIcon } from '../../shared/ui/AppIcon';
 import { usePwaStatus } from './usePwaStatus';
 
 export function PwaStatus({ locale }: { locale: Locale }) {
@@ -35,11 +36,14 @@ export function PwaStatus({ locale }: { locale: Locale }) {
     <div className="pwa-status">
       <Pill tone={pwa.online ? 'ok' : 'warn'}>{translate(locale, pwa.online ? 'pwaOnline' : 'pwaOffline')}</Pill>
       {pwa.canInstall ? (
-        <button type="button" className="compact-button" onClick={() => void pwa.install()}>
+        <button type="button" className="compact-button pwa-install-btn" onClick={() => void pwa.install()}>
+          <AppIcon id="icon-install" size={14} />
           {translate(locale, 'pwaInstall')}
         </button>
       ) : (
-        <Pill>{translate(locale, pwa.installed ? 'pwaInstalled' : 'pwaInstallUnavailable')}</Pill>
+        <Pill tone={pwa.installed ? 'ok' : 'neutral'}>
+          {translate(locale, pwa.installed ? 'pwaInstalled' : 'pwaInstallUnavailable')}
+        </Pill>
       )}
     </div>
   );
