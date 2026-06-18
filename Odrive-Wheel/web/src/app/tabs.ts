@@ -12,6 +12,7 @@ export interface TabDefinition {
 export const tabs: TabDefinition[] = [
   { id: 'dashboard', labelKey: 'tabDashboard', descriptionKey: 'tabDashboardDescription', group: 'operate', iconId: 'tab-dashboard' },
   { id: 'setup', labelKey: 'tabSetup', descriptionKey: 'tabSetupDescription', group: 'operate', iconId: 'tab-setup' },
+  { id: 'calibration', labelKey: 'tabCalibration', descriptionKey: 'tabCalibrationDescription', group: 'operate', iconId: 'tab-calibration' },
   { id: 'motor', labelKey: 'tabMotor', descriptionKey: 'tabMotorDescription', group: 'operate', iconId: 'tab-motor' },
   { id: 'tune', labelKey: 'tabTune', descriptionKey: 'tabTuneDescription', group: 'tune', iconId: 'tab-tune' },
   { id: 'ffb-test', labelKey: 'tabFfbTest', descriptionKey: 'tabFfbTestDescription', group: 'tune', iconId: 'tab-ffb-test' },

@@ -89,10 +89,11 @@ export interface DecodedError {
 /** Parse a raw ODrive error reply and decode it against a bitmask map. */
 export function decodeErr(raw: string, map: BitMap): DecodedError {
   const trimmed = raw.trim();
+  const token = trimmed.split(/\s+/)[0] ?? '';
   // ODrive replies can be decimal or hex (0x…)
-  const value = trimmed.startsWith('0x') || trimmed.startsWith('0X')
-    ? parseInt(trimmed, 16)
-    : parseInt(trimmed, 10);
+  const value = token.startsWith('0x') || token.startsWith('0X')
+    ? parseInt(token, 16)
+    : parseInt(token, 10);
 
   if (isNaN(value)) {
     return { raw: trimmed, hex: '?', value: 0, bits: [`(unparseable: ${trimmed})`], ok: false };

@@ -2,9 +2,11 @@ import type { Dispatch } from 'react';
 import type { AppAction } from '../../app/types';
 import { flatFields, type ConfigField } from '../config/fieldCatalog';
 import { readField, applyField } from '../board/BoardProtocol';
+import { persistFfbEeprom } from '../board/fieldApply';
 import { serialService } from '../serial/SerialService';
 import { readAllFields } from '../board/unifiedSave';
-
+import { as5047EncoderTargets } from './calibrationTargets';
+import { applyBootPreset } from './calibrationBootPresets';
 const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
 export function fieldByPath(path: string): ConfigField | undefined {
@@ -15,6 +17,7 @@ export async function writePath(
   path: string,
   value: string | boolean,
   dispatch: Dispatch<AppAction>,
+  options?: { markNvmPending?: boolean },
 ): Promise<boolean> {
   const field = fieldByPath(path);
   if (!field || field.readonly) {
@@ -24,6 +27,9 @@ export async function writePath(
   const applied = await applyField(field, normalized);
   dispatch({ type: 'append-log', direction: 'rx', message: `${path} = ${applied}` });
   dispatch({ type: 'set-field', path, value: applied, dirty: false });
+  if (options?.markNvmPending !== false) {
+    dispatch({ type: 'set-nvm-pending', pending: true });
+  }
   return true;
 }
 
@@ -56,32 +62,40 @@ export function markDirtyPaths(
 }
 
 export function applyAs5047Preset(dispatch: React.Dispatch<AppAction>): void {
+  const specs = as5047EncoderTargets.map((entry) => {
+    if (entry.match.kind === 'bool') {
+      return { path: entry.path, value: entry.match.value };
+    }
+    if (entry.match.kind === 'exact') {
+      return { path: entry.path, value: entry.match.value };
+    }
+    return { path: entry.path, value: '' };
+  });
   markDirtyPaths(
     [
-      { path: 'axis0.encoder.config.mode', value: '257' },
-      { path: 'axis0.encoder.config.cpr', value: '16384' },
-      { path: 'axis0.encoder.config.abs_spi_cs_gpio_pin', value: '7' },
-      { path: 'axis0.encoder.config.use_index', value: false },
+      ...specs,
       { path: 'axis0.encoder.config.pre_calibrated', value: false },
     ],
     dispatch,
   );
+  dispatch({ type: 'set-field', path: 'axis0.encoder.is_ready', value: 'false', dirty: false });
+  dispatch({ type: 'set-field', path: 'axis0.encoder.config.pre_calibrated', value: 'false', dirty: true });
+  dispatch({ type: 'set-nvm-pending', pending: true });
 }
 
-export async function markPrecalibrated(dispatch: React.Dispatch<AppAction>): Promise<{ ok: number; fail: number }> {
-  return writePaths(
-    [
-      { path: 'axis0.motor.config.pre_calibrated', value: true },
-      { path: 'axis0.encoder.config.pre_calibrated', value: true },
-      { path: 'axis0.config.startup_motor_calibration', value: true },
-      { path: 'axis0.config.startup_encoder_offset_calibration', value: true },
-      { path: 'axis0.config.startup_closed_loop_control', value: true },
-      { path: 'axis0.controller.config.enable_vel_limit', value: false },
-      { path: 'axis0.controller.config.enable_overspeed_error', value: false },
-      { path: 'axis0.controller.config.enable_torque_mode_vel_limit', value: false },
-    ],
-    dispatch,
-  );
+export async function applyPersistReadyBoot(
+  dispatch: React.Dispatch<AppAction>,
+  fieldValues?: Record<string, string>,
+): Promise<{ ok: number; fail: number; skipped?: string[] }> {
+  return applyBootPreset('persistReady', dispatch, fieldValues);
+}
+
+/** @deprecated Use applyPersistReadyBoot — old name kept for Quick Start imports. */
+export async function markPrecalibrated(
+  dispatch: React.Dispatch<AppAction>,
+  fieldValues?: Record<string, string>,
+): Promise<{ ok: number; fail: number; skipped?: string[] }> {
+  return applyPersistReadyBoot(dispatch, fieldValues);
 }
 
 async function tryReconnect(maxAttempts = 12, delayMs = 1000): Promise<boolean> {
@@ -121,9 +135,23 @@ export async function eraseAndReconnect(
   return { reconnected: true, values };
 }
 
-export async function zeroWheel(dispatch: React.Dispatch<AppAction>): Promise<void> {
+/** Capture FFB logical center (axis.zeroenc!) and optionally persist to FFB EEPROM (sys.save!). */
+export async function zeroWheel(
+  dispatch: React.Dispatch<AppAction>,
+  options?: { persistEeprom?: boolean },
+): Promise<boolean> {
   const reply = await serialService.sendCommand('axis.zeroenc!', true, 3000);
   dispatch({ type: 'append-log', direction: 'info', message: `axis.zeroenc! → ${reply}` });
+  if (options?.persistEeprom === false) {
+    return true;
+  }
+  const ok = await persistFfbEeprom();
+  dispatch({
+    type: 'append-log',
+    direction: ok ? 'info' : 'error',
+    message: ok ? 'sys.save! (zeroOffset EEPROM)' : 'sys.save! failed — zeroOffset RAM only',
+  });
+  return ok;
 }
 
 export async function readAnticogProgress(): Promise<{ index: number; valid: boolean; axisErr: number }> {

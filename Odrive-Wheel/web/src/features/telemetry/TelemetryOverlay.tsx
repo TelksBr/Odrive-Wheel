@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
+import { useThrottledValue } from '../../shared/useThrottledValue';
 import { TimeSeriesChart } from './TimeSeriesChart';
 import { busSeries, motionSeries } from './series';
 import { computeStats } from './types';
@@ -32,6 +33,8 @@ function renderOverlayRoot(
 export function TelemetryOverlay({ connected, samples, brakePower, windowMs: externalWindowMs = 60_000 }: TelemetryOverlayProps) {
   const { state, dispatch } = useAppState();
   const locale = state.locale;
+  const throttledSamples = useThrottledValue(samples, 500);
+  const throttledBrake = useThrottledValue(brakePower, 500);
   const [pipOpen, setPipOpen] = useState(false);
   const [overlayWindowMs, setOverlayWindowMs] = useState(externalWindowMs);
   const [overlayError, setOverlayError] = useState<string | null>(null);
@@ -44,8 +47,8 @@ export function TelemetryOverlay({ connected, samples, brakePower, windowMs: ext
 
   const overlayProps = {
     connected,
-    samples,
-    brakePower,
+    samples: throttledSamples,
+    brakePower: throttledBrake,
     windowMs: overlayWindowMs,
     locale,
   };
@@ -106,11 +109,11 @@ export function TelemetryOverlay({ connected, samples, brakePower, windowMs: ext
   }, [connected, dispatch, locale]);
 
   useEffect(() => {
-    if (!rootRef.current) {
+    if (!rootRef.current || !pipOpen) {
       return;
     }
     renderOverlayRoot(rootRef.current, propsRef.current);
-  }, [connected, samples, brakePower, overlayWindowMs, locale]);
+  }, [connected, pipOpen, throttledSamples, throttledBrake, overlayWindowMs, locale]);
 
   const pipAvailable = Boolean(window.documentPictureInPicture);
 

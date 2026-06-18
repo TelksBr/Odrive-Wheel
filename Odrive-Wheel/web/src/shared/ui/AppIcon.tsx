@@ -3,6 +3,7 @@ const spriteUrl = `${import.meta.env.BASE_URL}icons.svg`;
 export type AppIconId =
   | 'tab-dashboard'
   | 'tab-setup'
+  | 'tab-calibration'
   | 'tab-motor'
   | 'tab-tune'
   | 'tab-ffb-test'

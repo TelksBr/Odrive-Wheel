@@ -11,6 +11,7 @@ import {
 import { parseTorqueReply } from '../inputs/parseTorque';
 import { serialService } from '../serial/SerialService';
 
+const POSITION_UI_MS = 100;
 const CONFIG_POLL_MS = 2000;
 const GPIO_LIST = [1, 2, 3, 4] as const;
 
@@ -87,6 +88,7 @@ export function useDashboardLivePoll(
   const rafRef = useRef(0);
   const slotRef = useRef(0);
   const gpioRoundRobinRef = useRef(0);
+  const lastPositionUiRef = useRef(0);
 
   const refreshConfig = useCallback(async () => {
     const base = configRef.current ?? mergeFieldConfig(
@@ -107,7 +109,11 @@ export function useDashboardLivePoll(
         const value = parsePosition(raw);
         if (value !== null) {
           positionDegRef.current = value;
-          setPositionDeg(value);
+          const now = performance.now();
+          if (now - lastPositionUiRef.current >= POSITION_UI_MS) {
+            lastPositionUiRef.current = now;
+            setPositionDeg(value);
+          }
         }
       } catch {
         // keep previous sample
@@ -189,7 +195,6 @@ export function useDashboardLivePoll(
       gpioRawRef.current = { 1: null, 2: null, 3: null, 4: null };
       slotRef.current = 0;
       gpioRoundRobinRef.current = 0;
-      cancelAnimationFrame(rafRef.current);
       return;
     }
 

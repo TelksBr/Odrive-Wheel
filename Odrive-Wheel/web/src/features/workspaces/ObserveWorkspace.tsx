@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useAppState } from '../../app/AppState';
+import { usePageVisible } from '../../shared/usePageVisible';
 import { translate } from '../../i18n/messages';
 import { Card, SectionHeader } from '../../shared/ui';
 import { LiveDebugPage } from '../live/LiveDebugPage';
-import { ConfigPage } from '../config/ConfigPage';
 import { TimeSeriesChart } from '../telemetry/TimeSeriesChart';
 import { TelemetryControlPanel } from '../telemetry/TelemetryControlPanel';
 import { TelemetryOverlay } from '../telemetry/TelemetryOverlay';
@@ -14,18 +14,20 @@ import type { SeriesStats, TelemetrySample } from '../telemetry/types';
 export function ObserveWorkspace() {
   const { state } = useAppState();
   const locale = state.locale;
+  const pageVisible = usePageVisible();
   const [enabled, setEnabled] = useState(true);
-  const [intervalMs, setIntervalMs] = useState(250);
+  const [intervalMs, setIntervalMs] = useState(500);
   const [windowMs, setWindowMs] = useState(60_000);
+  const [liveDebugPolling, setLiveDebugPolling] = useState(false);
 
   const maxTorqueNm = Number(state.fieldValues['axis.maxtorque'] ?? '');
   const telemetry = useTelemetry({
     connected: state.connected,
-    enabled,
+    enabled: enabled && pageVisible,
     intervalMs,
     windowMs,
     maxTorqueNm: Number.isFinite(maxTorqueNm) && maxTorqueNm > 0 ? maxTorqueNm : undefined,
-    holdPolling: state.busy,
+    holdPolling: state.busy || liveDebugPolling,
   });
 
   return (
@@ -51,7 +53,7 @@ export function ObserveWorkspace() {
 
         <TelemetryOverlay
           connected={state.connected}
-          samples={telemetry.samples}
+          samples={telemetry.displaySamples}
           brakePower={telemetry.brakePower}
           windowMs={windowMs}
         />
@@ -74,8 +76,7 @@ export function ObserveWorkspace() {
         />
       </div>
 
-      <LiveDebugPage />
-      <ConfigPage filter="ffb" includeGroups={['system']} />
+      <LiveDebugPage onAutoPollChange={setLiveDebugPolling} />
     </div>
   );
 }

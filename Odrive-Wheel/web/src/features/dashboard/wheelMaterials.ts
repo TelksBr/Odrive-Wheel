@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import type { WheelRenderSettings } from './wheelRenderQuality';
 
+const configuredRoots = new WeakSet<THREE.Object3D>();
+const wheelTextureLoader = new THREE.TextureLoader();
+
 const TEXTURE_BASES = [
   '/models/wheel/textures/',
   '/models/textures/',
@@ -126,6 +129,18 @@ function phongToStandard(
   return dst;
 }
 
+function replaceTexture(
+  mat: THREE.MeshStandardMaterial,
+  key: 'map' | 'normalMap' | 'roughnessMap' | 'metalnessMap',
+  tex: THREE.Texture,
+): void {
+  const previous = mat[key];
+  if (previous && previous !== tex) {
+    previous.dispose();
+  }
+  mat[key] = tex;
+}
+
 function applyPbrMaps(
   mat: THREE.MeshStandardMaterial,
   loader: THREE.TextureLoader,
@@ -138,22 +153,22 @@ function applyPbrMaps(
   const preset = presetFor(name);
 
   loadFirstAvailable(loader, textureCandidates(name, 'BaseColor'), quality.maxAnisotropy, (tex) => {
-    mat.map = tex;
+    replaceTexture(mat, 'map', tex);
     mat.color.set(0xffffff);
     mat.needsUpdate = true;
   });
   loadFirstAvailable(loader, textureCandidates(name, 'Normal'), quality.maxAnisotropy, (tex) => {
-    mat.normalMap = tex;
+    replaceTexture(mat, 'normalMap', tex);
     applyNormalScale(mat, quality.normalScale);
     mat.needsUpdate = true;
   });
   loadFirstAvailable(loader, textureCandidates(name, 'Roughness'), quality.maxAnisotropy, (tex) => {
-    mat.roughnessMap = tex;
+    replaceTexture(mat, 'roughnessMap', tex);
     mat.roughness = preset.roughness;
     mat.needsUpdate = true;
   });
   loadFirstAvailable(loader, textureCandidates(name, 'Metallic'), quality.maxAnisotropy, (tex) => {
-    mat.metalnessMap = tex;
+    replaceTexture(mat, 'metalnessMap', tex);
     mat.metalness = preset.metalness;
     mat.needsUpdate = true;
   });
@@ -178,6 +193,7 @@ function upgradeMaterial(
   if (mat instanceof THREE.MeshPhongMaterial) {
     const upgraded = phongToStandard(mat, quality);
     applyPbrMaps(upgraded, loader, quality);
+    mat.dispose();
     return upgraded;
   }
 
@@ -195,6 +211,7 @@ function upgradeMaterial(
     return mat;
   }
 
+  mat.dispose();
   return fallbackMaterial(mat.name || 'Material');
 }
 
@@ -217,7 +234,14 @@ export function configureWheelMaterials(
   const quality = settings
     ? materialQualityFromSettings(settings, maxAnisotropyCap)
     : DEFAULT_QUALITY;
-  const loader = new THREE.TextureLoader();
+
+  if (configuredRoots.has(root)) {
+    if (settings) {
+      applyWheelRenderQuality(root, settings, maxAnisotropyCap);
+    }
+    return;
+  }
+  configuredRoots.add(root);
 
   root.traverse((child) => {
     if (!(child instanceof THREE.Mesh)) {
@@ -225,7 +249,7 @@ export function configureWheelMaterials(
     }
 
     const materials = Array.isArray(child.material) ? child.material : [child.material];
-    const upgraded = materials.map((mat) => upgradeMaterial(mat, loader, quality));
+    const upgraded = materials.map((mat) => upgradeMaterial(mat, wheelTextureLoader, quality));
     child.material = Array.isArray(child.material) ? upgraded : upgraded[0];
   });
 }

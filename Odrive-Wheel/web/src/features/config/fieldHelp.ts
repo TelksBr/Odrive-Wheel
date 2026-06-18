@@ -2,6 +2,7 @@ import { guidanceEn, guidancePt } from '../../i18n/bundles/guidance';
 import type { Locale } from '../../i18n/messages';
 import { translate } from '../../i18n/messages';
 import type { ConfigField } from './fieldCatalog';
+import { fieldDefaults, fieldExamples, fieldRanges } from './fieldMetaValues';
 
 export interface FieldHelp {
   defaultValue: string;
@@ -33,7 +34,7 @@ function inferDefault(field: ConfigField, locale: Locale): string {
     return translate(locale, 'fieldLiveValue');
   }
 
-  const exact = exactDefaults[field.path];
+  const exact = fieldDefaults[field.path];
   if (exact !== undefined) {
     return exact;
   }
@@ -64,7 +65,7 @@ function inferDefault(field: ConfigField, locale: Locale): string {
 }
 
 function inferExample(field: ConfigField): string {
-  const exact = exactExamples[field.path];
+  const exact = fieldExamples[field.path];
   if (exact !== undefined) {
     return exact;
   }
@@ -145,10 +146,14 @@ function inferGuidance(field: ConfigField, locale: Locale): string {
   if (field.path.startsWith('fx.filter') && field.path.endsWith('Q')) {
     return 'Biquad Q (quality) factor. Q = 0.5 = over-damped (very smooth). Q = 0.707 = Butterworth (flat, recommended starting point). Q > 1.0 = resonant peak — adds a subtle bump at the cutoff frequency, can feel lively but may oscillate.';
   }
-  return 'Persisted by sys.save. Changes take effect immediately but are lost on power cycle without saving.';
+  return 'FFB: Apply persists to EEPROM (sys.save!). ODrive: Apply writes RAM only — toolbar Save persists NVM and reboots.';
 }
 
 function formatRange(field: ConfigField): string {
+  const catalogRange = fieldRanges[field.path];
+  if (catalogRange) {
+    return catalogRange;
+  }
   if (field.options?.length) {
     return field.options.map((option) => option.value).join(' / ');
   }
@@ -167,63 +172,3 @@ function formatRange(field: ConfigField): string {
 function trimNumber(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
 }
-
-const exactDefaults: Record<string, string> = {
-  'config.dc_bus_overvoltage_trip_level': '56',
-  'config.dc_bus_undervoltage_trip_level': '8',
-  'config.brake_resistance': '2',
-  'config.enable_brake_resistor': 'false',
-  'config.dc_bus_overvoltage_ramp_start': '48',
-  'config.dc_bus_overvoltage_ramp_end': '52',
-  'config.dc_max_positive_current': '20',
-  'config.dc_max_negative_current': '-5',
-  'axis0.requested_state': '1',
-  'axis0.config.startup_closed_loop_control': 'false',
-  'axis0.motor.config.motor_type': '0',
-  'axis0.motor.config.calibration_current': '10',
-  'axis0.motor.config.resistance_calib_max_voltage': '4',
-  'axis0.motor.config.current_control_bandwidth': '100',
-  'axis0.motor.config.current_control_deadband': '0',
-  'axis0.motor.config.pre_calibrated': 'false',
-  'axis0.encoder.config.mode': '0',
-  'axis0.encoder.config.use_index': 'false',
-  'axis0.encoder.config.pre_calibrated': 'false',
-  'axis0.controller.config.control_mode': '1',
-  'axis0.controller.config.input_mode': '1',
-  'axis0.controller.config.enable_vel_limit': 'false',
-  'axis0.controller.config.enable_overspeed_error': 'false',
-  'axis0.controller.config.enable_torque_mode_vel_limit': 'false',
-  'axis.range': '900',
-  'axis.maxtorque': '10',
-  'axis.fxratio': '1',
-  'axis.invert': 'false',
-  'axis.idlespring': '0',
-  'axis.axisdamper': '0',
-  'axis.axisinertia': '0',
-  'axis.axisfriction': '0',
-  'axis.esgain': '0',
-  'axis.esdamp': '0',
-  'axis.maxtorquerate': '0',
-  'axis.expo': '0',
-  'axis.exposcale': '1',
-  'sys.vbusdiv': '10',
-};
-
-const exactExamples: Record<string, string> = {
-  'config.brake_resistance': '2.0',
-  'config.dc_max_positive_current': '15',
-  'config.dc_max_negative_current': '-3',
-  'axis0.requested_state': '8',
-  'axis0.motor.config.pole_pairs': '7',
-  'axis0.motor.config.torque_constant': '0.05',
-  'axis0.encoder.config.cpr': '8192',
-  'axis0.controller.config.vel_limit': '10000',
-  'axis.range': '900',
-  'axis.maxtorque': '12',
-  'axis.fxratio': '0.75',
-  'axis.idlespring': '15',
-  'axis.axisdamper': '8',
-  'axis.esgain': '40',
-  'axis.maxtorquerate': '4',
-  'sys.vbusdiv': '10',
-};

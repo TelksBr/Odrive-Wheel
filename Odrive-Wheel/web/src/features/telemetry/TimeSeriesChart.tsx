@@ -49,24 +49,78 @@ export function TimeSeriesChart({
   const [localSeries, setLocalSeries] = useState<TelemetrySeries[]>(series);
   const [hover, setHover] = useState<ChartHover | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null);
+  const hoverRef = useRef<ChartHover | null>(null);
+  const samplesRef = useRef(samples);
+  const drawPendingRef = useRef(false);
+  const lastDrawRef = useRef(0);
+
+  useEffect(() => {
+    hoverRef.current = hover;
+  }, [hover]);
+
+  useEffect(() => {
+    samplesRef.current = samples;
+  }, [samples]);
 
   useEffect(() => {
     setLocalSeries(series);
   }, [series]);
 
+  const sampleTick = samples.length > 0 ? `${samples.length}:${samples[samples.length - 1]?.t ?? 0}` : '0';
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) {
-      return;
+      return undefined;
     }
-    const layout = getChartLayout(canvas, compact);
-    const now = samples.at(-1)?.t ?? performance.now();
-    const windowSamples = samples.filter((s) => s.t >= now - windowMs);
-    const visible = localSeries.filter((item) => item.visible);
-    const leftScale = scaleFor(windowSamples, visible.filter((item) => item.axis === 'left'));
-    const rightScale = scaleFor(windowSamples, visible.filter((item) => item.axis === 'right'));
-    drawChart(canvas, windowSamples, localSeries, windowMs, compact, locale, layout, leftScale, rightScale, hover);
-  }, [compact, hover, localSeries, locale, samples, windowMs]);
+
+    const DRAW_INTERVAL_MS = 1000 / 20;
+
+    function paint() {
+      drawPendingRef.current = false;
+      const layout = getChartLayout(canvas!, compact);
+      const currentSamples = samplesRef.current;
+      const now = currentSamples.at(-1)?.t ?? performance.now();
+      const windowSamples = currentSamples.filter((s) => s.t >= now - windowMs);
+      const visible = localSeries.filter((item) => item.visible);
+      const leftScale = scaleFor(windowSamples, visible.filter((item) => item.axis === 'left'));
+      const rightScale = scaleFor(windowSamples, visible.filter((item) => item.axis === 'right'));
+      drawChart(
+        canvas!,
+        windowSamples,
+        localSeries,
+        windowMs,
+        compact,
+        locale,
+        layout,
+        leftScale,
+        rightScale,
+        hoverRef.current,
+      );
+      lastDrawRef.current = performance.now();
+    }
+
+    function scheduleDraw() {
+      if (drawPendingRef.current) {
+        return;
+      }
+      drawPendingRef.current = true;
+      const elapsed = performance.now() - lastDrawRef.current;
+      const delay = Math.max(0, DRAW_INTERVAL_MS - elapsed);
+      const id = window.setTimeout(() => {
+        requestAnimationFrame(paint);
+      }, delay);
+      return id;
+    }
+
+    const timerId = scheduleDraw();
+    return () => {
+      if (timerId) {
+        window.clearTimeout(timerId);
+      }
+      drawPendingRef.current = false;
+    };
+  }, [compact, localSeries, locale, sampleTick, windowMs]);
 
   function toggle(key: keyof TelemetrySample) {
     setLocalSeries((prev) =>
@@ -119,6 +173,29 @@ export function TimeSeriesChart({
       top = 4;
     }
     setTooltipPos({ left, top });
+    requestAnimationFrame(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const layout = getChartLayout(canvas, compact);
+      const currentSamples = samplesRef.current;
+      const now = currentSamples.at(-1)?.t ?? performance.now();
+      const windowSamples = currentSamples.filter((s) => s.t >= now - windowMs);
+      const visible = localSeries.filter((item) => item.visible);
+      const leftScale = scaleFor(windowSamples, visible.filter((item) => item.axis === 'left'));
+      const rightScale = scaleFor(windowSamples, visible.filter((item) => item.axis === 'right'));
+      drawChart(
+        canvas,
+        windowSamples,
+        localSeries,
+        windowMs,
+        compact,
+        locale,
+        layout,
+        leftScale,
+        rightScale,
+        { sample, x, offsetMs: now - sample.t },
+      );
+    });
   }
 
   function handleMouseLeave() {
@@ -250,7 +327,7 @@ function drawChart(
   rightScale: { min: number; max: number },
   hover: ChartHover | null,
 ) {
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const { width, height, padL, padT, plotW, plotH } = layout;
   if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
     canvas.width = Math.round(width * dpr);

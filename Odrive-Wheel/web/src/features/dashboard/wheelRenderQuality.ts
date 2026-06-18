@@ -45,13 +45,13 @@ export const WHEEL_QUALITY_PRESETS: Record<WheelRenderQuality, WheelRenderSettin
   },
   ultra: {
     id: 'ultra',
-    maxDpr: 2.5,
+    maxDpr: 2,
     antialias: true,
     toneMappingExposure: 1.1,
     environmentIntensity: 1.28,
-    maxAnisotropy: 16,
+    maxAnisotropy: 8,
     normalScale: 1.25,
-    envMapResolution: 1024,
+    envMapResolution: 512,
   },
 };
 
@@ -64,7 +64,7 @@ export function loadWheelRenderQuality(): WheelRenderQuality {
   if (saved && saved in WHEEL_QUALITY_PRESETS) {
     return saved as WheelRenderQuality;
   }
-  return 'high';
+  return 'medium';
 }
 
 export function saveWheelRenderQuality(quality: WheelRenderQuality): void {

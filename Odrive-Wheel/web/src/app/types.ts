@@ -3,6 +3,7 @@ import type { Locale } from '../i18n/messages';
 export type TabId =
   | 'dashboard'
   | 'setup'
+  | 'calibration'
   | 'motor'
   | 'tune'
   | 'ffb-test'
@@ -31,10 +32,10 @@ export interface AppState {
   busy: boolean;
   autoReconnect: boolean;
   reconnecting: boolean;
-  autoRefresh: boolean;
-  refreshIntervalMs: number;
   lastRefreshAt?: string;
   dirtyPaths: string[];
+  /** ODrive RAM has cal/boot changes not yet committed via toolbar Save (ss). */
+  nvmPending: boolean;
   fieldValues: Record<string, string>;
   logs: LogEntry[];
   focusFieldPath?: string;
@@ -47,11 +48,10 @@ export type AppAction =
   | { type: 'set-busy'; busy: boolean }
   | { type: 'set-auto-reconnect'; autoReconnect: boolean }
   | { type: 'set-reconnecting'; reconnecting: boolean }
-  | { type: 'set-auto-refresh'; autoRefresh: boolean }
-  | { type: 'set-refresh-interval'; refreshIntervalMs: number }
   | { type: 'mark-refreshed' }
   | { type: 'set-field'; path: string; value: string; dirty?: boolean }
   | { type: 'clear-dirty' }
+  | { type: 'set-nvm-pending'; pending: boolean }
   | { type: 'append-log'; direction: LogEntry['direction']; message: string }
   | { type: 'clear-log' }
   | { type: 'hydrate-fields'; values: Record<string, string>; dirty?: boolean }

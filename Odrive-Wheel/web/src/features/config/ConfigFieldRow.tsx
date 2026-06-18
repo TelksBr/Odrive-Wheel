@@ -1,10 +1,10 @@
 import type { ConfigField } from './fieldCatalog';
-import { applyField } from '../board/BoardProtocol';
+import { applyConfigField } from '../board/fieldApply';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
 import { localizeOptionLabel } from '../../i18n/fieldMeta';
 import { getFieldHelp } from './fieldHelp';
-import { isFieldInertInTorque, isFieldPartialInTorque } from '../calibration/controllerInert';
+import { getFieldEditState } from './fieldEditState';
 
 /** Normalizes any board reply to a JS boolean. Handles 'true'/'1'/truthy strings. */
 function parseBool(raw: string): boolean {
@@ -64,16 +64,25 @@ function EditableRow({ field }: { field: ConfigField }) {
   const value = state.fieldValues[field.path] ?? '';
   const dirty = state.dirtyPaths.includes(field.path);
   const help = getFieldHelp(field, state.locale);
-  const controlMode = state.fieldValues['axis0.controller.config.control_mode'];
-  const inert = isFieldInertInTorque(field.path, controlMode);
-  const partial = isFieldPartialInTorque(field.path, controlMode);
+  const editState = getFieldEditState(field.path, state.fieldValues);
+  const inert = editState === 'inert';
+  const partial = editState === 'partial';
   const disabled = !state.connected || state.busy || inert;
 
   async function handleWrite() {
     dispatch({ type: 'set-busy', busy: true });
     try {
-      const applied = await applyField(field, value);
-      dispatch({ type: 'append-log', direction: 'rx', message: `${field.path} = ${applied}` });
+      const result = await applyConfigField(field, value);
+      const applied = result.applied[field.path] ?? value;
+      let message = `${field.path} = ${applied}`;
+      if (field.protocol === 'openffboard') {
+        message += result.persistedFfb
+          ? ` — ${translate(state.locale, 'applyLogFfbEepromOk')}`
+          : ` — ${translate(state.locale, 'applyLogFfbEepromFail')}`;
+      } else {
+        message += ` — ${translate(state.locale, 'applyLogOdriveRam')}`;
+      }
+      dispatch({ type: 'append-log', direction: 'rx', message });
       dispatch({ type: 'set-field', path: field.path, value: applied, dirty: false });
     } catch (error) {
       dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -157,7 +166,16 @@ function EditableRow({ field }: { field: ConfigField }) {
           />
         )}
         <div className="field-actions">
-          <button type="button" disabled={disabled || !dirty} onClick={() => void handleWrite()}>
+          <button
+            type="button"
+            disabled={disabled || !dirty}
+            title={
+              field.protocol === 'openffboard'
+                ? translate(state.locale, 'applyFieldHintFfb')
+                : translate(state.locale, 'applyFieldHintOdrive')
+            }
+            onClick={() => void handleWrite()}
+          >
             {translate(state.locale, 'applyField')}
           </button>
         </div>

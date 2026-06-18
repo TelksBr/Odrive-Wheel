@@ -3,7 +3,7 @@ import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
 import { Pill, SectionHeader } from '../../shared/ui';
 import { QuickActions } from '../board/QuickActions';
-import { serialService } from '../serial/SerialService';
+import { zeroWheel } from '../calibration/calibrationPresets';
 import { useDashboardLivePoll } from './useDashboardLivePoll';
 import { DashboardLiveMetrics } from './DashboardLiveMetrics';
 import { DashboardAnalogAxes } from './DashboardAnalogAxes';
@@ -18,8 +18,15 @@ export function DashboardPage() {
   async function centerWheel() {
     dispatch({ type: 'set-busy', busy: true });
     try {
-      await serialService.sendCommand('axis.zeroenc!', true, 2000);
-      dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'dashboardWheelCenteredLog') });
+      const ok = await zeroWheel(dispatch);
+      dispatch({
+        type: 'append-log',
+        direction: ok ? 'info' : 'error',
+        message: translate(
+          state.locale,
+          ok ? 'dashboardWheelCenteredSaved' : 'dashboardWheelCenteredEepromFail',
+        ),
+      });
     } catch (error) {
       dispatch({
         type: 'append-log',

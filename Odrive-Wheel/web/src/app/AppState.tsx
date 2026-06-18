@@ -9,9 +9,7 @@ interface AppContextValue {
 
 const savedLocale = localStorage.getItem('odrive-wheel-locale') as Locale | null;
 const savedAutoReconnect = localStorage.getItem('odrive-wheel-auto-reconnect');
-const savedAutoRefresh = localStorage.getItem('odrive-wheel-auto-refresh');
-const savedRefreshInterval = Number(localStorage.getItem('odrive-wheel-refresh-interval'));
-const tabIds: TabId[] = ['dashboard', 'setup', 'motor', 'tune', 'ffb-test', 'perf-test', 'inputs', 'observe', 'maintain', 'commands', 'console', 'about'];
+const tabIds: TabId[] = ['dashboard', 'setup', 'calibration', 'motor', 'tune', 'ffb-test', 'perf-test', 'inputs', 'observe', 'maintain', 'commands', 'console', 'about'];
 
 function initialTab(): TabId {
   const tab = new URLSearchParams(window.location.search).get('tab');
@@ -28,9 +26,8 @@ const initialState: AppState = {
   busy: false,
   autoReconnect: savedAutoReconnect !== 'false',
   reconnecting: false,
-  autoRefresh: savedAutoRefresh !== 'false',
-  refreshIntervalMs: Number.isFinite(savedRefreshInterval) && savedRefreshInterval >= 1000 ? savedRefreshInterval : 2500,
   dirtyPaths: [],
+  nvmPending: false,
   fieldValues: {},
   logs: [],
 };
@@ -61,12 +58,6 @@ function reducer(state: AppState, action: AppAction): AppState {
       return { ...state, autoReconnect: action.autoReconnect };
     case 'set-reconnecting':
       return { ...state, reconnecting: action.reconnecting };
-    case 'set-auto-refresh':
-      localStorage.setItem('odrive-wheel-auto-refresh', String(action.autoRefresh));
-      return { ...state, autoRefresh: action.autoRefresh };
-    case 'set-refresh-interval':
-      localStorage.setItem('odrive-wheel-refresh-interval', String(action.refreshIntervalMs));
-      return { ...state, refreshIntervalMs: action.refreshIntervalMs };
     case 'mark-refreshed':
       return { ...state, lastRefreshAt: new Date().toLocaleTimeString() };
     case 'set-field':
@@ -82,12 +73,14 @@ function reducer(state: AppState, action: AppAction): AppState {
         dirtyPaths: action.dirty ? [...new Set([...state.dirtyPaths, ...Object.keys(action.values)])] : state.dirtyPaths,
       };
     case 'clear-dirty':
-      return { ...state, dirtyPaths: [] };
+      return { ...state, dirtyPaths: [], nvmPending: false };
+    case 'set-nvm-pending':
+      return { ...state, nvmPending: action.pending };
     case 'append-log':
       return {
         ...state,
         logs: [
-          ...state.logs.slice(-399),
+          ...state.logs.slice(-199),
           {
             id: Date.now() + Math.floor(Math.random() * 1000),
             direction: action.direction,

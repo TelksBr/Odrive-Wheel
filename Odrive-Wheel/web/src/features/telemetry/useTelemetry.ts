@@ -4,9 +4,12 @@ import { flatFields } from '../config/fieldCatalog';
 import { serialService } from '../serial/SerialService';
 import { computeStats } from './types';
 import { allSeriesKeys } from './series';
+import { pushTelemetrySample, snapshotTelemetry } from './telemetryBuffer';
 import type { BrakePowerState, TelemetrySample, TelemetryStats } from './types';
 
-const MAX_WINDOW_MS = 5 * 60_000;
+const MAX_WINDOW_MS = 60_000;
+const MAX_SAMPLES = 720;
+const UI_SYNC_MS = 500;
 
 const fieldByPath = new Map(flatFields.map((field) => [field.path, field]));
 
@@ -62,6 +65,8 @@ export function useTelemetry({
   const brakeSamplesRef = useRef<Array<{ t: number; i2: number }>>([]);
   const resistanceRef = useRef<number | null>(null);
   const pausedRef = useRef(false);
+  const samplesRef = useRef<TelemetrySample[]>([]);
+  const syncVersionRef = useRef(0);
 
   // Keep pausedRef in sync so the interval closure can read it
   useEffect(() => {
@@ -114,10 +119,8 @@ export function useTelemetry({
         velocityDegS: parseNumber(velRaw),
       };
 
-      setSamples((prev) => [
-        ...prev.filter((s) => s.t >= now - MAX_WINDOW_MS),
-        sample,
-      ]);
+      pushTelemetrySample(samplesRef.current, sample, MAX_WINDOW_MS, MAX_SAMPLES);
+      syncVersionRef.current += 1;
       updateBrakePower(sample, brakeSamplesRef.current, resistanceRef.current, setBrakePower);
       setLastError(null);
     } catch (error) {
@@ -129,11 +132,22 @@ export function useTelemetry({
 
   useEffect(() => {
     if (!connected || !enabled) {
+      samplesRef.current = [];
+      syncVersionRef.current = 0;
+      setSamples([]);
       return undefined;
     }
     void pollOnce();
-    const id = window.setInterval(() => void pollOnce(), Math.max(intervalMs, 100));
-    return () => window.clearInterval(id);
+    const pollId = window.setInterval(() => void pollOnce(), Math.max(intervalMs, 200));
+    const syncId = window.setInterval(() => {
+      if (!pausedRef.current && syncVersionRef.current > 0) {
+        setSamples(snapshotTelemetry(samplesRef.current));
+      }
+    }, UI_SYNC_MS);
+    return () => {
+      window.clearInterval(pollId);
+      window.clearInterval(syncId);
+    };
   }, [connected, enabled, intervalMs, pollOnce]);
 
   // Trim samples to current windowMs for display when not paused
@@ -157,6 +171,7 @@ export function useTelemetry({
   const clear = useCallback(() => {
     brakeSamplesRef.current = [];
     resistanceRef.current = null;
+    samplesRef.current = [];
     setSamples([]);
     setFrozenSamples([]);
     setBrakePower({ resistance: null, watts: null, sampleCount: 0 });
@@ -164,11 +179,12 @@ export function useTelemetry({
   }, []);
 
   const exportCsv = useCallback(() => {
-    if (samples.length === 0) {
+    const exportSamples = samplesRef.current.length > 0 ? samplesRef.current : samples;
+    if (exportSamples.length === 0) {
       return;
     }
     const headers = ['timestamp_ms', 'vbus_V', 'ibus_A', 'iq_A', 'ibrake_A', 'torque_Nm', 'position_deg', 'velocity_degS'];
-    const rows = samples.map((s) => [
+    const rows = exportSamples.map((s) => [
       s.t.toFixed(0),
       s.vbus?.toFixed(3) ?? '',
       s.ibus?.toFixed(3) ?? '',

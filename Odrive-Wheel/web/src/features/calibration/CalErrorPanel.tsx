@@ -18,12 +18,22 @@ interface ErrorRowState {
   ok: boolean;
 }
 
-export function CalErrorPanel({ fields, visible }: { fields: SetupErrorField[]; visible: boolean }) {
+export function CalErrorPanel({
+  fields,
+  visible,
+  refreshKey = 0,
+}: {
+  fields: SetupErrorField[];
+  visible: boolean;
+  refreshKey?: number;
+}) {
   const { state } = useAppState();
   const locale = state.locale;
   const [rows, setRows] = useState<Record<string, ErrorRowState>>({});
+  const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
+    setLoading(true);
     const next: Record<string, ErrorRowState> = {};
     for (const field of fields) {
       try {
@@ -39,22 +49,33 @@ export function CalErrorPanel({ fields, visible }: { fields: SetupErrorField[]; 
       }
     }
     setRows(next);
+    setLoading(false);
   }, [fields, locale]);
 
   useEffect(() => {
     if (visible && state.connected) {
       void refresh();
     }
-  }, [visible, state.connected, refresh]);
+  }, [visible, state.connected, refreshKey, refresh]);
 
   if (!visible) {
     return null;
   }
 
+  const loaded = Object.keys(rows).length === fields.length;
+  const hasErrors = loaded && Object.values(rows).some((row) => !row.ok);
+  const allClear = loaded && !hasErrors;
+
   return (
-    <div className="cal-err-panel">
+    <div className={`cal-err-panel${allClear ? ' all-clear' : hasErrors ? ' has-errors' : ''}`}>
       <div className="cal-err-panel-header">
-        <span>{translate(locale, 'setupErrTitle')}</span>
+        <span>
+          {loading
+            ? translate(locale, 'setupErrTitlePending')
+            : allClear
+              ? translate(locale, 'setupErrTitleOk')
+              : translate(locale, 'setupErrTitle')}
+        </span>
         <button type="button" disabled={!state.connected || state.busy} onClick={() => void refresh()}>
           {translate(locale, 'setupErrRefresh')}
         </button>
@@ -72,9 +93,9 @@ export function CalErrorPanel({ fields, visible }: { fields: SetupErrorField[]; 
           <div key={field.id} className={`cal-err-row${row && !row.ok ? ' has-error' : ''}`}>
             <span className="lbl">{field.label}</span>
             <code className={`hex${row?.ok ? ' ok' : ' err'}`}>{row?.hex ?? '—'}</code>
-            <span className="bits">
+            <span className={`bits${row?.ok ? ' ok' : ''}`}>
               {row?.ok
-                ? ''
+                ? translate(locale, 'setupErrRowOk')
                 : row?.bits.map((bit) => (
                     <span key={bit} className="bit-tag">
                       {bit}

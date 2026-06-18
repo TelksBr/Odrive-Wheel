@@ -5,6 +5,7 @@ import { translateGroupDescription, translateGroupTitle } from '../../i18n/bundl
 import { localizeField } from '../../i18n/fieldMeta';
 import { configGroups } from './fieldCatalog';
 import { ConfigFieldRow } from './ConfigFieldRow';
+import { isTorqueControlMode } from './fieldEditState';
 import { Card } from '../../shared/ui';
 
 export function ConfigPage({ filter, includeGroups }: { filter?: 'ffb' | 'odrive'; includeGroups?: string[] }) {
@@ -84,6 +85,13 @@ export function ConfigPage({ filter, includeGroups }: { filter?: 'ffb' | 'odrive
       </Card>
       {groups.map((group) => (
         <Card key={group.id} title={group.title} description={group.description}>
+          {group.id === 'controller' &&
+          isTorqueControlMode(state.fieldValues['axis0.controller.config.control_mode']) ? (
+            <div className="controller-torque-banner">
+              <strong>{translate(locale, 'ctrlWarnTorqueTitle')}</strong>
+              <p>{translate(locale, 'ctrlWarnTorqueDesc')}</p>
+            </div>
+          ) : null}
           <div className="field-list">
             {group.fields.map((field) => (
               <ConfigFieldRow key={field.path} field={field} />

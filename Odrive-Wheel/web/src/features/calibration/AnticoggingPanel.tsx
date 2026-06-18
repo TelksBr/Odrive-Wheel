@@ -6,7 +6,7 @@ import { serialService } from '../serial/SerialService';
 import { executeOpenFFBoard } from '../board/BoardProtocol';
 import { readAnticogProgress, writePath } from './calibrationPresets';
 
-export function AnticoggingPanel() {
+export function AnticoggingPanel({ embedded = false }: { embedded?: boolean }) {
   const { state, dispatch } = useAppState();
   const locale = state.locale;
   const [running, setRunning] = useState(false);
@@ -88,7 +88,7 @@ export function AnticoggingPanel() {
     }
     dispatch({ type: 'set-busy', busy: true });
     try {
-      await serialService.sendCommand('w axis0.requested_state 1', true, 2000);
+      await serialService.sendCommand('w axis0.requested_state 1', false, 2000);
       await new Promise<void>((r) => setTimeout(r, 300));
       await restoreTorqueMode();
       setRunning(false);
@@ -100,8 +100,8 @@ export function AnticoggingPanel() {
 
   const pct = ((progress.index / 3600) * 100).toFixed(1);
 
-  return (
-    <Card title={translate(locale, 'anticogTitle')} description={translate(locale, 'anticogDescription')}>
+  const body = (
+    <>
       <div className="toolbar">
         <button type="button" className="warn" disabled={!state.connected || state.busy || running} onClick={() => void start()}>
           {running ? translate(locale, 'anticogRunning') : translate(locale, 'anticogRun')}
@@ -118,6 +118,16 @@ export function AnticoggingPanel() {
           <div>{translate(locale, 'anticogValid', { valid: progress.valid ? 'True' : 'False' })}</div>
         </div>
       ) : null}
+    </>
+  );
+
+  if (embedded) {
+    return body;
+  }
+
+  return (
+    <Card title={translate(locale, 'anticogTitle')} description={translate(locale, 'anticogDescription')}>
+      {body}
     </Card>
   );
 }

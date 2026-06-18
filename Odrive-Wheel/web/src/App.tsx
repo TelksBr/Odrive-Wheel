@@ -5,11 +5,11 @@ import { translate } from './i18n/messages';
 import { serialService, type SerialEvent } from './features/serial/SerialService';
 import { formatSerialRxLine } from './features/serial/serialLogFormat';
 import { readField } from './features/board/BoardProtocol';
-import { unifiedSave, type SaveProgress } from './features/board/unifiedSave';
-import { initialFieldsForTab, refreshFieldsForTab } from './app/refreshPolicy';
+import { useBoardSave } from './features/board/useBoardSave';
+import { initialFieldsForTab } from './app/refreshPolicy';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { CalibrationPage } from './features/calibration/CalibrationPage';
 import { ConfigPage } from './features/config/ConfigPage';
-import { MotorCalibrationExtras } from './features/calibration/MotorCalibrationExtras';
 import { ConsolePage } from './features/console/ConsolePage';
 import { QuickStartPage } from './features/setup/QuickStartPage';
 import { TuneWorkspace } from './features/workspaces/TuneWorkspace';
@@ -26,20 +26,10 @@ import { AppLogo, AppIcon } from './shared/ui/AppIcon';
 import { SidebarSearch } from './features/navigation/SidebarSearch';
 import { FieldFocusEffect } from './features/navigation/FieldFocusEffect';
 
-const saveProgressKey: Record<SaveProgress, string> = {
-  writing_changes: 'saveWritingChanges',
-  disarming: 'saveDisarming',
-  persisting_ffb: 'savePersistingFfb',
-  persisting_odrive: 'savePersistingOdrive',
-  rebooting: 'saveRebooting',
-  reconnecting: 'saveReconnecting',
-  reading_back: 'saveReadingBack',
-};
-
 function AppShell() {
   const { state, dispatch } = useAppState();
   const [navQuery, setNavQuery] = useState('');
-  const [saveProgress, setSaveProgress] = useState<SaveProgress | null>(null);
+  const { saveAll, saveButtonLabel, saveBadge, saveBlocked } = useBoardSave();
   const dirtyKey = state.dirtyPaths.join('\0');
 
   useEffect(() => {
@@ -93,41 +83,6 @@ function AppShell() {
       cancelled = true;
     };
   }, [dispatch, state.autoReconnect, state.busy, state.connected, state.locale, state.serialSupported]);
-
-  useEffect(() => {
-    if (!state.connected || !state.autoRefresh || state.busy) {
-      return undefined;
-    }
-
-    let cancelled = false;
-    async function refreshVisibleFields() {
-      const fields = refreshFieldsForTab(state.activeTab, state.dirtyPaths);
-      if (fields.length === 0) {
-        return;
-      }
-      try {
-        for (const field of fields) {
-          if (cancelled) {
-            return;
-          }
-          const value = await readField(field);
-          dispatch({ type: 'set-field', path: field.path, value, dirty: false });
-        }
-        dispatch({ type: 'mark-refreshed' });
-      } catch (error) {
-        if (!cancelled) {
-          dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
-        }
-      }
-    }
-
-    void refreshVisibleFields();
-    const id = window.setInterval(() => void refreshVisibleFields(), state.refreshIntervalMs);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [dirtyKey, dispatch, state.activeTab, state.autoRefresh, state.busy, state.connected, state.refreshIntervalMs]);
 
   useEffect(() => {
     if (!state.connected || state.busy) {
@@ -192,63 +147,16 @@ function AppShell() {
     }
   }
 
-  async function saveAll() {
-    if (!state.connected) {
-      dispatch({ type: 'append-log', direction: 'error', message: translate(state.locale, 'saveSerialRequired') });
-      return;
-    }
-    if (state.busy) {
-      return;
-    }
-    dispatch({ type: 'set-busy', busy: true });
-    try {
-      const result = await unifiedSave({
-        dirtyPaths: state.dirtyPaths,
-        fieldValues: state.fieldValues,
-        onProgress: setSaveProgress,
-      });
-      if (result.reconnected && result.values) {
-        for (const [path, value] of Object.entries(result.values)) {
-          dispatch({ type: 'set-field', path, value, dirty: false });
-        }
-        dispatch({ type: 'clear-dirty' });
-        dispatch({ type: 'mark-refreshed' });
-        dispatch({
-          type: 'append-log',
-          direction: 'info',
-          message: translate(state.locale, 'toastSaveComplete'),
-        });
-      } else if (!result.reconnected) {
-        dispatch({ type: 'append-log', direction: 'error', message: translate(state.locale, 'saveReconnectFailed') });
-      }
-    } catch (error) {
-      dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
-    } finally {
-      setSaveProgress(null);
-      dispatch({ type: 'set-busy', busy: false });
-    }
-  }
-
-  function saveButtonLabel(): string {
-    if (!saveProgress) {
-      return translate(state.locale, 'save');
-    }
-    return `⏳ ${translate(state.locale, saveProgressKey[saveProgress])}`;
-  }
-
   function renderActiveTab() {
     switch (state.activeTab) {
       case 'dashboard':
         return <DashboardPage />;
       case 'setup':
         return <QuickStartPage />;
+      case 'calibration':
+        return <CalibrationPage />;
       case 'motor':
-        return (
-          <div className="page-stack">
-            <MotorCalibrationExtras />
-            <ConfigPage filter="odrive" />
-          </div>
-        );
+        return <ConfigPage filter="odrive" />;
       case 'tune':
         return <TuneWorkspace />;
       case 'ffb-test':
@@ -325,37 +233,15 @@ function AppShell() {
             <button
               type="button"
               className="topbar-save-btn ok"
-              disabled={!state.connected || state.busy}
+              disabled={!state.connected || state.busy || saveBlocked}
               onClick={() => void saveAll()}
               title={translate(state.locale, 'saveTitle')}
             >
               <AppIcon id="icon-save" size={14} />
-              {saveButtonLabel()}{state.dirtyPaths.length > 0 ? ` (${state.dirtyPaths.length})` : ''}
+              {saveButtonLabel()}{saveBadge}
             </button>
 
             <div className="topbar-divider" aria-hidden="true" />
-
-            {/* Auto-refresh group */}
-            <div className="topbar-group">
-              <label className="toggle-label">
-                <input
-                  type="checkbox"
-                  checked={state.autoRefresh}
-                  onChange={(event) => dispatch({ type: 'set-auto-refresh', autoRefresh: event.target.checked })}
-                />
-                {translate(state.locale, 'autoRefresh')}
-              </label>
-              <select
-                className="topbar-select"
-                value={state.refreshIntervalMs}
-                disabled={!state.autoRefresh}
-                onChange={(event) => dispatch({ type: 'set-refresh-interval', refreshIntervalMs: Number(event.target.value) })}
-              >
-                <option value={1000}>{translate(state.locale, 'refreshInterval1s')}</option>
-                <option value={2500}>{translate(state.locale, 'refreshInterval2_5s')}</option>
-                <option value={5000}>{translate(state.locale, 'refreshInterval5s')}</option>
-              </select>
-            </div>
 
             {/* Auto-reconnect */}
             <label className="toggle-label">

@@ -4,6 +4,7 @@ import { flatFields, type ConfigField } from '../features/config/fieldCatalog';
 const workspaceGroups: Partial<Record<TabId, string[]>> = {
   dashboard: ['system', 'live', 'psu', 'axis', 'inputs'],
   setup: ['psu', 'axis', 'motor', 'encoder', 'controller', 'ffb-wheel'],
+  calibration: ['psu', 'axis', 'motor', 'encoder', 'controller', 'live'],
   motor: ['psu', 'axis', 'motor', 'encoder', 'controller'],
   tune: ['ffb-wheel', 'ffb-effects', 'ffb-filters', 'system'],
   'ffb-test': ['system', 'live', 'ffb-wheel'],
@@ -17,6 +18,23 @@ const highSignalPaths = new Set([
   'axis0.current_state',
   'axis0.motor.is_calibrated',
   'axis0.encoder.is_ready',
+  'axis0.encoder.config.mode',
+  'axis0.encoder.config.cpr',
+  'axis0.encoder.config.use_index',
+  'axis0.encoder.config.abs_spi_cs_gpio_pin',
+  'axis0.encoder.config.pre_calibrated',
+  'axis0.encoder.config.phase_offset',
+  'axis0.encoder.config.phase_offset_float',
+  'axis0.motor.config.pre_calibrated',
+  'axis0.motor.config.phase_resistance',
+  'axis0.motor.config.phase_inductance',
+  'axis0.config.startup_motor_calibration',
+  'axis0.config.startup_encoder_offset_calibration',
+  'axis0.config.startup_encoder_index_search',
+  'axis0.config.startup_closed_loop_control',
+  'axis0.controller.config.enable_vel_limit',
+  'axis0.controller.config.enable_overspeed_error',
+  'axis0.controller.config.enable_torque_mode_vel_limit',
   'axis0.controller.input_torque',
   'sys.swver',
   'sys.hwtype',
@@ -48,28 +66,16 @@ const highSignalPaths = new Set([
 ]);
 
 export function refreshFieldsForTab(tab: TabId, dirtyPaths: string[]): ConfigField[] {
-  return fieldsForTab(tab, dirtyPaths)
-    .filter((field) => field.readonly || highSignalPaths.has(field.path))
-    .slice(0, 16);
+  const fields = fieldsForTab(tab, dirtyPaths).filter(
+    (field) => field.readonly || highSignalPaths.has(field.path),
+  );
+  const limit = tab === 'calibration' ? 32 : 16;
+  return fields.slice(0, limit);
 }
 
 export function initialFieldsForTab(tab: TabId, dirtyPaths: string[]): ConfigField[] {
   return fieldsForTab(tab, dirtyPaths);
 }
-
-const TAB_PRIORITY: TabId[] = [
-  'tune',
-  'motor',
-  'setup',
-  'inputs',
-  'observe',
-  'dashboard',
-  'ffb-test',
-  'maintain',
-  'commands',
-  'console',
-  'about',
-];
 
 export function tabsForGroup(groupId: string): TabId[] {
   const tabs: TabId[] = [];
@@ -81,13 +87,27 @@ export function tabsForGroup(groupId: string): TabId[] {
   return tabs;
 }
 
+/** Tabs where config fields are edited — excludes calibration (actions only) and setup (wizard). */
+const FIELD_EDIT_TAB_PRIORITY: TabId[] = [
+  'tune',
+  'motor',
+  'inputs',
+  'observe',
+  'dashboard',
+  'ffb-test',
+  'maintain',
+  'commands',
+  'console',
+  'about',
+];
+
 export function preferredTabForField(field: ConfigField): TabId {
   const groupId = field.groupId ?? 'system';
   if (field.readonly && groupId === 'live') {
     return 'observe';
   }
   const candidates = tabsForGroup(groupId);
-  for (const tab of TAB_PRIORITY) {
+  for (const tab of FIELD_EDIT_TAB_PRIORITY) {
     if (candidates.includes(tab)) {
       return tab;
     }

@@ -111,7 +111,7 @@ export const guidanceEn: Record<string, string> = {
 
   // System
   'sys.vbusdiv':
-    '⚠ Hardware parameter — only change if your board uses a non-standard VBUS voltage divider. Default 10 = 1/10 divider (10 kΩ / 100 kΩ typical). Wrong value: all voltage readings, brake ramp thresholds, and overvoltage protection will be calibrated incorrectly. Verify against board schematic.',
+    '⚠ Hardware parameter — only change if your board uses a non-standard VBUS divider. Odrive-Wheel / MKS XDrive Mini default is 19. Wrong value: all voltage readings, brake ramp thresholds, and overvoltage protection will be miscalibrated.',
 };
 
 export const guidancePt: Record<string, string> = {
@@ -227,5 +227,5 @@ export const guidancePt: Record<string, string> = {
 
   // Sistema
   'sys.vbusdiv':
-    '⚠ Parâmetro de hardware — altere só se a placa usar divisor de tensão VBUS não padrão. Padrão 10 = divisor 1/10 (10 kΩ / 100 kΩ típico). Valor errado: todas as leituras de tensão, limiares de rampa de freio e proteção de sobretensão ficam calibrados incorretamente. Confira no esquemático da placa.',
+    '⚠ Parâmetro de hardware — altere só se a placa usar divisor VBUS não padrão. Padrão Odrive-Wheel / MKS XDrive Mini: 19. Valor errado: leituras de tensão, rampa de freio e proteção de sobretensão ficam calibrados incorretamente.',
 };

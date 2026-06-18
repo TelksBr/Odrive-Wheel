@@ -16,11 +16,37 @@ export function EncoderToolsPanel() {
         <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--muted)' }}>
           {translate(locale, 'encoderIncrementalWarn')}
         </p>
+        <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600 }}>{translate(locale, 'encoderAs5047WorkflowTitle')}</p>
+        <ol className="cal-nvm-steps" style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--muted)' }}>
+          <li>{translate(locale, 'encoderAs5047Step1')}</li>
+          <li>{translate(locale, 'encoderAs5047Step2')}</li>
+          <li>{translate(locale, 'encoderAs5047Step3')}</li>
+        </ol>
+        <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--muted)' }}>
+          {translate(locale, 'encoderZeroPersistHint')}
+        </p>
         <div className="toolbar">
           <button
             type="button"
             disabled={!state.connected || state.busy}
-            onClick={() => void zeroWheel(dispatch)}
+            onClick={() => {
+              void (async () => {
+                dispatch({ type: 'set-busy', busy: true });
+                try {
+                  const ok = await zeroWheel(dispatch);
+                  dispatch({
+                    type: 'append-log',
+                    direction: ok ? 'info' : 'error',
+                    message: translate(
+                      locale,
+                      ok ? 'dashboardWheelCenteredSaved' : 'dashboardWheelCenteredEepromFail',
+                    ),
+                  });
+                } finally {
+                  dispatch({ type: 'set-busy', busy: false });
+                }
+              })();
+            }}
           >
             {translate(locale, 'encoderZeroWheel')}
           </button>
@@ -33,7 +59,7 @@ export function EncoderToolsPanel() {
                 dispatch({
                   type: 'append-log',
                   direction: 'info',
-                  message: translate(locale, 'encoderAs5047Preset'),
+                  message: translate(locale, 'calAs5047PresetStaged'),
                 });
               }
             }}

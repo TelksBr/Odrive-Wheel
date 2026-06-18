@@ -1,5 +1,6 @@
 import { flatFields, type ConfigField } from '../config/fieldCatalog';
-import { normalizeReply, readField, writeFieldNow } from './BoardProtocol';
+import { readField, writeFieldNow } from './BoardProtocol';
+import { persistFfbEeprom } from './fieldApply';
 import { serialService } from '../serial/SerialService';
 
 export type SaveProgress =
@@ -26,6 +27,7 @@ export class SaveSequenceError extends Error {
 export interface UnifiedSaveResult {
   outcome: SaveOutcome;
   reconnected: boolean;
+  ffbSaved: boolean;
   values?: Record<string, string>;
 }
 
@@ -56,12 +58,6 @@ function editableDirtyFields(dirtyPaths: string[]): ConfigField[] {
   return fields;
 }
 
-function assertFfbSaveOk(raw: string): void {
-  const normalized = normalizeReply(raw).trim().toUpperCase();
-  if (normalized !== 'OK' && !normalized.endsWith('OK')) {
-    throw new SaveSequenceError(`sys.save! failed: ${normalizeReply(raw) || raw}`, 'ffb_failed');
-  }
-}
 
 /** Read all catalog fields — used after reconnect to hydrate app state. */
 export async function readAllFields(): Promise<Record<string, string>> {
@@ -73,10 +69,10 @@ export async function readAllFields(): Promise<Record<string, string>> {
 }
 
 /**
- * Unified save sequence (matches odrive-wheel.html):
- * 1. Write dirty fields to device RAM (skipped when none pending)
- * 2. Disarm motor (IDLE)
- * 3. Persist FFB EEPROM (sys.save!) — verified
+ * Unified save sequence (matches odrive-wheel.html, with safer ordering):
+ * 1. Disarm motor (IDLE) — before encoder/motor config writes
+ * 2. Write dirty fields to device RAM (skipped when none pending)
+ * 3. Persist FFB EEPROM (sys.save!) — warn on failure, continue
  * 4. ODrive NVM (ss + reboot) — always
  * 5. Auto-reconnect + readAll
  */
@@ -90,8 +86,13 @@ export async function unifiedSave({
   onProgress?: (step: SaveProgress) => void;
 }): Promise<UnifiedSaveResult> {
   const pending = editableDirtyFields(dirtyPaths);
+  let ffbSaved = false;
 
   await serialService.runAtomic(async () => {
+    onProgress?.('disarming');
+    await serialService.commandNow('w axis0.requested_state 1', false);
+    await sleep(300);
+
     if (pending.length > 0) {
       onProgress?.('writing_changes');
       for (const field of pending) {
@@ -104,16 +105,13 @@ export async function unifiedSave({
       }
     }
 
-    onProgress?.('disarming');
-    await serialService.commandNow('w axis0.requested_state 1', true, 2000);
-    await sleep(300);
-
     onProgress?.('persisting_ffb');
-    const ffbReply = await serialService.commandNow('sys.save!', true, 8000);
-    assertFfbSaveOk(ffbReply);
+    ffbSaved = await persistFfbEeprom({ now: true });
 
     onProgress?.('persisting_odrive');
     await serialService.commandNow('ss', false);
+    // Let the UART flush ss before closing the port — otherwise the board never reboots.
+    await sleep(250);
 
     onProgress?.('rebooting');
     await serialService.disconnect().catch(() => undefined);
@@ -124,11 +122,11 @@ export async function unifiedSave({
   onProgress?.('reconnecting');
   const reconnected = await tryReconnect();
   if (!reconnected) {
-    return { outcome: 'full', reconnected: false, values: undefined };
+    return { outcome: 'full', reconnected: false, ffbSaved, values: undefined };
   }
 
   await sleep(500);
   onProgress?.('reading_back');
   const values = await readAllFields();
-  return { outcome: 'full', reconnected: true, values };
+  return { outcome: 'full', reconnected: true, ffbSaved, values };
 }

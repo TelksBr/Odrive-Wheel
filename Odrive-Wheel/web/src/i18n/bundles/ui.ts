@@ -26,7 +26,7 @@ export const uiPt = {
   tuneTorqueCardDescription: 'Verifica se axis.maxtorque está dentro da capacidade real do motor. Baseado em current_lim × torque_constant (e torque_lim se ativo).',
   observeEyebrow: 'Observar',
   observeTitle: 'Telemetria ao vivo',
-  observeDescription: 'Histórico configurável, exportação CSV e overlay iRacing em tempo real.',
+  observeDescription: 'Gráficos, telemetria CSV/overlay e monitor de debug completo (valores do odrive-wheel.html).',
   observeControlsTitle: 'Controles',
   observeControlsDescription: 'Polling, janela de tempo, pausa e exportação',
   observePolling: 'Polling',
@@ -81,7 +81,8 @@ export const uiPt = {
   wheelQualityHigh: 'Alta',
   wheelQualityUltra: 'Ultra',
   wheelLiveBadge: '⬤ live',
-  centerWheelTitle: 'Captura a posição atual como centro lógico do FFB (axis.zeroenc!)',
+  centerWheelTitle:
+    'Com volante no centro mecânico: captura centro FFB (axis.zeroenc!) e grava na EEPROM (sys.save!)',
   apiWebSerial: 'Web Serial',
   apiWebHid: 'WebHID',
   apiWebUsb: 'WebUSB',
@@ -181,6 +182,9 @@ export const uiPt = {
   maintainSystemDescription: 'Operações de manutenção que não estão ligadas a um formulário específico.',
   observeKpiMode: 'Modo',
   dashboardWheelCenteredLog: 'Volante centralizado (axis.zeroenc!)',
+  dashboardWheelCenteredSaved: 'Volante centralizado e zeroOffset gravado na EEPROM FFB (sys.save!)',
+  dashboardWheelCenteredEepromFail:
+    'Centro capturado (axis.zeroenc!) mas sys.save! falhou — zeroOffset só em RAM até salvar',
   overlayPipError: 'Document Picture-in-Picture não está disponível neste navegador.',
   overlayConnectFirst: 'Conecte a placa antes de abrir o overlay.',
   seriesTorque: 'Torque',
@@ -199,7 +203,7 @@ export const uiPt = {
   logProfileSaved: 'Perfil salvo',
   logGpioApplied: 'GPIO {n} aplicado',
   saveTitle:
-    'Salvar: grava alterações pendentes em RAM, desarma motor, persiste FFB (sys.save!), grava ODrive NVM (ss) e reinicia a placa. Reconecta e re-lê os valores automaticamente.',
+    'Salvar na barra: grava dirty em RAM, desarma motor, persiste FFB (sys.save!), grava ODrive NVM (ss) e reinicia. Use Aplicar nos campos para FFB→EEPROM ou ODrive→RAM sem reboot.',
   saveWritingChanges: 'Gravando alterações...',
   saveDisarming: 'Desarmando motor...',
   savePersistingFfb: 'Salvando FFB (EEPROM)...',
@@ -209,7 +213,13 @@ export const uiPt = {
   saveReadingBack: 'Re-lendo valores...',
   saveSerialRequired: 'Conecte a serial na topbar antes de salvar.',
   toastSaveComplete: 'Save completo + re-leitura OK',
+  saveFfbWarn: 'ODrive NVM gravada e placa reiniciada, mas sys.save! (FFB EEPROM) falhou — verifique sys.savestat?',
   saveReconnectFailed: 'Auto-reconnect falhou após reboot — reconecte manualmente.',
+  applyFieldHintFfb: 'Grava no device e persiste na EEPROM FFB (sys.save!) — sem reboot',
+  applyFieldHintOdrive: 'Grava na RAM do ODrive — use Salvar na barra para NVM + reboot',
+  applyLogFfbEepromOk: 'EEPROM FFB gravada (sys.save!)',
+  applyLogFfbEepromFail: 'EEPROM FFB falhou (sys.save!)',
+  applyLogOdriveRam: 'RAM ODrive — NVM pendente (use Salvar na barra)',
 };
 
 export const uiEn = {
@@ -239,7 +249,7 @@ export const uiEn = {
   tuneTorqueCardDescription: "Verify axis.maxtorque is within the motor's real capacity. Based on current_lim × torque_constant (and torque_lim if active).",
   observeEyebrow: 'Observe',
   observeTitle: 'Live telemetry',
-  observeDescription: 'Configurable history, CSV export, and real-time iRacing overlay.',
+  observeDescription: 'Charts, CSV/overlay telemetry and full debug monitor (odrive-wheel.html values).',
   observeControlsTitle: 'Controls',
   observeControlsDescription: 'Polling, time window, pause, and export',
   observePolling: 'Polling',
@@ -294,7 +304,8 @@ export const uiEn = {
   wheelQualityHigh: 'High',
   wheelQualityUltra: 'Ultra',
   wheelLiveBadge: '⬤ live',
-  centerWheelTitle: 'Capture current position as FFB logical center (axis.zeroenc!)',
+  centerWheelTitle:
+    'With wheel at mechanical center: capture FFB center (axis.zeroenc!) and save to EEPROM (sys.save!)',
   apiWebSerial: 'Web Serial',
   apiWebHid: 'WebHID',
   apiWebUsb: 'WebUSB',
@@ -394,6 +405,9 @@ export const uiEn = {
   maintainSystemDescription: 'Maintenance operations that are not tied to a specific form.',
   observeKpiMode: 'Mode',
   dashboardWheelCenteredLog: 'Wheel centered (axis.zeroenc!)',
+  dashboardWheelCenteredSaved: 'Wheel centered and zeroOffset saved to FFB EEPROM (sys.save!)',
+  dashboardWheelCenteredEepromFail:
+    'Center captured (axis.zeroenc!) but sys.save! failed — zeroOffset RAM-only until you save',
   overlayPipError: 'Document Picture-in-Picture is not available in this browser.',
   overlayConnectFirst: 'Connect the board before opening the overlay.',
   seriesTorque: 'Torque',
@@ -412,7 +426,7 @@ export const uiEn = {
   logProfileSaved: 'Profile saved',
   logGpioApplied: 'GPIO {n} applied',
   saveTitle:
-    'Save: write pending changes to RAM, disarm motor, persist FFB (sys.save!), save ODrive NVM (ss), and reboot the board. Reconnects and re-reads values automatically.',
+    'Toolbar Save: flush dirty to RAM, disarm motor, persist FFB (sys.save!), save ODrive NVM (ss), and reboot. Use Apply on fields for FFB→EEPROM or ODrive→RAM without reboot.',
   saveWritingChanges: 'Writing changes...',
   saveDisarming: 'Disarming motor...',
   savePersistingFfb: 'Saving FFB (EEPROM)...',
@@ -422,5 +436,11 @@ export const uiEn = {
   saveReadingBack: 'Reading back...',
   saveSerialRequired: 'Connect serial in the topbar before saving.',
   toastSaveComplete: 'Save complete + re-read OK',
+  saveFfbWarn: 'ODrive NVM saved and board rebooted, but sys.save! (FFB EEPROM) failed — check sys.savestat?',
   saveReconnectFailed: 'Auto-reconnect failed after reboot — reconnect manually.',
+  applyFieldHintFfb: 'Write to device and persist FFB EEPROM (sys.save!) — no reboot',
+  applyFieldHintOdrive: 'Write to ODrive RAM — use toolbar Save for NVM + reboot',
+  applyLogFfbEepromOk: 'FFB EEPROM saved (sys.save!)',
+  applyLogFfbEepromFail: 'FFB EEPROM save failed (sys.save!)',
+  applyLogOdriveRam: 'ODrive RAM — NVM pending (use toolbar Save)',
 };

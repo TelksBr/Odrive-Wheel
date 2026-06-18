@@ -33,12 +33,17 @@ export async function readFieldNow(field: ConfigField, log = false): Promise<str
 }
 
 export async function writeField(field: ConfigField, value: string): Promise<string> {
-  return serialService.sendCommand(writeCommandFor(field, value), true);
+  const command = writeCommandFor(field, value);
+  // ODrive ASCII writes are silent on success — only errors get a reply (HTML writeProp).
+  const expectReply = field.protocol !== 'odrive';
+  return serialService.sendCommand(command, expectReply);
 }
 
 /** Same as writeField but for use inside serialService.runAtomic(). */
 export async function writeFieldNow(field: ConfigField, value: string): Promise<string> {
-  return serialService.commandNow(writeCommandFor(field, value), true);
+  const command = writeCommandFor(field, value);
+  const expectReply = field.protocol !== 'odrive';
+  return serialService.commandNow(command, expectReply);
 }
 
 /** Write then read back the applied value (matches HTML writeOne). */
@@ -58,8 +63,8 @@ export async function executeOpenFFBoard(command: string): Promise<string> {
 }
 
 export async function saveBoardConfiguration(): Promise<void> {
-  await serialService.sendCommand('w axis0.requested_state 1', true, 2000);
-  await serialService.sendCommand('sys.save!', true, 5000);
+  await serialService.sendCommand('w axis0.requested_state 1', false);
+  await serialService.sendCommand('sys.save!', true, 8000);
   await serialService.sendCommand('ss', false);
 }
 

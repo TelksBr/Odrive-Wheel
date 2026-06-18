@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useAppState } from '../../app/AppState';
-import { readField, applyField } from '../board/BoardProtocol';
+import { readField } from '../board/BoardProtocol';
+import { applyConfigFields } from '../board/fieldApply';
 import { flatFields, type ConfigField } from '../config/fieldCatalog';
 import { isButtonPressed } from '../inputs/analogAxisMath';
 import {
@@ -137,11 +138,24 @@ export function InputsWorkspace() {
   async function applyChannel(channel: InputChannel) {
     dispatch({ type: 'set-busy', busy: true });
     try {
-      for (const field of writableFields(channel)) {
-        const applied = await applyField(field, state.fieldValues[field.path] ?? '');
-        dispatch({ type: 'set-field', path: field.path, value: applied, dirty: false });
+      const entries = writableFields(channel).map((field) => ({
+        field,
+        value: state.fieldValues[field.path] ?? '',
+      }));
+      const result = await applyConfigFields(entries);
+      for (const [path, applied] of Object.entries(result.applied)) {
+        dispatch({ type: 'set-field', path, value: applied, dirty: false });
       }
-      dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'logGpioApplied', { n: channel.gpio }) });
+      const suffix = result.persistedFfb
+        ? translate(state.locale, 'applyLogFfbEepromOk')
+        : result.hasFfbFields
+          ? translate(state.locale, 'applyLogFfbEepromFail')
+          : translate(state.locale, 'applyLogOdriveRam');
+      dispatch({
+        type: 'append-log',
+        direction: 'rx',
+        message: `${translate(state.locale, 'logGpioApplied', { n: channel.gpio })} — ${suffix}`,
+      });
     } catch (error) {
       dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
     } finally {

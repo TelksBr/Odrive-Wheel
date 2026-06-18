@@ -7,6 +7,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import * as THREE from 'three';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
+import { usePageVisible } from '../../shared/usePageVisible';
 import { configureWheelMaterials } from './wheelMaterials';
 import {
   loadWheelRenderQuality,
@@ -19,10 +20,6 @@ import {
 
 const WHEEL_MODEL = '/models/wheel.fbx';
 const WHEEL_TEXTURES = '/models/wheel/textures/';
-
-useLoader.preload(FBXLoader, WHEEL_MODEL, (loader) => {
-  loader.setResourcePath(WHEEL_TEXTURES);
-});
 
 interface WheelViewerProps {
   positionDegRef: React.MutableRefObject<number | null>;
@@ -67,6 +64,7 @@ function WheelRendererSetup({ settings }: { settings: WheelRenderSettings }) {
   useEffect(() => {
     const dpr = Math.min(window.devicePixelRatio, settings.maxDpr);
     gl.setPixelRatio(dpr);
+    gl.setSize(gl.domElement.clientWidth, gl.domElement.clientHeight, false);
     gl.toneMappingExposure = settings.toneMappingExposure;
   }, [gl, settings]);
 
@@ -94,6 +92,7 @@ function WheelMesh({
       if (child.geometry instanceof THREE.BufferGeometry) {
         const merged = mergeVertices(child.geometry);
         merged.computeVertexNormals();
+        child.geometry.dispose();
         child.geometry = merged;
       }
     });
@@ -200,8 +199,10 @@ export const WheelViewer = memo(function WheelViewer({
   height = 340,
 }: WheelViewerProps) {
   const { state } = useAppState();
+  const pageVisible = usePageVisible();
   const [quality, setQuality] = useState<WheelRenderQuality>(loadWheelRenderQuality);
   const settings = useMemo(() => wheelRenderSettings(quality), [quality]);
+  const renderActive = pageVisible && connected;
 
   const onQualityChange = useCallback((next: WheelRenderQuality) => {
     setQuality(next);
@@ -233,8 +234,7 @@ export const WheelViewer = memo(function WheelViewer({
       </div>
 
       <Canvas
-        key={`${quality}-${settings.antialias}`}
-        frameloop="always"
+        frameloop={renderActive ? 'always' : 'never'}
         dpr={[1, settings.maxDpr]}
         gl={{
           antialias: settings.antialias,

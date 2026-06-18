@@ -94,3 +94,27 @@ export async function readMotorCalResults(): Promise<{ resistance: string | null
     return { resistance: null, inductance: null };
   }
 }
+
+export async function readEncoderCalResults(): Promise<{
+  phaseOffset: string | null;
+  phaseOffsetFloat: string | null;
+  isReady: string | null;
+}> {
+  try {
+    const [offsetRaw, offsetFloatRaw, readyRaw] = await Promise.all([
+      serialService.sendCommand('r axis0.encoder.config.phase_offset', true, 2500, false),
+      serialService.sendCommand('r axis0.encoder.config.phase_offset_float', true, 2500, false),
+      serialService.sendCommand('r axis0.encoder.is_ready', true, 2500, false),
+    ]);
+    const offset = parseIntField(offsetRaw);
+    const offsetFloat = parseFloat(offsetFloatRaw.trim().split(/\s+/)[0]);
+    const ready = readyRaw.trim().toLowerCase();
+    return {
+      phaseOffset: Number.isFinite(offset) ? String(offset) : null,
+      phaseOffsetFloat: Number.isFinite(offsetFloat) ? offsetFloat.toFixed(6) : null,
+      isReady: ready === 'true' || ready === '1' ? 'true' : ready === 'false' || ready === '0' ? 'false' : null,
+    };
+  } catch {
+    return { phaseOffset: null, phaseOffsetFloat: null, isReady: null };
+  }
+}

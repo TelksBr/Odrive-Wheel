@@ -97,6 +97,8 @@ export function QuickStartPage() {
   const [ffbValues, setFfbValues] = useState(() => initialFormValues(FFB_SPECS));
   const [motorCalDone, setMotorCalDone] = useState(false);
   const [encCalDone, setEncCalDone] = useState(false);
+  const [motorErrorRefreshKey, setMotorErrorRefreshKey] = useState(0);
+  const [encErrorRefreshKey, setEncErrorRefreshKey] = useState(0);
   const [motorResults, setMotorResults] = useState<{ resistance: string | null; inductance: string | null } | null>(
     null,
   );
@@ -178,16 +180,18 @@ export function QuickStartPage() {
 
   async function runMotorCal() {
     dispatch({ type: 'set-busy', busy: true });
-    setMotorCalDone(true);
     try {
       dispatch({ type: 'append-log', direction: 'info', message: translate(locale, 'setupToastStateRunning') });
       const result = await runAxisState(4, 30000);
       if (result.ok) {
         setMotorResults(await readMotorCalResults());
         dispatch({ type: 'append-log', direction: 'info', message: translate(locale, 'setupToastStateDone') });
+        dispatch({ type: 'set-nvm-pending', pending: true });
       } else {
         dispatch({ type: 'append-log', direction: 'error', message: translate(locale, 'setupToastStateFail') });
       }
+      setMotorCalDone(true);
+      setMotorErrorRefreshKey((key) => key + 1);
     } finally {
       dispatch({ type: 'set-busy', busy: false });
     }
@@ -195,7 +199,6 @@ export function QuickStartPage() {
 
   async function runEncoderCal() {
     dispatch({ type: 'set-busy', busy: true });
-    setEncCalDone(true);
     try {
       dispatch({ type: 'append-log', direction: 'info', message: translate(locale, 'setupToastStateRunning') });
       const result = await runAxisState(7, 60000);
@@ -204,6 +207,11 @@ export function QuickStartPage() {
         direction: result.ok ? 'info' : 'error',
         message: translate(locale, result.ok ? 'setupToastStateDone' : 'setupToastStateFail'),
       });
+      if (result.ok) {
+        dispatch({ type: 'set-nvm-pending', pending: true });
+      }
+      setEncCalDone(true);
+      setEncErrorRefreshKey((key) => key + 1);
     } finally {
       dispatch({ type: 'set-busy', busy: false });
     }
@@ -344,7 +352,7 @@ export function QuickStartPage() {
             <button type="button" className="ok" disabled={!state.connected || state.busy} onClick={() => void applySpecs(ENC_SPECS, encValues)}>
               {translate(locale, 'setupStep6Apply')}
             </button>
-            <button type="button" onClick={() => goTab('motor')}>
+            <button type="button" onClick={() => goTab('calibration')}>
               {translate(locale, 'setupStep6Open')}
             </button>
           </>
@@ -362,9 +370,14 @@ export function QuickStartPage() {
         titleKey="setupStep7Title"
         descKey="setupStep7Desc"
         actions={
-          <button type="button" className="warn" disabled={!state.connected || state.busy} onClick={() => void runMotorCal()}>
-            {translate(locale, 'setupStep7Action')}
-          </button>
+          <>
+            <button type="button" className="warn" disabled={!state.connected || state.busy} onClick={() => void runMotorCal()}>
+              {translate(locale, 'setupStep7Action')}
+            </button>
+            <button type="button" onClick={() => goTab('calibration')}>
+              {translate(locale, 'setupStep7Open')}
+            </button>
+          </>
         }
       >
         {motorResults ? (
@@ -380,7 +393,7 @@ export function QuickStartPage() {
             </div>
           </div>
         ) : null}
-        <CalErrorPanel fields={motorCalErrorFields} visible={motorCalDone} />
+        <CalErrorPanel fields={motorCalErrorFields} visible={motorCalDone} refreshKey={motorErrorRefreshKey} />
       </SetupStepCard>
 
       <SetupStepCard
@@ -388,12 +401,17 @@ export function QuickStartPage() {
         titleKey="setupStep8Title"
         descKey="setupStep8Desc"
         actions={
-          <button type="button" className="warn" disabled={!state.connected || state.busy} onClick={() => void runEncoderCal()}>
-            {translate(locale, 'setupStep8Action')}
-          </button>
+          <>
+            <button type="button" className="warn" disabled={!state.connected || state.busy} onClick={() => void runEncoderCal()}>
+              {translate(locale, 'setupStep8Action')}
+            </button>
+            <button type="button" onClick={() => goTab('calibration')}>
+              {translate(locale, 'setupStep8Open')}
+            </button>
+          </>
         }
       >
-        <CalErrorPanel fields={encoderCalErrorFields} visible={encCalDone} />
+        <CalErrorPanel fields={encoderCalErrorFields} visible={encCalDone} refreshKey={encErrorRefreshKey} />
       </SetupStepCard>
 
       <SetupStepCard
@@ -406,18 +424,26 @@ export function QuickStartPage() {
               type="button"
               className="ok"
               disabled={!state.connected || state.busy}
-              onClick={() => void markPrecalibrated(dispatch).then((r) =>
-                dispatch({
-                  type: 'append-log',
-                  direction: r.fail === 0 ? 'info' : 'error',
-                  message: translate(locale, 'setupToastWritten', { ok: r.ok, fail: r.fail }),
-                }),
-              )}
+              onClick={() =>
+                void markPrecalibrated(dispatch, state.fieldValues).then((r) => {
+                  dispatch({
+                    type: 'append-log',
+                    direction: r.fail === 0 ? 'info' : 'error',
+                    message: translate(locale, 'setupToastWritten', { ok: r.ok, fail: r.fail }),
+                  });
+                  if (r.fail === 0) {
+                    dispatch({ type: 'set-nvm-pending', pending: true });
+                  }
+                })
+              }
             >
               {translate(locale, 'setupStep9Apply')}
             </button>
             <button type="button" disabled={!state.connected || state.busy} onClick={() => void triggerSave()}>
               {translate(locale, 'setupStep9Save')}
+            </button>
+            <button type="button" onClick={() => goTab('calibration')}>
+              {translate(locale, 'setupStep9Open')}
             </button>
           </>
         }
