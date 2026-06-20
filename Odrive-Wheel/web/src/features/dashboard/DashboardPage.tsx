@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
-import { Pill, SectionHeader } from '../../shared/ui';
+import { SectionHeader } from '../../shared/ui';
 import { QuickActions } from '../board/QuickActions';
 import { zeroWheel } from '../calibration/calibrationPresets';
 import { useDashboardLivePoll } from './useDashboardLivePoll';
@@ -9,7 +9,12 @@ import { DashboardLiveMetrics } from './DashboardLiveMetrics';
 import { DashboardAnalogAxes } from './DashboardAnalogAxes';
 
 // Lazy-load the heavy Three.js bundle into a separate chunk
-const WheelViewer = lazy(() => import('./WheelViewer').then((m) => ({ default: m.WheelViewer })));
+const WheelViewer = lazy(() =>
+  import('./WheelViewer').then((m) => {
+    m.preloadWheelModel();
+    return { default: m.WheelViewer };
+  }),
+);
 
 export function DashboardPage() {
   const { state, dispatch } = useAppState();
@@ -51,18 +56,13 @@ export function DashboardPage() {
         <div className="wheel-panel">
           <Suspense
             fallback={
-              <div
-                className="wheel-viewer"
-                style={{
-                  height: 340,
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: 'var(--muted-2)',
-                  fontSize: 12,
-                  fontFamily: 'var(--mono)',
-                }}
-              >
-                {translate(state.locale, 'wheelModelLoading')}
+              <div className="wheel-viewer wheel-viewer--loading-shell" style={{ height: 340 }}>
+                <div className="wheel-viewer-loading" aria-busy="true">
+                  <div className="wheel-viewer-spinner" />
+                  <span className="wheel-viewer-loading-label">
+                    {translate(state.locale, 'wheelModelLoading')}
+                  </span>
+                </div>
               </div>
             }
           >
@@ -88,18 +88,6 @@ export function DashboardPage() {
               >
                 ⊙ {translate(state.locale, 'centerWheel')}
               </button>
-
-              <div className="wheel-api-pills">
-                <Pill tone={state.serialSupported ? 'ok' : 'error'}>
-                  {translate(state.locale, 'apiWebSerial')} {state.serialSupported ? '✓' : '✗'}
-                </Pill>
-                <Pill tone={state.hidSupported ? 'ok' : 'neutral'}>
-                  {translate(state.locale, 'apiWebHid')} {state.hidSupported ? '✓' : '✗'}
-                </Pill>
-                <Pill tone={state.usbSupported ? 'ok' : 'neutral'}>
-                  {translate(state.locale, 'apiWebUsb')} {state.usbSupported ? '✓' : '✗'}
-                </Pill>
-              </div>
             </div>
           </div>
         </div>
@@ -131,7 +119,7 @@ export function DashboardPage() {
           {/* Live metrics */}
           <div className="dashboard-section">
             <span className="eyebrow">{translate(state.locale, 'dashboardLiveMetrics')}</span>
-            <DashboardLiveMetrics connected={state.connected} />
+            <DashboardLiveMetrics connected={state.connected} metrics={live.metrics} />
           </div>
 
           {/* Quick actions */}

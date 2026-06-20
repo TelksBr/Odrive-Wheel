@@ -1,4 +1,4 @@
-/** ODrive error bitmask dictionaries, ported from tools/odrive-wheel.html */
+import { translate, type Locale } from '../../i18n/messages';
 
 type BitMap = Record<number, string>;
 
@@ -127,15 +127,27 @@ export function decodeErr(raw: string, map: BitMap): DecodedError {
 
 export interface ErrorEntry {
   id: string;
-  label: string;
   command: string;
   map: BitMap;
 }
 
+const ERROR_REGISTER_LABEL_KEYS: Record<string, string> = {
+  odrv: 'liveErrorRegOdrv',
+  axis: 'liveErrorRegAxis',
+  motor: 'liveErrorRegMotor',
+  enc: 'liveErrorRegEnc',
+  ctrl: 'liveErrorRegCtrl',
+};
+
+export function errorRegisterLabel(locale: Locale, id: string): string {
+  const key = ERROR_REGISTER_LABEL_KEYS[id];
+  return key ? translate(locale, key) : id;
+}
+
 export const ERROR_REGISTERS: ErrorEntry[] = [
-  { id: 'odrv',  label: 'ODrive system',      command: 'r error',                   map: ERR_BITS_ODRIVE  },
-  { id: 'axis',  label: 'Axis 0',             command: 'r axis0.error',             map: ERR_BITS_AXIS    },
-  { id: 'motor', label: 'Motor',              command: 'r axis0.motor.error',       map: ERR_BITS_MOTOR   },
-  { id: 'enc',   label: 'Encoder',            command: 'r axis0.encoder.error',     map: ERR_BITS_ENCODER },
-  { id: 'ctrl',  label: 'Controller',         command: 'r axis0.controller.error',  map: ERR_BITS_CTRL    },
+  { id: 'odrv', command: 'r error', map: ERR_BITS_ODRIVE },
+  { id: 'axis', command: 'r axis0.error', map: ERR_BITS_AXIS },
+  { id: 'motor', command: 'r axis0.motor.error', map: ERR_BITS_MOTOR },
+  { id: 'enc', command: 'r axis0.encoder.error', map: ERR_BITS_ENCODER },
+  { id: 'ctrl', command: 'r axis0.controller.error', map: ERR_BITS_CTRL },
 ];

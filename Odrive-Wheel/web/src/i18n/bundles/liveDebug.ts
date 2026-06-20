@@ -65,6 +65,11 @@ export const liveDebugPt = {
   liveNoErrors: 'Sem erros',
   liveErrorOk: 'OK',
   liveErrorActive: 'ERRO',
+  liveErrorRegOdrv: 'Sistema ODrive',
+  liveErrorRegAxis: 'Eixo 0',
+  liveErrorRegMotor: 'Motor',
+  liveErrorRegEnc: 'Encoder',
+  liveErrorRegCtrl: 'Controlador',
   liveTimeoutBit: '(timeout)',
   liveEmptyValue: '—',
 };
@@ -136,6 +141,11 @@ export const liveDebugEn = {
   liveNoErrors: 'No errors',
   liveErrorOk: 'OK',
   liveErrorActive: 'ERROR',
+  liveErrorRegOdrv: 'ODrive system',
+  liveErrorRegAxis: 'Axis 0',
+  liveErrorRegMotor: 'Motor',
+  liveErrorRegEnc: 'Encoder',
+  liveErrorRegCtrl: 'Controller',
   liveTimeoutBit: '(timeout)',
   liveEmptyValue: '—',
 };

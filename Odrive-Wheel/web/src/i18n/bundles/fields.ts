@@ -1,3 +1,5 @@
+import { flatFields } from '../../features/config/fieldCatalog';
+
 export const fieldsPt: Record<string, string> = {
   // ── PSU / Brake ──────────────────────────────────────────────────────────
   'field.vbus_voltage.label': 'Tensão VBUS',
@@ -280,6 +282,80 @@ export const fieldsPt: Record<string, string> = {
   'field.sys.heap.desc': 'Heap FreeRTOS restante. Valor abaixo de ~4 kB pode causar instabilidade.',
   'field.sys.vbusdiv.label': 'Divisor VBUS',
   'field.sys.vbusdiv.desc': '⚠ Parâmetro de hardware. Razão do divisor de tensão ADC. Valor errado = leituras VBUS incorretas e proteções quebradas. Altere só se a placa usar resistores não padrão.',
+
+  // ── Campos em falta (complemento PT) ─────────────────────────────────────
+  'field.config.max_regen_current.label': 'Corrente máx. de regeneração',
+  'field.config.max_regen_current.desc': 'Corrente máxima de regeneração no barramento DC. Use 0 com fonte sem regeneração.',
+  'field.axis0.config.startup_motor_calibration.label': 'Calibração motor no boot',
+  'field.axis0.config.startup_motor_calibration.desc': 'Executa calibração R/L no boot. Desative após calibrar e salvar — use pre_calibrated.',
+  'field.axis0.config.startup_motor_calibration.opt.true': 'Sim',
+  'field.axis0.config.startup_motor_calibration.opt.false': 'Não',
+  'field.axis0.config.startup_encoder_offset_calibration.label': 'Calibração encoder no boot',
+  'field.axis0.config.startup_encoder_offset_calibration.desc': 'Executa calibração de offset do encoder no boot. Desative após calibrar e salvar.',
+  'field.axis0.config.startup_encoder_offset_calibration.opt.true': 'Sim',
+  'field.axis0.config.startup_encoder_offset_calibration.opt.false': 'Não',
+  'field.axis0.config.startup_encoder_index_search.label': 'Busca de índice no boot',
+  'field.axis0.config.startup_encoder_index_search.desc': 'Procura índice Z no boot. Só para encoders incrementais com índice ligado.',
+  'field.axis0.config.startup_encoder_index_search.opt.true': 'Sim',
+  'field.axis0.config.startup_encoder_index_search.opt.false': 'Não',
+  'field.axis0.motor.config.requested_current_range.label': 'Faixa de corrente solicitada',
+  'field.axis0.motor.config.requested_current_range.desc': 'Escala de corrente usada pelo controlador. Normalmente igual a current_lim.',
+  'field.axis0.motor.config.phase_resistance.label': 'Resistência de fase',
+  'field.axis0.motor.config.phase_resistance.desc': 'Resistência de fase medida na calibração do motor (Ω).',
+  'field.axis0.motor.config.phase_inductance.label': 'Indutância de fase',
+  'field.axis0.motor.config.phase_inductance.desc': 'Indutância de fase medida na calibração do motor (H).',
+  'field.axis0.encoder.config.direction.label': 'Direção',
+  'field.axis0.encoder.config.direction.desc': 'Direção da contagem do encoder: 1 = normal, −1 = invertido.',
+  'field.axis0.encoder.config.abs_spi_cs_gpio_pin.label': 'Pino CS SPI ABS',
+  'field.axis0.encoder.config.abs_spi_cs_gpio_pin.desc': 'GPIO chip-select para encoder absoluto SPI.',
+  'field.axis0.encoder.config.phase_offset.label': 'Offset de fase',
+  'field.axis0.encoder.config.phase_offset.desc': 'Offset elétrico inteiro da calibração do encoder. Somente leitura — NVM via Salvar.',
+  'field.axis0.encoder.config.phase_offset_float.label': 'Offset de fase (float)',
+  'field.axis0.encoder.config.phase_offset_float.desc': 'Offset elétrico fino (rad) da calibração. Somente leitura — NVM via Salvar.',
+  'field.axis0.controller.config.pos_gain.label': 'Ganho de posição',
+  'field.axis0.controller.config.pos_gain.desc': 'Ganho proporcional PID de posição. Ignorado em modo TORQUE.',
+  'field.axis0.controller.config.vel_gain.label': 'Ganho de velocidade',
+  'field.axis0.controller.config.vel_gain.desc': 'Ganho proporcional PID de velocidade. Ignorado em modo TORQUE.',
+  'field.axis0.controller.config.vel_integrator_gain.label': 'Ganho integrador de velocidade',
+  'field.axis0.controller.config.vel_integrator_gain.desc': 'Ganho integrador de velocidade. Ignorado em modo TORQUE.',
+  'field.axis0.controller.config.inertia.label': 'Inércia',
+  'field.axis0.controller.config.inertia.desc': 'Feed-forward de inércia da carga (kg·m²). Ignorado em modo TORQUE.',
+  'field.axis0.controller.config.anticogging.anticogging_enabled.label': 'Anticogging ativo',
+  'field.axis0.controller.config.anticogging.anticogging_enabled.desc': 'Aplica mapa anticogging quando pre_calibrated é true.',
+  'field.axis0.controller.config.anticogging.anticogging_enabled.opt.true': 'Sim',
+  'field.axis0.controller.config.anticogging.anticogging_enabled.opt.false': 'Não',
+  'field.axis0.controller.config.anticogging.pre_calibrated.label': 'Anticogging pré-calibrado',
+  'field.axis0.controller.config.anticogging.pre_calibrated.desc': 'Pula calibração anticogging no boot. Defina após axis.anticogcal! bem-sucedido.',
+  'field.axis0.controller.config.anticogging.pre_calibrated.opt.true': 'Sim',
+  'field.axis0.controller.config.anticogging.pre_calibrated.opt.false': 'Não',
+  'field.axis0.controller.config.anticogging.index.label': 'Índice anticogging',
+  'field.axis0.controller.config.anticogging.index.desc': 'Índice de progresso durante calibração anticogging (0–3600).',
+  'field.axis0.motor.motor_thermistor.config.enabled.label': 'Termistor ativo',
+  'field.axis0.motor.motor_thermistor.config.enabled.desc': 'Monitora temperatura do motor via NTC externo. Use a calculadora NTC para os coeficientes.',
+  'field.axis0.motor.motor_thermistor.config.enabled.opt.true': 'Sim',
+  'field.axis0.motor.motor_thermistor.config.enabled.opt.false': 'Não',
+  'field.axis0.motor.motor_thermistor.config.gpio_pin.label': 'GPIO do NTC',
+  'field.axis0.motor.motor_thermistor.config.gpio_pin.desc': 'GPIO para entrada analógica do NTC. Requer pull-up 10 kΩ para 3,3 V.',
+  'field.axis0.motor.motor_thermistor.config.poly_coefficient_0.label': 'Coeficiente polinomial 0',
+  'field.axis0.motor.motor_thermistor.config.poly_coefficient_0.desc': 'Coeficiente de maior ordem do polinômio T(V). Use a calculadora NTC.',
+  'field.axis0.motor.motor_thermistor.config.poly_coefficient_1.label': 'Coeficiente polinomial 1',
+  'field.axis0.motor.motor_thermistor.config.poly_coefficient_1.desc': 'Coeficiente c1 do polinômio.',
+  'field.axis0.motor.motor_thermistor.config.poly_coefficient_2.label': 'Coeficiente polinomial 2',
+  'field.axis0.motor.motor_thermistor.config.poly_coefficient_2.desc': 'Coeficiente c2 do polinômio.',
+  'field.axis0.motor.motor_thermistor.config.poly_coefficient_3.label': 'Coeficiente polinomial 3',
+  'field.axis0.motor.motor_thermistor.config.poly_coefficient_3.desc': 'Coeficiente c3 do polinômio.',
 };
 
-export const fieldsEn: Record<string, string> = {};
+function buildFieldsEnFromCatalog(): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const field of flatFields) {
+    map[`field.${field.path}.label`] = field.label;
+    map[`field.${field.path}.desc`] = field.description;
+    for (const opt of field.options ?? []) {
+      map[`field.${field.path}.opt.${opt.value}`] = opt.label;
+    }
+  }
+  return map;
+}
+
+export const fieldsEn = buildFieldsEnFromCatalog();

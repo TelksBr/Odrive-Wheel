@@ -6,7 +6,7 @@ export type GpioInputMode = '0' | '1' | '2' | '3';
 
 export interface GpioConfigCache {
   maxTorqueNm: number | null;
-  gpios: Record<number, { mode: GpioInputMode; min: number; max: number }>;
+  gpios: Record<number, { mode: GpioInputMode; idx: number | null; min: number; max: number }>;
 }
 
 const GPIO_LIST = [1, 2, 3, 4] as const;
@@ -14,10 +14,10 @@ const GPIO_LIST = [1, 2, 3, 4] as const;
 const EMPTY_CACHE: GpioConfigCache = {
   maxTorqueNm: null,
   gpios: {
-    1: { mode: '0', min: 0, max: 4095 },
-    2: { mode: '0', min: 0, max: 4095 },
-    3: { mode: '0', min: 0, max: 4095 },
-    4: { mode: '0', min: 0, max: 4095 },
+    1: { mode: '0', idx: null, min: 0, max: 4095 },
+    2: { mode: '0', idx: null, min: 0, max: 4095 },
+    3: { mode: '0', idx: null, min: 0, max: 4095 },
+    4: { mode: '0', idx: null, min: 0, max: 4095 },
   },
 };
 
@@ -72,6 +72,16 @@ export async function readInputConfigCache(
     }
 
     try {
+      const idxRaw = await readField(fieldFor(`gpio.${gpio}.idx`));
+      const idx = parseReplyNumber(idxRaw);
+      if (idx !== null && idx >= 0) {
+        next.gpios[gpio] = { ...next.gpios[gpio], idx: Math.round(idx) };
+      }
+    } catch {
+      // keep previous idx
+    }
+
+    try {
       const minRaw = await readField(fieldFor(`gpio.${gpio}.amin`));
       const min = parseReplyNumber(minRaw);
       if (min !== null) {
@@ -108,10 +118,16 @@ export function mergeFieldConfig(
   const gpios = { ...cache.gpios };
   for (const gpio of GPIO_LIST) {
     const modeRaw = fieldValues[`gpio.${gpio}.mode`];
+    const idxRaw = fieldValues[`gpio.${gpio}.idx`];
     const minRaw = Number(fieldValues[`gpio.${gpio}.amin`] ?? '');
     const maxRaw = Number(fieldValues[`gpio.${gpio}.amax`] ?? '');
+    const idxParsed = idxRaw === '' ? null : Number(idxRaw);
     gpios[gpio] = {
       mode: modeRaw ? parseMode(modeRaw) : gpios[gpio].mode,
+      idx:
+        idxParsed !== null && Number.isFinite(idxParsed) && idxParsed >= 0
+          ? Math.round(idxParsed)
+          : gpios[gpio].idx,
       min: Number.isFinite(minRaw) ? minRaw : gpios[gpio].min,
       max: Number.isFinite(maxRaw) ? maxRaw : gpios[gpio].max,
     };

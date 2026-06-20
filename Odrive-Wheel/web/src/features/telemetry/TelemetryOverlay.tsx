@@ -4,7 +4,7 @@ import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
 import { useThrottledValue } from '../../shared/useThrottledValue';
 import { TimeSeriesChart } from './TimeSeriesChart';
-import { busSeries, motionSeries } from './series';
+import { busSeries, localizedSeries, motionSeries } from './series';
 import { computeStats } from './types';
 import { allSeriesKeys } from './series';
 import type { BrakePowerState, TelemetrySample } from './types';
@@ -16,12 +16,21 @@ interface TelemetryOverlayProps {
   windowMs?: number;
 }
 
-const WINDOW_OPTIONS = [
-  { label: '10 s', ms: 10_000 },
-  { label: '30 s', ms: 30_000 },
-  { label: '1 min', ms: 60_000 },
-  { label: '2 min', ms: 120_000 },
-];
+import type { Locale } from '../../i18n/messages';
+
+const WINDOW_OPTION_KEYS = [
+  { key: 'observeWindow10s', ms: 10_000 },
+  { key: 'observeWindow30s', ms: 30_000 },
+  { key: 'observeWindow1m', ms: 60_000 },
+  { key: 'observeWindow2m', ms: 120_000 },
+] as const;
+
+function windowOptions(locale: Locale) {
+  return WINDOW_OPTION_KEYS.map((opt) => ({
+    label: translate(locale, opt.key),
+    ms: opt.ms,
+  }));
+}
 
 function renderOverlayRoot(
   root: Root,
@@ -130,7 +139,7 @@ export function TelemetryOverlay({ connected, samples, brakePower, windowMs: ext
       {pipOpen && (
         <>
           <span className="eyebrow" style={{ alignSelf: 'center' }}>{translate(locale, 'overlayWindowLabel')}</span>
-          {WINDOW_OPTIONS.map((opt) => (
+          {windowOptions(locale).map((opt) => (
             <button
               key={opt.ms}
               type="button"
@@ -201,7 +210,7 @@ function OverlayWindow({
       <TimeSeriesChart
         title={translate(locale, 'overlayChartDcBus')}
         samples={samples}
-        series={busSeries}
+        series={localizedSeries(locale, busSeries)}
         windowMs={windowMs}
         height={190}
         compact
@@ -210,7 +219,7 @@ function OverlayWindow({
       <TimeSeriesChart
         title={translate(locale, 'overlayChartWheel')}
         samples={samples}
-        series={motionSeries}
+        series={localizedSeries(locale, motionSeries)}
         windowMs={windowMs}
         height={190}
         compact

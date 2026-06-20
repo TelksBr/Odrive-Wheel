@@ -404,8 +404,12 @@ int32_t EffectsCalculator::calcComponentForce(FFB_Effect *effect, int32_t forceV
 	case FFB_EFFECT_INERTIA:
 	{
 		float accel = metrics->accel * INTERNAL_SCALER_INERTIA;
-		result_torque -= effect->filter[axis]->process(calcConditionEffectForce(effect, accel, gain.inertia, con_idx, scaler.inertia, angle_ratio)); // Bump *60 the inertia feedback
-
+		int32_t raw = calcConditionEffectForce(effect, accel, gain.inertia, con_idx, scaler.inertia, angle_ratio);
+		if (effect->filter[axis] != nullptr) {
+			result_torque -= effect->filter[axis]->process(raw);
+		} else {
+			result_torque -= raw;
+		}
 		break;
 	}
 

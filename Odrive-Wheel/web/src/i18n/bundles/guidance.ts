@@ -109,6 +109,24 @@ export const guidanceEn: Record<string, string> = {
   'fx.inertia':
     'Gain for inertia condition effects from games (mass simulation). 255 = heavy wheel, hard to accelerate. Low values = light, quick response. Most drivers prefer 50–150. Set 0 to disable inertia conditions.',
 
+  // GPIO fallbacks
+  'gpio.mode':
+    'Set Disabled (0) to ignore this pin. Button (1) maps the pin to a HID button. Analog axis (2) uses the ADC for a joystick axis — calibrate with amin/amax. Zero wheel (3) resets the encoder position when pressed.',
+  'gpio.idx':
+    'HID report index assigned to this pin. Button index 0–63. Analog axis index 0–3 (Rx/Ry/Rz/Slider). Avoid duplicating the same index for two GPIOs with the same mode.',
+  'gpio.invert':
+    'Mirrors the input direction. For buttons: pressed = 0 instead of 1. For analog axes: the mapped range is reversed (max ↔ min).',
+  'gpio.amin':
+    'Raw ADC count at mechanical minimum. Read gpio.N.cur while pedal/stick is at minimum and enter that value.',
+  'gpio.amax':
+    'Raw ADC count at mechanical maximum. Read gpio.N.cur while pedal/stick is at maximum. amax must be greater than amin.',
+  'fx.filterFreq':
+    'Low-pass cutoff frequency for this effect type. 0 = filter bypassed. 50–150 Hz is typical for sim racing.',
+  'fx.filterQ':
+    'Biquad Q factor. Q = 0.707 = Butterworth (recommended starting point).',
+  'field.guidance.fallback':
+    'FFB: Apply persists to EEPROM (sys.save!). ODrive: Apply writes RAM only — toolbar Save persists NVM and reboots.',
+
   // System
   'sys.vbusdiv':
     '⚠ Hardware parameter — only change if your board uses a non-standard VBUS divider. Odrive-Wheel / MKS XDrive Mini default is 19. Wrong value: all voltage readings, brake ramp thresholds, and overvoltage protection will be miscalibrated.',
@@ -224,6 +242,24 @@ export const guidancePt: Record<string, string> = {
     'Ganho para efeitos de condição friction dos jogos (resistência independente de velocidade). Muito alto mascara textura de pista e solavancos. Faixa comum 50–150. Defina 0 para desabilitar friction e ouvir só o detalhe bruto de pista/solavanco.',
   'fx.inertia':
     'Ganho para efeitos de condição inertia dos jogos (simulação de massa). 255 = volante pesado, difícil de acelerar. Valores baixos = leve e rápido. A maioria prefere 50–150. Defina 0 para desabilitar condições inertia.',
+
+  // GPIO fallbacks
+  'gpio.mode':
+    'Defina Desativado (0) para ignorar o pino. Botão (1) mapeia para um botão HID. Eixo analógico (2) usa o ADC — calibre com amin/amax. Zerar volante (3) captura o centro ao pressionar.',
+  'gpio.idx':
+    'Índice HID deste pino. Botão 0–63. Eixo analógico 0–3 (Rx/Ry/Rz/Slider). Evite duplicar o mesmo índice em dois GPIOs no mesmo modo.',
+  'gpio.invert':
+    'Inverte a direção. Em botões: pressionado = 0 em vez de 1. Em analógicos: inverte o intervalo mapeado.',
+  'gpio.amin':
+    'Contagem ADC no mínimo mecânico. Leia gpio.N.cur com pedal/botão no mínimo e insira o valor.',
+  'gpio.amax':
+    'Contagem ADC no máximo mecânico. Leia gpio.N.cur no máximo. amax deve ser maior que amin.',
+  'fx.filterFreq':
+    'Frequência de corte do filtro passa-baixa. 0 = filtro desligado. 50–150 Hz é típico em sim racing.',
+  'fx.filterQ':
+    'Fator Q do biquad. Q = 0,707 = Butterworth (ponto de partida recomendado).',
+  'field.guidance.fallback':
+    'FFB: Aplicar persiste na EEPROM (sys.save!). ODrive: Aplicar grava só na RAM — use Salvar na barra para NVM e reboot.',
 
   // Sistema
   'sys.vbusdiv':

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
 import { isButtonPressed } from '../inputs/analogAxisMath';
+import { gpioInputLabel } from '../inputs/gpioChannel';
 import {
   ButtonInputControl,
   CenteredAnalogAxis,
@@ -105,19 +106,18 @@ function GpioInputDisplay({
   locale: import('../../i18n/messages').Locale;
   emptyLabel: string;
 }) {
-  const label = translate(locale, 'dashboardGpioInput', { n: gpio.gpio });
+  const label = gpioInputLabel(locale, gpio.gpio, gpio.mode, gpio.idx);
 
   if (gpio.mode === '2') {
     return (
-      <LinearAnalogAxis
-        label={label}
-        value={gpio.raw}
-        min={gpio.min}
-        max={gpio.max}
-        tone="ok"
-        smooth={false}
-        emptyLabel={emptyLabel}
-      />
+        <LinearAnalogAxis
+          label={label}
+          value={gpio.raw}
+          min={gpio.min}
+          max={gpio.max}
+          tone="ok"
+          emptyLabel={emptyLabel}
+        />
     );
   }
 

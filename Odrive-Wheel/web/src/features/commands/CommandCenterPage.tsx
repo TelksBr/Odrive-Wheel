@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAppState } from '../../app/AppState';
+import { localizeCommand } from '../../i18n/commandMeta';
 import { translate } from '../../i18n/messages';
 import { boardCommands } from '../../domain/commands/commandRegistry';
 import { serialService } from '../serial/SerialService';
@@ -21,14 +22,13 @@ export function CommandCenterPage() {
 
   const commands = useMemo(
     () =>
-      boardCommands.filter(
-        (command) =>
-          !normalizedQuery ||
-          command.label.toLowerCase().includes(normalizedQuery) ||
-          command.command.toLowerCase().includes(normalizedQuery) ||
-          command.description.toLowerCase().includes(normalizedQuery) ||
-          translate(locale, categoryKeys[command.category]).toLowerCase().includes(normalizedQuery),
-      ),
+      boardCommands.filter((command) => {
+        if (!normalizedQuery) return true;
+        const localized = localizeCommand(locale, command);
+        const category = translate(locale, categoryKeys[command.category]);
+        const haystack = `${localized.label} ${localized.description} ${command.command} ${category}`.toLowerCase();
+        return haystack.includes(normalizedQuery);
+      }),
     [locale, normalizedQuery],
   );
 
@@ -54,7 +54,9 @@ export function CommandCenterPage() {
         <span>{translate(locale, 'commandCenterCount', { n: commands.length })}</span>
       </div>
       <div className="command-grid">
-        {commands.map((command) => (
+        {commands.map((command) => {
+          const localized = localizeCommand(locale, command);
+          return (
           <button
             type="button"
             key={command.id}
@@ -63,11 +65,12 @@ export function CommandCenterPage() {
             onClick={() => void run(command)}
           >
             <span>{translate(locale, categoryKeys[command.category])}</span>
-            <strong>{command.label}</strong>
-            <p>{command.description}</p>
+            <strong>{localized.label}</strong>
+            <p>{localized.description}</p>
             <code>{command.command}</code>
           </button>
-        ))}
+          );
+        })}
       </div>
     </Card>
   );

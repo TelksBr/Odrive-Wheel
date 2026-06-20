@@ -25,6 +25,7 @@ import { Pill } from './shared/ui';
 import { AppLogo, AppIcon } from './shared/ui/AppIcon';
 import { SidebarSearch } from './features/navigation/SidebarSearch';
 import { FieldFocusEffect } from './features/navigation/FieldFocusEffect';
+import { ToastHost } from './shared/ToastHost';
 
 function AppShell() {
   const { state, dispatch } = useAppState();
@@ -186,6 +187,7 @@ function AppShell() {
   return (
     <div className="app-shell">
       <FieldFocusEffect />
+      <ToastHost />
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-lockup">

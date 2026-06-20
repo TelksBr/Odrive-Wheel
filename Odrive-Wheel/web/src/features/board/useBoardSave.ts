@@ -7,6 +7,9 @@ import {
   parseAxisError,
   shouldBlockSave,
 } from '../calibration/calibrationIntegrity';
+import { toast, toastSticky, toastStickyClose } from '../../shared/toastActions';
+
+const SAVE_STICKY_ID = 'save-progress';
 
 const saveProgressKey: Record<SaveProgress, string> = {
   writing_changes: 'saveWritingChanges',
@@ -18,13 +21,33 @@ const saveProgressKey: Record<SaveProgress, string> = {
   reading_back: 'saveReadingBack',
 };
 
+const saveProgressOrder: SaveProgress[] = [
+  'writing_changes',
+  'disarming',
+  'persisting_ffb',
+  'persisting_odrive',
+  'rebooting',
+  'reconnecting',
+  'reading_back',
+];
+
+function saveStepProgress(step: SaveProgress): number {
+  const index = saveProgressOrder.indexOf(step);
+  if (index < 0) {
+    return 0;
+  }
+  return Math.round(((index + 1) / saveProgressOrder.length) * 100);
+}
+
 export function useBoardSave() {
   const { state, dispatch } = useAppState();
   const [saveProgress, setSaveProgress] = useState<SaveProgress | null>(null);
 
   const saveAll = useCallback(async () => {
     if (!state.connected) {
-      dispatch({ type: 'append-log', direction: 'error', message: translate(state.locale, 'saveSerialRequired') });
+      const msg = translate(state.locale, 'saveSerialRequired');
+      dispatch({ type: 'append-log', direction: 'error', message: msg });
+      toast(dispatch, msg, 'error');
       return;
     }
     if (state.busy) {
@@ -33,11 +56,13 @@ export function useBoardSave() {
     const integrity = assessCalibrationIntegrity(state.fieldValues, state.dirtyPaths);
     if (shouldBlockSave(integrity)) {
       for (const key of integrity.blockers) {
+        const msg = translate(state.locale, `calIntegrity_${key}`);
         dispatch({
           type: 'append-log',
           direction: 'error',
-          message: translate(state.locale, `calIntegrity_${key}`),
+          message: msg,
         });
+        toast(dispatch, msg, 'error');
       }
       return;
     }
@@ -46,8 +71,15 @@ export function useBoardSave() {
       const result = await unifiedSave({
         dirtyPaths: state.dirtyPaths,
         fieldValues: state.fieldValues,
-        onProgress: setSaveProgress,
+        onProgress: (step) => {
+          setSaveProgress(step);
+          toastSticky(dispatch, SAVE_STICKY_ID, translate(state.locale, saveProgressKey[step]), {
+            progress: saveStepProgress(step),
+            kind: 'info',
+          });
+        },
       });
+      toastStickyClose(dispatch, SAVE_STICKY_ID);
       if (result.reconnected && result.values) {
         for (const [path, value] of Object.entries(result.values)) {
           dispatch({ type: 'set-field', path, value, dirty: false });
@@ -69,28 +101,37 @@ export function useBoardSave() {
             }),
           });
         } else {
+          const msg = translate(state.locale, 'toastSaveComplete');
           dispatch({
             type: 'append-log',
             direction: 'info',
-            message: translate(state.locale, 'toastSaveComplete'),
+            message: msg,
           });
+          toast(dispatch, msg, 'ok');
         }
         if (!result.ffbSaved) {
+          const msg = translate(state.locale, 'saveFfbWarn');
           dispatch({
             type: 'append-log',
             direction: 'error',
-            message: translate(state.locale, 'saveFfbWarn'),
+            message: msg,
           });
+          toast(dispatch, msg, 'warn');
         }
       } else if (!result.reconnected) {
-        dispatch({ type: 'append-log', direction: 'error', message: translate(state.locale, 'saveReconnectFailed') });
+        const msg = translate(state.locale, 'saveReconnectFailed');
+        dispatch({ type: 'append-log', direction: 'error', message: msg });
+        toast(dispatch, msg, 'error');
       }
     } catch (error) {
+      toastStickyClose(dispatch, SAVE_STICKY_ID);
+      const message = error instanceof Error ? error.message : String(error);
       dispatch({
         type: 'append-log',
         direction: 'error',
-        message: error instanceof Error ? error.message : String(error),
+        message,
       });
+      toast(dispatch, message, 'error');
     } finally {
       setSaveProgress(null);
       dispatch({ type: 'set-busy', busy: false });

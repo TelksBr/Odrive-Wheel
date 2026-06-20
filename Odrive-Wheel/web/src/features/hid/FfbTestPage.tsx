@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppState } from '../../app/AppState';
 import { translate, type Locale } from '../../i18n/messages';
 import { Card, SectionHeader } from '../../shared/ui';
 import { TimeSeriesChart } from '../telemetry/TimeSeriesChart';
 import { TelemetryControlPanel } from '../telemetry/TelemetryControlPanel';
-import { motionSeries } from '../telemetry/series';
+import { localizedSeries, motionSeries } from '../telemetry/series';
 import { useTelemetry } from '../telemetry/useTelemetry';
 import { FfbPidReference } from './FfbPidReference';
 import { HidConnectionToolbar } from './HidConnectionToolbar';
-import { hidFfbService, type EffectKey } from './HidFfbService';
+import { hidFfbService, EFFECT_KEYS, RAMP_LAB_MAX_PCT, type EffectKey, type EffectParams } from './HidFfbService';
 import { useHidConnection } from './useHidConnection';
 
 type EffectDef = {
@@ -20,7 +20,26 @@ type EffectDef = {
   sliderMax: number;
   sliderDefault: number;
   formatValue: (v: number) => string;
+  signed?: boolean;
+  secondSlider?: {
+    label: string;
+    min: number;
+    max: number;
+    default: number;
+    formatValue: (v: number) => string;
+  };
+  hintKey?: string;
 };
+
+function buildEffectParams(key: EffectKey, value: number, secondValue?: number): EffectParams {
+  if (key === 'cf' || key === 'ra') {
+    return { magnitudePct: value };
+  }
+  if (key === 'si') {
+    return { pct: value, frequencyHz: secondValue ?? 15 };
+  }
+  return { pct: value };
+}
 
 function getEffects(locale: Locale): EffectDef[] {
   return [
@@ -64,16 +83,40 @@ function getEffects(locale: Locale): EffectDef[] {
       sliderDefault: 50,
       formatValue: (v) => `${v}%`,
     },
+    {
+      key: 'si',
+      title: translate(locale, 'ffbEffectSiTitle'),
+      description: translate(locale, 'ffbEffectSiDescription'),
+      sliderLabel: translate(locale, 'ffbEffectIntensity'),
+      sliderMin: 0,
+      sliderMax: 100,
+      sliderDefault: 40,
+      formatValue: (v) => `${v}%`,
+      secondSlider: {
+        label: translate(locale, 'ffbEffectSiFrequency'),
+        min: 5,
+        max: 60,
+        default: 15,
+        formatValue: (v) => `${v} Hz`,
+      },
+    },
+    {
+      key: 'ra',
+      title: translate(locale, 'ffbEffectRaTitle'),
+      description: translate(locale, 'ffbEffectRaDescription'),
+      hintKey: 'ffbEffectRaHint',
+      sliderLabel: translate(locale, 'ffbEffectRaSlider'),
+      sliderMin: -RAMP_LAB_MAX_PCT,
+      sliderMax: RAMP_LAB_MAX_PCT,
+      sliderDefault: 0,
+      signed: true,
+      formatValue: (v) => `${v > 0 ? '+' : ''}${v}%`,
+    },
   ];
 }
 
 function readRunningFromService(): Record<EffectKey, boolean> {
-  return {
-    cf: hidFfbService.isRunning('cf'),
-    sp: hidFfbService.isRunning('sp'),
-    da: hidFfbService.isRunning('da'),
-    fr: hidFfbService.isRunning('fr'),
-  };
+  return Object.fromEntries(EFFECT_KEYS.map((key) => [key, hidFfbService.isRunning(key)])) as Record<EffectKey, boolean>;
 }
 
 function countActiveEffects(running: Record<EffectKey, boolean>): number {
@@ -85,11 +128,16 @@ export function FfbTestPage() {
   const locale = state.locale;
   const effects = getEffects(locale);
   const hid = useHidConnection(locale);
-  const [running, setRunning] = useState<Record<EffectKey, boolean>>(readRunningFromService);
-  const [values, setValues] = useState<Record<EffectKey, number>>({ cf: 0, sp: 50, da: 50, fr: 50 });
+  const [running, setRunning] = useState<Record<EffectKey, boolean>>(() => readRunningFromService());
+  const [values, setValues] = useState<Record<EffectKey, number>>({
+    cf: 0, sp: 50, da: 50, fr: 50, si: 40, ra: 0,
+  });
+  const [secondaryValues, setSecondaryValues] = useState<Partial<Record<EffectKey, number>>>({ si: 15 });
   const [telemetryEnabled, setTelemetryEnabled] = useState(true);
   const [intervalMs, setIntervalMs] = useState(250);
   const [windowMs, setWindowMs] = useState(60_000);
+
+  const localizedMotionSeries = useMemo(() => localizedSeries(locale, motionSeries), [locale]);
 
   const maxTorqueNm = Number(state.fieldValues['axis.maxtorque'] ?? '');
   const telemetry = useTelemetry({
@@ -148,8 +196,7 @@ export function FfbTestPage() {
   async function toggleEffect(key: EffectKey, enable: boolean) {
     await wrapAsync(async () => {
       if (enable) {
-        const param = key === 'cf' ? { magnitudePct: values[key] } : { pct: values[key] };
-        await hidFfbService.startEffect(key, param);
+        await hidFfbService.startEffect(key, buildEffectParams(key, values[key], secondaryValues[key]));
       } else {
         await hidFfbService.stopEffect(key);
       }
@@ -161,8 +208,16 @@ export function FfbTestPage() {
     setValues((prev) => ({ ...prev, [key]: value }));
     if (running[key] && hidFfbService.connected) {
       await wrapAsync(async () => {
-        const param = key === 'cf' ? { magnitudePct: value } : { pct: value };
-        await hidFfbService.startEffect(key, param);
+        await hidFfbService.startEffect(key, buildEffectParams(key, value, secondaryValues[key]));
+      });
+    }
+  }
+
+  async function updateSecondaryValue(key: EffectKey, value: number) {
+    setSecondaryValues((prev) => ({ ...prev, [key]: value }));
+    if (running[key] && hidFfbService.connected) {
+      await wrapAsync(async () => {
+        await hidFfbService.startEffect(key, buildEffectParams(key, values[key], value));
       });
     }
   }
@@ -209,9 +264,13 @@ export function FfbTestPage() {
               effect={effect}
               enabled={running[effect.key]}
               value={values[effect.key]}
+              secondValue={effect.secondSlider ? secondaryValues[effect.key] ?? effect.secondSlider.default : undefined}
               disabled={!hid.connected}
               onToggle={(en) => void toggleEffect(effect.key, en)}
               onValueChange={(v) => void updateValue(effect.key, v)}
+              onSecondValueChange={
+                effect.secondSlider ? (v) => void updateSecondaryValue(effect.key, v) : undefined
+              }
             />
           ))}
         </div>
@@ -244,14 +303,20 @@ export function FfbTestPage() {
         <TimeSeriesChart
           title={translate(locale, 'observeChartWheel')}
           samples={telemetry.displaySamples}
-          series={motionSeries}
+          series={localizedMotionSeries}
           windowMs={windowMs}
         />
       </div>
 
       <Card title={translate(locale, 'ffbHowItWorksTitle')} description={translate(locale, 'ffbHowItWorksDescription')}>
         <p className="ffb-pid-intro">{translate(locale, 'ffbPidIntro')}</p>
-        <FfbPidReference locale={locale} running={running} values={values} hidConnected={hid.connected} />
+        <FfbPidReference
+          locale={locale}
+          running={running}
+          values={values}
+          secondaryValues={secondaryValues}
+          hidConnected={hid.connected}
+        />
       </Card>
 
       <Card title={translate(locale, 'ffbPerfLinkTitle')} description={translate(locale, 'ffbPerfLinkDescription')}>
@@ -268,17 +333,21 @@ function EffectCard({
   effect,
   enabled,
   value,
+  secondValue,
   disabled,
   onToggle,
   onValueChange,
+  onSecondValueChange,
 }: {
   locale: Locale;
   effect: EffectDef;
   enabled: boolean;
   value: number;
+  secondValue?: number;
   disabled: boolean;
   onToggle: (enable: boolean) => void;
   onValueChange: (value: number) => void;
+  onSecondValueChange?: (value: number) => void;
 }) {
   return (
     <div className={`field-row ffb-effect-card${enabled ? ' field-row--highlight' : ''}`}>
@@ -286,6 +355,7 @@ function EffectCard({
         <div className="field-copy">
           <label>{effect.title}</label>
           <small>{effect.description}</small>
+          {effect.hintKey ? <small className="ffb-effect-hint">{translate(locale, effect.hintKey)}</small> : null}
         </div>
         <label className="toggle-label" style={{ cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1 }}>
           <input type="checkbox" checked={enabled} disabled={disabled} onChange={(e) => onToggle(e.target.checked)} />
@@ -305,13 +375,29 @@ function EffectCard({
           disabled={disabled}
           onChange={(e) => onValueChange(Number(e.target.value))}
         />
-        {effect.key === 'cf' && (
+        {effect.signed && (
           <div className="ffb-slider-ends">
             <span>{translate(locale, 'ffbCfLeft')}</span>
             <span>{translate(locale, 'ffbCfRight')}</span>
           </div>
         )}
       </label>
+
+      {effect.secondSlider && secondValue !== undefined && onSecondValueChange ? (
+        <label className="ffb-slider-row">
+          <span>{effect.secondSlider.label}</span>
+          <strong>{effect.secondSlider.formatValue(secondValue)}</strong>
+          <input
+            type="range"
+            min={effect.secondSlider.min}
+            max={effect.secondSlider.max}
+            step={1}
+            value={secondValue}
+            disabled={disabled}
+            onChange={(e) => onSecondValueChange(Number(e.target.value))}
+          />
+        </label>
+      ) : null}
     </div>
   );
 }

@@ -30,6 +30,7 @@ const initialState: AppState = {
   nvmPending: false,
   fieldValues: {},
   logs: [],
+  toasts: [],
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -91,6 +92,26 @@ function reducer(state: AppState, action: AppAction): AppState {
       };
     case 'clear-log':
       return { ...state, logs: [] };
+    case 'push-toast': {
+      const id = action.toast.id ?? `toast-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const item = {
+        id,
+        kind: action.toast.kind,
+        message: action.toast.message,
+        sub: action.toast.sub,
+        progress: action.toast.progress,
+        sticky: action.toast.sticky ?? false,
+        createdAt: Date.now(),
+      };
+      const index = state.toasts.findIndex((t) => t.id === id);
+      const toasts =
+        index >= 0
+          ? state.toasts.map((t, i) => (i === index ? { ...t, ...item, createdAt: t.createdAt } : t))
+          : [...state.toasts.slice(-4), item];
+      return { ...state, toasts };
+    }
+    case 'dismiss-toast':
+      return { ...state, toasts: state.toasts.filter((t) => t.id !== action.id) };
     case 'focus-field':
       return { ...state, focusFieldPath: action.path };
     case 'clear-focus-field':

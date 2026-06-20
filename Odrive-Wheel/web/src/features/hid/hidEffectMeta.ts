@@ -54,6 +54,26 @@ export const HID_EFFECT_META: Record<EffectKey, HidEffectMeta> = {
       { id: '0x0A', labelKey: 'ffbReportEffectOp' },
     ],
   },
+  si: {
+    key: 'si',
+    block: 6,
+    pidType: 4,
+    reportChain: [
+      { id: '0x01', labelKey: 'ffbReportSetEffect' },
+      { id: '0x04', labelKey: 'ffbReportSetPeriodic' },
+      { id: '0x0A', labelKey: 'ffbReportEffectOp' },
+    ],
+  },
+  ra: {
+    key: 'ra',
+    block: 7,
+    pidType: 1,
+    reportChain: [
+      { id: '0x01', labelKey: 'ffbReportSetEffect' },
+      { id: '0x05', labelKey: 'ffbReportSetConstant' },
+      { id: '0x0A', labelKey: 'ffbReportEffectOp' },
+    ],
+  },
 };
 
 export function reportChainLabel(meta: HidEffectMeta): string {

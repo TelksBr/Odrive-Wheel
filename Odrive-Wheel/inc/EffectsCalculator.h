@@ -46,7 +46,7 @@ enum class ClassType : uint32_t { Internal, External, Mainclass };
 
 #define INTERNAL_SCALER_DAMPER 40
 #define INTERNAL_SCALER_FRICTION 45
-#define INTERNAL_SCALER_INERTIA 4
+#define INTERNAL_SCALER_INERTIA 32
 
 #define CUSTOM_PROFILE_ID 1
 
@@ -65,14 +65,14 @@ struct effect_scaler_t {
 	float friction = 1.0; //0.4 * 40;
 	float spring = 16.0;
 	float damper = 4.0; //2 * 40 * 2
-	float inertia = 2.0;//0.5 * 40;
+	float inertia = 8.0;
 };
 
 struct effect_biquad_t {
 	biquad_constant_t constant	= { 500, 70 };
 	biquad_constant_t friction 	= { 50, 20 };
 	biquad_constant_t damper 	= { 30, 40 };
-	biquad_constant_t inertia	= { 15, 20 };
+	biquad_constant_t inertia	= { 300, 35 };
 };
 
 struct effect_stat_t {

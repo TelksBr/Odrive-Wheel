@@ -22,6 +22,19 @@ export interface LogEntry {
   timestamp: string;
 }
 
+export type ToastKind = 'ok' | 'error' | 'warn' | 'info';
+
+export interface ToastItem {
+  id: string;
+  kind: ToastKind;
+  message: string;
+  sub?: string;
+  /** 0–100 when set; omit bar when undefined */
+  progress?: number;
+  sticky?: boolean;
+  createdAt: number;
+}
+
 export interface AppState {
   activeTab: TabId;
   locale: Locale;
@@ -38,6 +51,7 @@ export interface AppState {
   nvmPending: boolean;
   fieldValues: Record<string, string>;
   logs: LogEntry[];
+  toasts: ToastItem[];
   focusFieldPath?: string;
 }
 
@@ -54,6 +68,8 @@ export type AppAction =
   | { type: 'set-nvm-pending'; pending: boolean }
   | { type: 'append-log'; direction: LogEntry['direction']; message: string }
   | { type: 'clear-log' }
+  | { type: 'push-toast'; toast: { id?: string; kind: ToastKind; message: string; sub?: string; progress?: number; sticky?: boolean } }
+  | { type: 'dismiss-toast'; id: string }
   | { type: 'hydrate-fields'; values: Record<string, string>; dirty?: boolean }
   | { type: 'focus-field'; path: string }
   | { type: 'clear-focus-field' };

@@ -20,7 +20,7 @@ export function getFieldHelp(field: ConfigField, locale: Locale): FieldHelp {
   return {
     defaultValue: field.defaultValue ?? inferDefault(field, locale),
     exampleValue: field.exampleValue ?? inferExample(field),
-    range: formatRange(field),
+    range: formatRange(field, locale),
     unit,
     readCommand: field.protocol === 'openffboard' ? `${field.path}?` : `r ${field.path}`,
     writeCommand: field.readonly ? undefined : field.protocol === 'openffboard' ? `${field.path}=<value>` : `w ${field.path} <value>`,
@@ -126,30 +126,30 @@ function inferGuidance(field: ConfigField, locale: Locale): string {
   if (exact) return exact;
   // Dynamic patterns for GPIO fields
   if (field.path.startsWith('gpio.') && field.path.endsWith('.mode')) {
-    return 'Set Disabled (0) to ignore this pin. Button (1) maps the pin to a HID button. Analog axis (2) uses the ADC for a joystick axis — calibrate with amin/amax. Zero wheel (3) resets the encoder position when pressed.';
+    return guidance['gpio.mode'] ?? translate(locale, 'fieldGuidanceFallback');
   }
   if (field.path.startsWith('gpio.') && field.path.endsWith('.idx')) {
-    return 'HID report index assigned to this pin. Button index 0–63. Analog axis index 0–7. Avoid duplicating the same index for two GPIOs with the same mode.';
+    return guidance['gpio.idx'] ?? translate(locale, 'fieldGuidanceFallback');
   }
   if (field.path.startsWith('gpio.') && field.path.endsWith('.invert')) {
-    return 'Mirrors the input direction. For buttons: pressed = 0 instead of 1. For analog axes: the mapped range is reversed (max ↔ min). Useful for potentiometers wired in reverse.';
+    return guidance['gpio.invert'] ?? translate(locale, 'fieldGuidanceFallback');
   }
   if (field.path.startsWith('gpio.') && field.path.endsWith('.amin')) {
-    return 'Raw ADC count at mechanical minimum. Read gpio.N.cur while pedal/stick is at minimum position and enter that value. Typical range 0–300 for most hall sensors. Correct calibration eliminates axis dead zones.';
+    return guidance['gpio.amin'] ?? translate(locale, 'fieldGuidanceFallback');
   }
   if (field.path.startsWith('gpio.') && field.path.endsWith('.amax')) {
-    return 'Raw ADC count at mechanical maximum. Read gpio.N.cur while pedal/stick is at maximum position. Typical range 3800–4095. amax must be greater than amin.';
+    return guidance['gpio.amax'] ?? translate(locale, 'fieldGuidanceFallback');
   }
   if (field.path.startsWith('fx.filter') && field.path.endsWith('Freq')) {
-    return 'Low-pass cutoff frequency for this effect type. 0 = filter bypassed (sharpest response, may add high-frequency noise). 50–150 Hz is typical for sim racing — smooth without losing road texture. Lower values add latency.';
+    return guidance['fx.filterFreq'] ?? translate(locale, 'fieldGuidanceFallback');
   }
   if (field.path.startsWith('fx.filter') && field.path.endsWith('Q')) {
-    return 'Biquad Q (quality) factor. Q = 0.5 = over-damped (very smooth). Q = 0.707 = Butterworth (flat, recommended starting point). Q > 1.0 = resonant peak — adds a subtle bump at the cutoff frequency, can feel lively but may oscillate.';
+    return guidance['fx.filterQ'] ?? translate(locale, 'fieldGuidanceFallback');
   }
-  return 'FFB: Apply persists to EEPROM (sys.save!). ODrive: Apply writes RAM only — toolbar Save persists NVM and reboots.';
+  return guidance['field.guidance.fallback'] ?? translate(locale, 'fieldGuidanceFallback');
 }
 
-function formatRange(field: ConfigField): string {
+function formatRange(field: ConfigField, locale: Locale): string {
   const catalogRange = fieldRanges[field.path];
   if (catalogRange) {
     return catalogRange;
@@ -164,9 +164,9 @@ function formatRange(field: ConfigField): string {
     return 'true / false';
   }
   if (field.readonly) {
-    return 'read-only';
+    return translate(locale, 'fieldRangeReadonly');
   }
-  return 'firmware-defined';
+  return translate(locale, 'fieldRangeFirmware');
 }
 
 function trimNumber(value: number): string {

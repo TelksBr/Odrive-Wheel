@@ -86,6 +86,12 @@ actual motor current — and which parameters affect each stage — see
 `current_control_bandwidth`, `torque_constant`, feed-forward, and understanding
 why PID gains (`pos_gain`, `vel_gain`, etc.) are inert in TORQUE mode.
 
+## 🔌 Firmware API (web app developers)
+
+**[docs/FIRMWARE_WEB_API.md](docs/FIRMWARE_WEB_API.md)** — serial protocol reference
+(dual OpenFFBoard + ODrive ASCII), command tables, persistence, calibration states,
+error registers, HID/FFB stack, and mapping to `Odrive-Wheel/web/src/`.
+
 ## Repository structure
 
 ```

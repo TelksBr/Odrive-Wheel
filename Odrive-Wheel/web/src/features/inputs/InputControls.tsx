@@ -1,5 +1,6 @@
-import { useSmoothedValue } from './useSmoothedValue';
-import { toCenteredPercent, toLinearPercent } from './analogAxisMath';
+import { useAppState } from '../../app/AppState';
+import { translate } from '../../i18n/messages';
+import { useLinearAnalogDisplay, useCenteredAnalogDisplay } from './useAnalogDisplay';
 
 type Tone = 'accent' | 'ok' | 'warn';
 
@@ -26,10 +27,8 @@ export function CenteredAnalogAxis({
   maxLabel,
   emptyLabel,
 }: CenteredAnalogAxisProps) {
-  const smoothed = useSmoothedValue(value, 0.22);
-  const display = smooth ? smoothed : value;
-  const percent = display === null ? null : toCenteredPercent(display, maxAbs);
-  const valueLabel = formatSigned(display, unit, emptyLabel);
+  const { barPercent, displayRaw } = useCenteredAnalogDisplay(value, maxAbs, smooth);
+  const valueLabel = formatSigned(displayRaw, unit, emptyLabel);
 
   return (
     <div className={`input-control input-control--centered${smooth ? '' : ' input-control--instant'}`}>
@@ -39,7 +38,7 @@ export function CenteredAnalogAxis({
       </div>
       <div className="input-control-track input-control-track--centered" aria-hidden="true">
         <span className="input-control-center" />
-        <CenteredFill percent={percent} tone={tone} />
+        <CenteredFill percent={barPercent} tone={tone} />
       </div>
       {(minLabel || maxLabel) && (
         <div className="input-control-scale">
@@ -70,24 +69,21 @@ export function LinearAnalogAxis({
   smooth = true,
   emptyLabel,
 }: LinearAnalogAxisProps) {
-  const smoothed = useSmoothedValue(value, 0.25);
-  const display = smooth ? smoothed : value;
-  const percent = display === null ? null : toLinearPercent(display, min, max);
-  const valueLabel =
-    percent === null ? emptyLabel : `${percent.toFixed(0)}%`;
+  const { barPercent, labelPercent } = useLinearAnalogDisplay(value, min, max, smooth);
+  const valueLabel = labelPercent === null ? emptyLabel : `${labelPercent}%`;
 
   return (
-    <div className="input-control input-control--linear">
+    <div className={`input-control input-control--linear${smooth ? '' : ' input-control--instant'}`}>
       <div className="input-control-header">
         <span className="input-control-label">{label}</span>
         <strong className="input-control-value">{valueLabel}</strong>
       </div>
       <div className="input-control-track input-control-track--linear" aria-hidden="true">
-        <span className={`input-control-fill tone-${tone}`} style={{ width: `${percent ?? 0}%` }} />
+        <span className={`input-control-fill tone-${tone}`} style={{ width: `${barPercent ?? 0}%` }} />
       </div>
       <div className="input-control-scale">
         <span>{min}</span>
-        <span>{percent === null ? emptyLabel : `${percent.toFixed(0)}%`}</span>
+        <span>{valueLabel}</span>
         <span>{max}</span>
       </div>
     </div>
@@ -111,6 +107,7 @@ export function ButtonInputControl({
   releasedLabel,
   emptyLabel,
 }: ButtonInputControlProps) {
+  const { state } = useAppState();
   return (
     <div className={`input-control input-control--button${pressed ? ' is-pressed' : ''}`}>
       <div className="input-control-header">
@@ -124,7 +121,7 @@ export function ButtonInputControl({
       </div>
       {raw !== null && (
         <div className="input-control-scale">
-          <span>ADC {raw}</span>
+          <span>{translate(state.locale, 'inputAdcRaw', { n: raw })}</span>
         </div>
       )}
     </div>

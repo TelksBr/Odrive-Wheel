@@ -5,6 +5,7 @@ export type LiveFieldFormat =
   | 'bool'
   | 'axisState'
   | 'voltage'
+  | 'voltageMv'
   | 'current'
   | 'tempC'
   | 'turns'
@@ -29,7 +30,6 @@ export const LIVE_MONITOR_FIELDS: LiveMonitorField[] = [
   { id: 'vbus_voltage', labelKey: 'liveFieldVbusVoltage', cmd: 'r vbus_voltage', group: 'power', format: 'voltage' },
   { id: 'ibus', labelKey: 'liveFieldIbus', cmd: 'r ibus', group: 'power', format: 'current' },
   { id: 'ibrake', labelKey: 'liveFieldIBrake', cmd: 'r brake_resistor_current', group: 'power', format: 'current' },
-  { id: 'odrv_vbus', labelKey: 'liveFieldOdrvVbus', cmd: 'r odrv.vbus', group: 'power', format: 'voltage' },
 
   { id: 'current_state', labelKey: 'liveFieldAxisState', cmd: 'r axis0.current_state', group: 'axis', format: 'axisState' },
   { id: 'requested_state', labelKey: 'liveFieldRequestedState', cmd: 'r axis0.requested_state', group: 'axis', format: 'axisState' },
@@ -58,7 +58,7 @@ export const LIVE_MONITOR_FIELDS: LiveMonitorField[] = [
   { id: 'ffb_pos', labelKey: 'liveFieldWheelPosition', cmd: 'axis.curpos?', group: 'ffb', format: 'degrees' },
   { id: 'ffb_spd', labelKey: 'liveFieldVelocity', cmd: 'axis.curspd?', group: 'ffb', format: 'degPerSec' },
   { id: 'ffb_torque', labelKey: 'liveFieldFfbTorque', cmd: 'axis.curtorque?', group: 'ffb', format: 'raw' },
-  { id: 'ffb_maxtorque', labelKey: 'liveFieldMaxTorque', cmd: 'r axis.maxtorque', group: 'ffb', format: 'torque' },
+  { id: 'ffb_maxtorque', labelKey: 'liveFieldMaxTorque', cmd: 'axis.maxtorque?', group: 'ffb', format: 'torque' },
 
   { id: 'sys_fw', labelKey: 'liveFieldFirmware', cmd: 'sys.swver?', group: 'system', format: 'raw' },
   { id: 'sys_hw', labelKey: 'liveFieldHardware', cmd: 'sys.hwtype?', group: 'system', format: 'raw' },

@@ -9,6 +9,7 @@ function buildSetEffect(blockIdx: number, type: number, durationMs = 0xffff, gai
     durationMs & 0xff, (durationMs >> 8) & 0xff,
     0, 0, 0, 0, 0, 0,
     gain, 0,
+    0, 0, 0, 0, 0,
   ];
 }
 

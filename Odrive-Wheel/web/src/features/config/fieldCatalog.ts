@@ -1041,7 +1041,7 @@ export const configGroups: ConfigGroup[] = [
         protocol: 'openffboard',
         readonly: true,
         unit: 'V',
-        description: 'DC bus voltage via OpenFFBoard ADC scaling.',
+        description: 'Alias OpenFFBoard de vbus_voltage (mesma leitura ADC, em mV). Use vbus_voltage no monitor.',
       },
       {
         path: 'odrv.maxtorque',

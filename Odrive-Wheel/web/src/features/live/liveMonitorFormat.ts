@@ -34,6 +34,10 @@ export function formatLiveValue(locale: Locale, raw: string | undefined, format:
       const n = parseNumber(raw);
       return n !== null ? `${n.toFixed(3)} V` : v;
     }
+    case 'voltageMv': {
+      const n = parseNumber(raw);
+      return n !== null ? `${(n / 1000).toFixed(3)} V` : v;
+    }
     case 'current': {
       const n = parseNumber(raw);
       return n !== null ? `${n.toFixed(3)} A` : v;

@@ -2,6 +2,7 @@ import { boardCommands, type CommandCategory } from '../domain/commands/commandR
 import { flatFields, type ConfigField } from '../features/config/fieldCatalog';
 import { getFieldHelp } from '../features/config/fieldHelp';
 import { localizeField } from '../i18n/fieldMeta';
+import { localizeCommand } from '../i18n/commandMeta';
 import type { Locale } from '../i18n/messages';
 import { translate } from '../i18n/messages';
 import { preferredTabForField } from './refreshPolicy';
@@ -149,8 +150,9 @@ function searchCommands(queryTokens: string[], locale: Locale): SearchResult[] {
   const results: SearchResult[] = [];
 
   for (const command of boardCommands) {
+    const localized = localizeCommand(locale, command);
     const category = translate(locale, CATEGORY_KEYS[command.category]);
-    const text = `${command.label} ${command.description} ${command.command} ${category}`;
+    const text = `${localized.label} ${localized.description} ${command.command} ${category}`;
     const score = scoreText(text, queryTokens);
     if (score <= 0) {
       continue;
@@ -158,7 +160,7 @@ function searchCommands(queryTokens: string[], locale: Locale): SearchResult[] {
     results.push({
       id: `command:${command.id}`,
       kind: 'command',
-      title: command.label,
+      title: localized.label,
       subtitle: command.command,
       tab: 'commands',
       command: command.command,

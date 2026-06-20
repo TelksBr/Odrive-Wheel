@@ -1,4 +1,4 @@
-import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { PerspectiveCamera } from '@react-three/drei';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
@@ -9,17 +9,35 @@ import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
 import { usePageVisible } from '../../shared/usePageVisible';
 import { configureWheelMaterials } from './wheelMaterials';
-import {
-  loadWheelRenderQuality,
-  saveWheelRenderQuality,
-  WHEEL_QUALITY_ORDER,
-  wheelRenderSettings,
-  type WheelRenderQuality,
-  type WheelRenderSettings,
-} from './wheelRenderQuality';
+import { WHEEL_RENDER_SETTINGS, type WheelRenderSettings } from './wheelRenderQuality';
 
 const WHEEL_MODEL = '/models/wheel.fbx';
 const WHEEL_TEXTURES = '/models/wheel/textures/';
+
+export function preloadWheelModel(): void {
+  useLoader.preload(FBXLoader, WHEEL_MODEL, (loader) => {
+    loader.setResourcePath(WHEEL_TEXTURES);
+  });
+}
+
+function prepareWheelMesh(fbx: THREE.Group): number {
+  fbx.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+
+    if (child.geometry instanceof THREE.BufferGeometry) {
+      const merged = mergeVertices(child.geometry);
+      merged.computeVertexNormals();
+      child.geometry.dispose();
+      child.geometry = merged;
+    }
+  });
+
+  const box = new THREE.Box3().setFromObject(fbx);
+  const center = box.getCenter(new THREE.Vector3());
+  fbx.position.sub(center);
+  const size = box.getSize(new THREE.Vector3()).length();
+  return size > 0 ? 1.6 / size : 1;
+}
 
 interface WheelViewerProps {
   positionDegRef: React.MutableRefObject<number | null>;
@@ -74,9 +92,11 @@ function WheelRendererSetup({ settings }: { settings: WheelRenderSettings }) {
 function WheelMesh({
   positionDegRef,
   settings,
+  onReady,
 }: {
   positionDegRef: React.MutableRefObject<number | null>;
   settings: WheelRenderSettings;
+  onReady: () => void;
 }) {
   const { gl } = useThree();
   const fbx = useLoader(FBXLoader, WHEEL_MODEL, (loader) => {
@@ -84,29 +104,36 @@ function WheelMesh({
   });
   const groupRef = useRef<THREE.Group>(null);
   const maxAnisotropy = gl.capabilities.getMaxAnisotropy();
-
-  const scale = useMemo(() => {
-    fbx.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return;
-
-      if (child.geometry instanceof THREE.BufferGeometry) {
-        const merged = mergeVertices(child.geometry);
-        merged.computeVertexNormals();
-        child.geometry.dispose();
-        child.geometry = merged;
-      }
-    });
-
-    const box = new THREE.Box3().setFromObject(fbx);
-    const center = box.getCenter(new THREE.Vector3());
-    fbx.position.sub(center);
-    const size = box.getSize(new THREE.Vector3()).length();
-    return size > 0 ? 1.6 / size : 1;
-  }, [fbx]);
+  const [scale, setScale] = useState<number | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    const run = () => {
+      if (cancelled) return;
+      const nextScale = prepareWheelMesh(fbx);
+      setScale(nextScale);
+      onReady();
+    };
+
+    const idleId =
+      typeof requestIdleCallback === 'function'
+        ? requestIdleCallback(run, { timeout: 120 })
+        : window.setTimeout(run, 0);
+
+    return () => {
+      cancelled = true;
+      if (typeof cancelIdleCallback === 'function') {
+        cancelIdleCallback(idleId as number);
+      } else {
+        window.clearTimeout(idleId as number);
+      }
+    };
+  }, [fbx, onReady]);
+
+  useEffect(() => {
+    if (scale === null) return;
     configureWheelMaterials(fbx, settings, maxAnisotropy);
-  }, [fbx, settings, maxAnisotropy]);
+  }, [fbx, settings, maxAnisotropy, scale]);
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -114,6 +141,8 @@ function WheelMesh({
     if (deg === null) return;
     groupRef.current.rotation.z = (deg * Math.PI) / 180;
   });
+
+  if (scale === null) return null;
 
   return (
     <group ref={groupRef} scale={scale}>
@@ -124,39 +153,18 @@ function WheelMesh({
   );
 }
 
-function WheelPlaceholder() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (ref.current) ref.current.rotation.z = clock.elapsedTime * 0.4;
-  });
-  return (
-    <group>
-      <mesh ref={ref}>
-        <torusGeometry args={[0.72, 0.055, 16, 64]} />
-        <meshStandardMaterial color="#5a5a66" metalness={0.55} roughness={0.32} />
-      </mesh>
-      {[0, 120, 240].map((a) => (
-        <mesh key={a} rotation={[0, 0, (a * Math.PI) / 180]}>
-          <boxGeometry args={[0.06, 1.35, 0.04]} />
-          <meshStandardMaterial color="#3a3a46" metalness={0.6} roughness={0.4} />
-        </mesh>
-      ))}
-      <mesh>
-        <cylinderGeometry args={[0.1, 0.1, 0.08, 24]} />
-        <meshStandardMaterial color="#666672" metalness={0.9} roughness={0.15} />
-      </mesh>
-    </group>
-  );
-}
-
 const WheelScene = memo(function WheelScene({
   positionDegRef,
   connected,
   settings,
+  modelReady,
+  onModelReady,
 }: {
   positionDegRef: React.MutableRefObject<number | null>;
   connected: boolean;
   settings: WheelRenderSettings;
+  modelReady: boolean;
+  onModelReady: () => void;
 }) {
   const bgSet = useRef(false);
   useFrame(({ scene }) => {
@@ -170,10 +178,10 @@ const WheelScene = memo(function WheelScene({
     <>
       <PerspectiveCamera makeDefault position={[0, 0, 2.65]} fov={36} />
       <WheelRendererSetup settings={settings} />
-      <WheelEnvironment settings={settings} />
+      {modelReady && <WheelEnvironment settings={settings} />}
 
-      <Suspense fallback={<WheelPlaceholder />}>
-        <WheelMesh positionDegRef={positionDegRef} settings={settings} />
+      <Suspense fallback={null}>
+        <WheelMesh positionDegRef={positionDegRef} settings={settings} onReady={onModelReady} />
       </Suspense>
 
       {!connected && (
@@ -186,13 +194,6 @@ const WheelScene = memo(function WheelScene({
   );
 });
 
-const QUALITY_LABEL_KEYS: Record<WheelRenderQuality, 'wheelQualityLow' | 'wheelQualityMedium' | 'wheelQualityHigh' | 'wheelQualityUltra'> = {
-  low: 'wheelQualityLow',
-  medium: 'wheelQualityMedium',
-  high: 'wheelQualityHigh',
-  ultra: 'wheelQualityUltra',
-};
-
 export const WheelViewer = memo(function WheelViewer({
   positionDegRef,
   connected,
@@ -200,13 +201,15 @@ export const WheelViewer = memo(function WheelViewer({
 }: WheelViewerProps) {
   const { state } = useAppState();
   const pageVisible = usePageVisible();
-  const [quality, setQuality] = useState<WheelRenderQuality>(loadWheelRenderQuality);
-  const settings = useMemo(() => wheelRenderSettings(quality), [quality]);
+  const [modelReady, setModelReady] = useState(false);
   const renderActive = pageVisible && connected;
 
-  const onQualityChange = useCallback((next: WheelRenderQuality) => {
-    setQuality(next);
-    saveWheelRenderQuality(next);
+  useEffect(() => {
+    preloadWheelModel();
+  }, []);
+
+  const onModelReady = useCallback(() => {
+    setModelReady(true);
   }, []);
 
   return (
@@ -214,30 +217,11 @@ export const WheelViewer = memo(function WheelViewer({
       className="wheel-viewer"
       style={{ height, position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}
     >
-      <div className="wheel-quality-bar">
-        <label className="wheel-quality-label" htmlFor="wheel-render-quality">
-          {translate(state.locale, 'wheelQualityLabel')}
-        </label>
-        <select
-          id="wheel-render-quality"
-          className="wheel-quality-select"
-          value={quality}
-          onChange={(event) => onQualityChange(event.target.value as WheelRenderQuality)}
-          title={translate(state.locale, 'wheelQualityHint')}
-        >
-          {WHEEL_QUALITY_ORDER.map((id) => (
-            <option key={id} value={id}>
-              {translate(state.locale, QUALITY_LABEL_KEYS[id])}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <Canvas
         frameloop={renderActive ? 'always' : 'never'}
-        dpr={[1, settings.maxDpr]}
+        dpr={[1, WHEEL_RENDER_SETTINGS.maxDpr]}
         gl={{
-          antialias: settings.antialias,
+          antialias: WHEEL_RENDER_SETTINGS.antialias,
           alpha: false,
           powerPreference: 'high-performance',
           stencil: false,
@@ -245,19 +229,34 @@ export const WheelViewer = memo(function WheelViewer({
           failIfMajorPerformanceCaveat: false,
         }}
         onCreated={({ gl }) => {
-          gl.setPixelRatio(Math.min(window.devicePixelRatio, settings.maxDpr));
+          gl.setPixelRatio(Math.min(window.devicePixelRatio, WHEEL_RENDER_SETTINGS.maxDpr));
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = settings.toneMappingExposure;
+          gl.toneMappingExposure = WHEEL_RENDER_SETTINGS.toneMappingExposure;
           gl.domElement.addEventListener('webglcontextlost', (e) => {
             e.preventDefault();
           });
         }}
       >
-        <WheelScene positionDegRef={positionDegRef} connected={connected} settings={settings} />
+        <WheelScene
+          positionDegRef={positionDegRef}
+          connected={connected}
+          settings={WHEEL_RENDER_SETTINGS}
+          modelReady={modelReady}
+          onModelReady={onModelReady}
+        />
       </Canvas>
 
-      {!connected && (
+      {!modelReady && (
+        <div className="wheel-viewer-loading" aria-busy="true" aria-live="polite">
+          <div className="wheel-viewer-spinner" />
+          <span className="wheel-viewer-loading-label">
+            {translate(state.locale, 'wheelModelLoading')}
+          </span>
+        </div>
+      )}
+
+      {modelReady && !connected && (
         <div className="wheel-viewer-overlay">
           <span className="wheel-viewer-overlay-label">
             {translate(state.locale, 'wheelNoConnection')}
