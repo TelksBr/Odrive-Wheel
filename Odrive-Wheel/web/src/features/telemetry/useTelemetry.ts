@@ -5,10 +5,8 @@ import { serialService } from '../serial/SerialService';
 import { computeStats } from './types';
 import { allSeriesKeys } from './series';
 import { pushTelemetrySample, snapshotTelemetry } from './telemetryBuffer';
+import { MAX_TELEMETRY_SAMPLES, MAX_TELEMETRY_WINDOW_MS } from './controlOptions';
 import type { BrakePowerState, TelemetrySample, TelemetryStats } from './types';
-
-const MAX_WINDOW_MS = 60_000;
-const MAX_SAMPLES = 720;
 const UI_SYNC_MS = 500;
 
 const fieldByPath = new Map(flatFields.map((field) => [field.path, field]));
@@ -22,7 +20,7 @@ function odriveField(path: string) {
 }
 
 export interface TelemetryHandle {
-  /** All samples in the rolling buffer (up to MAX_WINDOW_MS). */
+  /** All samples in the rolling buffer (up to MAX_TELEMETRY_WINDOW_MS). */
   samples: TelemetrySample[];
   /** Samples trimmed to the current display window — frozen when paused. */
   displaySamples: TelemetrySample[];
@@ -119,7 +117,7 @@ export function useTelemetry({
         velocityDegS: parseNumber(velRaw),
       };
 
-      pushTelemetrySample(samplesRef.current, sample, MAX_WINDOW_MS, MAX_SAMPLES);
+      pushTelemetrySample(samplesRef.current, sample, MAX_TELEMETRY_WINDOW_MS, MAX_TELEMETRY_SAMPLES);
       syncVersionRef.current += 1;
       updateBrakePower(sample, brakeSamplesRef.current, resistanceRef.current, setBrakePower);
       setLastError(null);
@@ -267,7 +265,7 @@ function updateBrakePower(
   }
 
   brakeSamples.push({ t: sample.t, i2: sample.ibrake * sample.ibrake });
-  const cutoff = sample.t - MAX_WINDOW_MS;
+  const cutoff = sample.t - MAX_TELEMETRY_WINDOW_MS;
   while (brakeSamples.length > 0 && brakeSamples[0].t < cutoff) {
     brakeSamples.shift();
   }

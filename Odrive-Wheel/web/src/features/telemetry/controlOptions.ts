@@ -12,3 +12,11 @@ export const TELEMETRY_INTERVAL_OPTIONS = [
   { labelKey: 'observeInterval500ms', ms: 500 },
   { labelKey: 'observeInterval1s', ms: 1000 },
 ] as const;
+
+/** Longest chart window — ring buffer retains at least this much history. */
+export const MAX_TELEMETRY_WINDOW_MS = TELEMETRY_WINDOW_OPTIONS[TELEMETRY_WINDOW_OPTIONS.length - 1].ms;
+
+const MIN_TELEMETRY_INTERVAL_MS = TELEMETRY_INTERVAL_OPTIONS[0].ms;
+
+/** Enough slots for 5 min at 100 ms poll (fastest interval). */
+export const MAX_TELEMETRY_SAMPLES = Math.ceil(MAX_TELEMETRY_WINDOW_MS / MIN_TELEMETRY_INTERVAL_MS);

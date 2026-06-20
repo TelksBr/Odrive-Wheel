@@ -13,13 +13,12 @@ import {
   type LiveMap,
 } from './observePollCore';
 import { pushTelemetrySample, snapshotTelemetry } from '../telemetry/telemetryBuffer';
+import { MAX_TELEMETRY_SAMPLES, MAX_TELEMETRY_WINDOW_MS } from '../telemetry/controlOptions';
 import { computeStats } from '../telemetry/types';
 import { allSeriesKeys } from '../telemetry/series';
 import type { BrakePowerState, TelemetrySample } from '../telemetry/types';
 import type { TelemetryHandle } from '../telemetry/useTelemetry';
 
-const MAX_WINDOW_MS = 60_000;
-const MAX_SAMPLES = 720;
 const UI_SYNC_MS = 500;
 const MIN_INTERVAL_MS = 500;
 
@@ -100,7 +99,7 @@ export function useObservePolling({
 
   const applySample = useCallback(
     (sample: TelemetrySample) => {
-      pushTelemetrySample(samplesRef.current, sample, MAX_WINDOW_MS, MAX_SAMPLES);
+      pushTelemetrySample(samplesRef.current, sample, MAX_TELEMETRY_WINDOW_MS, MAX_TELEMETRY_SAMPLES);
       syncVersionRef.current += 1;
       updateBrakePower(sample, brakeSamplesRef.current, resistanceRef.current, setBrakePower);
     },
@@ -266,7 +265,7 @@ function updateBrakePower(
   if (Math.abs(sample.ibrake) > maxPhysicalCurrent) return;
 
   brakeSamples.push({ t: sample.t, i2: sample.ibrake * sample.ibrake });
-  const cutoff = sample.t - MAX_WINDOW_MS;
+  const cutoff = sample.t - MAX_TELEMETRY_WINDOW_MS;
   while (brakeSamples.length > 0 && brakeSamples[0].t < cutoff) {
     brakeSamples.shift();
   }
