@@ -1742,7 +1742,7 @@
   <div class="header-actions">
     <!-- Sponsor / BuyMeACoffee links (à esquerda do Connect) -->
     <span class="tool-version" title="HTML tool version"
-          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px">V0.14</span>
+          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px">V0.15</span>
     <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank" rel="noopener"
        title="Buy Me a Coffee" data-i18n-title="btn.bmc_tip"
        style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#FFDD00;text-decoration:none;font-size:18px;line-height:1"
@@ -7489,14 +7489,14 @@ function wireSetupTab() {
       await sendCmd('sc', false);
       await new Promise(r => setTimeout(r, 200));
 
-      // Divide calib_scan_distance por 5 antes do offset_cal pra reduzir
+      // Divide calib_scan_distance por 4 antes do offset_cal pra reduzir
       // movimento do volante (mesmo valor é persistido — vai valer também
       // pro offset_cal automático que vai rodar a cada boot).
       const csdRaw = await readProp('axis0.encoder.config.calib_scan_distance').catch(() => null);
       const csd    = parseFloat(csdRaw);
       if (isFinite(csd) && csd > 0) {
-        await writeProp('axis0.encoder.config.calib_scan_distance', (csd / 5).toFixed(4));
-        logLine(`step10 skip: calib_scan_distance ${csd.toFixed(2)} → ${(csd/5).toFixed(2)} (÷5)`, 'tx');
+        await writeProp('axis0.encoder.config.calib_scan_distance', (csd / 4).toFixed(4));
+        logLine(`step10 skip: calib_scan_distance ${csd.toFixed(2)} → ${(csd/4).toFixed(2)} (÷4)`, 'tx');
       }
 
       setSt('setup.step10_calibrating', 'var(--accent)');
