@@ -1742,7 +1742,7 @@
   <div class="header-actions">
     <!-- Sponsor / BuyMeACoffee links (à esquerda do Connect) -->
     <span class="tool-version" title="HTML tool version"
-          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px">V0.12</span>
+          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px">V0.13</span>
     <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank" rel="noopener"
        title="Buy Me a Coffee" data-i18n-title="btn.bmc_tip"
        style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#FFDD00;text-decoration:none;font-size:18px;line-height:1"
@@ -7444,7 +7444,6 @@ function wireSetupTab() {
   });
   document.getElementById('btn-setup-z-skip')?.addEventListener('click', async () => {
     if (!writer) { toast(t('toast.connect_first_board'), 'err'); return; }
-    if (!confirm(t('setup.step10_skip_confirm'))) return;
     const status = document.getElementById('setup-step10-status');
     const btn    = document.getElementById('btn-setup-z-skip');
     const setSt = (key, color) => {
@@ -7452,6 +7451,25 @@ function wireSetupTab() {
       status.textContent = t(key);
       status.style.color = color || 'var(--fg-muted)';
     };
+
+    // Se o passo anterior já deixou o encoder pronto e pre_calibrated salvo
+    // (caso AS5047 absoluto, ou incremental com Z já configurado), Skip NÃO
+    // precisa rodar nova OFFSET_CAL nem religar startup_encoder_offset_cal —
+    // só marca o passo como concluído. Re-rodar seria redundante e ainda
+    // poderia introduzir startup_*_cal indesejado em setups absolutos.
+    const isReady  = parseInt(await readProp('axis0.encoder.is_ready') || '0', 10);
+    const preCalib = (await readProp('axis0.encoder.config.pre_calibrated') || '').trim() === 'True';
+    if (isReady === 1 && preCalib) {
+      logLine('step10 skip: encoder já is_ready + pre_calibrated — nada a recalibrar', 'tx');
+      setSt('setup.step10_skipped', 'var(--ok, #34d399)');
+      _setupSetBtnState('btn-setup-z-skip', 'ok');
+      toast(t('setup.step10_skipped'), 'ok');
+      return;
+    }
+
+    // Caminho original — incremental sem Z, encoder não saiu calibrado do
+    // passo anterior. Motor vai girar pra calibrar offset.
+    if (!confirm(t('setup.step10_skip_confirm'))) return;
     btn.disabled = true;
     try {
       // Skip do Z: precisa rodar OFFSET_CAL (sem index) pra deixar o encoder
