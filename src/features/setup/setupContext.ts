@@ -211,7 +211,6 @@ function recommendEncoder(ctx: SetupContext): StepRecommendations | null {
       'axis0.encoder.config.cpr': '16384',
       'axis0.encoder.config.abs_spi_cs_gpio_pin': '7',
       'axis0.encoder.config.use_index': 'false',
-      'axis0.encoder.config.pre_calibrated': 'false',
       'axis0.encoder.config.direction': '1',
       'axis0.encoder.config.bandwidth': '200',
     };
@@ -233,7 +232,6 @@ function recommendEncoder(ctx: SetupContext): StepRecommendations | null {
       'axis0.encoder.config.mode': '0',
       'axis0.encoder.config.cpr': cpr,
       'axis0.encoder.config.use_index': 'false',
-      'axis0.encoder.config.pre_calibrated': 'false',
       'axis0.encoder.config.direction': '1',
       'axis0.encoder.config.bandwidth': '200',
     };
@@ -255,7 +253,6 @@ function recommendEncoder(ctx: SetupContext): StepRecommendations | null {
       'axis0.encoder.config.cpr': '16384',
       'axis0.encoder.config.abs_spi_cs_gpio_pin': '7',
       'axis0.encoder.config.use_index': 'false',
-      'axis0.encoder.config.pre_calibrated': 'false',
     },
     summaryKey: 'setupRecEncoderGuessMks',
     confidence: 'low',

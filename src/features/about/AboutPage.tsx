@@ -1,6 +1,6 @@
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
-import { Card, Pill, SectionHeader } from '../../shared/ui';
+import { Card, SectionHeader } from '../../shared/ui';
 import { AppIcon } from '../../shared/ui/AppIcon';
 
 import { FIRMWARE_UPSTREAM_URL, LEGACY_HTML_TOOL_URL } from '../../app/brand';
@@ -10,38 +10,7 @@ const HOSTED_HTML = LEGACY_HTML_TOOL_URL;
 const ODRIVE_REPO = 'https://github.com/odriverobotics/ODrive';
 const OPENFF_REPO = 'https://github.com/Ultrawipf/OpenFFBoard';
 const SPONSOR_URL = 'https://github.com/sponsors/eagabriel';
-
-type ProposalStatus = 'done' | 'next' | 'future';
-
-interface ProposalItem {
-  key: string;
-  status: ProposalStatus;
-}
-
-const PROPOSAL_ITEMS: ProposalItem[] = [
-  { key: 'aboutPropDashboard', status: 'done' },
-  { key: 'aboutPropSave', status: 'done' },
-  { key: 'aboutPropTune', status: 'done' },
-  { key: 'aboutPropInputs', status: 'done' },
-  { key: 'aboutPropTelemetry', status: 'done' },
-  { key: 'aboutPropObserve', status: 'done' },
-  { key: 'aboutPropOverlay', status: 'done' },
-  { key: 'aboutPropPerfTest', status: 'done' },
-  { key: 'aboutPropProfiles', status: 'next' },
-  { key: 'aboutPropOnboarding', status: 'next' },
-];
-
-const STATUS_TONE: Record<ProposalStatus, 'ok' | 'warn' | 'neutral'> = {
-  done: 'ok',
-  next: 'warn',
-  future: 'neutral',
-};
-
-const STATUS_LABEL: Record<ProposalStatus, string> = {
-  done: 'aboutProposalStatusDone',
-  next: 'aboutProposalStatusNext',
-  future: 'aboutProposalStatusFuture',
-};
+const TELEGRAM_URL = 'https://t.me/telks13';
 
 export function AboutPage() {
   const { state } = useAppState();
@@ -86,6 +55,18 @@ export function AboutPage() {
           </ul>
         </Card>
 
+        <Card title={translate(locale, 'aboutContactTitle')}>
+          <p className="about-lead">{translate(locale, 'aboutContactBody')}</p>
+          <ul className="about-links">
+            <li>
+              <a href={TELEGRAM_URL} target="_blank" rel="noreferrer" className="about-link-with-icon">
+                <AppIcon id="social-icon" size={16} />
+                {translate(locale, 'aboutTelegram')}
+              </a>
+            </li>
+          </ul>
+        </Card>
+
         <Card title={translate(locale, 'aboutLineageTitle')}>
           <ul className="about-list">
             <li>
@@ -100,45 +81,6 @@ export function AboutPage() {
             </li>
             <li>{translate(locale, 'aboutLineageBridge')}</li>
           </ul>
-        </Card>
-
-        <Card title={translate(locale, 'aboutWebTitle')}>
-          <ul className="about-list about-list--checks">
-            <li>{translate(locale, 'aboutWebPwa')}</li>
-            <li>{translate(locale, 'aboutWebSerial')}</li>
-            <li>{translate(locale, 'aboutWebWorkspaces')}</li>
-            <li>{translate(locale, 'aboutWebGuidance')}</li>
-            <li>{translate(locale, 'aboutWebLive')}</li>
-          </ul>
-        </Card>
-
-        <Card
-          title={translate(locale, 'aboutProposalTitle')}
-          description={translate(locale, 'aboutProposalIntro')}
-        >
-          <div className="about-proposal">
-            <div className="about-proposal-compare">
-              <div className="about-proposal-col">
-                <span className="eyebrow">{translate(locale, 'aboutCompareHtmlLabel')}</span>
-                <p>{translate(locale, 'aboutCompareHtmlText')}</p>
-              </div>
-              <div className="about-proposal-col about-proposal-col--accent">
-                <span className="eyebrow">{translate(locale, 'aboutComparePwaLabel')}</span>
-                <p>{translate(locale, 'aboutComparePwaText')}</p>
-              </div>
-            </div>
-
-            <ul className="about-proposal-items">
-              {PROPOSAL_ITEMS.map((item) => (
-                <li key={item.key}>
-                  <Pill tone={STATUS_TONE[item.status]}>
-                    {translate(locale, STATUS_LABEL[item.status])}
-                  </Pill>
-                  <span>{translate(locale, item.key)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
         </Card>
 
         <Card title={translate(locale, 'aboutLicenseTitle')}>

@@ -196,7 +196,14 @@ export function QuickStartPage() {
   async function applySpecs(stepId: SetupStepId, specs: typeof POWER_SPECS, values: Record<string, string>) {
     dispatch({ type: 'set-busy', busy: true });
     try {
-      const result = await writePaths(specsToWrites(specs, values), dispatch);
+      let writes = specsToWrites(specs, values);
+      if (stepId === 'encoder') {
+        writes = [
+          ...writes.filter((w) => w.path !== 'axis0.encoder.config.pre_calibrated'),
+          { path: 'axis0.encoder.config.pre_calibrated', value: false },
+        ];
+      }
+      const result = await writePaths(writes, dispatch);
       dispatch({
         type: 'append-log',
         direction: result.fail === 0 ? 'info' : 'error',
@@ -306,13 +313,16 @@ export function QuickStartPage() {
   function renderStepActions(id: SetupStepId, actions: ReactNode) {
     const def = SETUP_STEPS.find((s) => s.id === id);
     const skipped = isSkipped(id);
+    const isLast = id === 'finish';
     return (
       <>
         {actions}
-        <button type="button" className="ghost" onClick={() => goNext(id)}>
-          {translate(locale, 'setupStepNext')}
-        </button>
-        {def?.optional && !skipped ? (
+        {!isLast ? (
+          <button type="button" className="ghost" onClick={() => goNext(id)}>
+            {translate(locale, 'setupStepNext')}
+          </button>
+        ) : null}
+        {!isLast && def?.optional && !skipped ? (
           <button type="button" className="ghost setup-skip-btn" onClick={() => skipStep(id)}>
             {translate(locale, 'setupStepSkip')}
           </button>
@@ -324,6 +334,7 @@ export function QuickStartPage() {
   function stepProps(id: SetupStepId) {
     const def = SETUP_STEPS.find((s) => s.id === id)!;
     const skipped = isSkipped(id);
+    const isLast = id === 'finish';
     return {
       num: setupStepIndex(id) + 1,
       titleKey: def.titleKey,
@@ -332,7 +343,7 @@ export function QuickStartPage() {
       skipped,
       done: doneSteps.has(id),
       collapsed: skipped,
-      onSkip: def.optional ? () => skipStep(id) : undefined,
+      onSkip: !isLast && def.optional ? () => skipStep(id) : undefined,
       onUnskip: skipped ? () => unskipStep(id) : undefined,
     };
   }
@@ -503,6 +514,7 @@ export function QuickStartPage() {
               applyRecommendationsToForm(stepRecommendations, setEncValues);
             }
           })}
+          <p className="setup-checkpoint-hint">{translate(locale, 'setupEncoderPreCalHint')}</p>
           <SetupParamForm specs={ENC_SPECS} values={encValues} onChange={(path, value) => setEncValues((c) => ({ ...c, [path]: value }))} />
         </SetupStepCard>
       )}

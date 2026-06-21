@@ -30,7 +30,6 @@ export const ENC_SPECS: SetupFormSpec[] = [
   { path: 'axis0.encoder.config.bandwidth', type: 'number', defaultValue: 200 },
   { path: 'axis0.encoder.config.use_index', type: 'bool', defaultValue: false },
   { path: 'axis0.encoder.config.abs_spi_cs_gpio_pin', type: 'number', defaultValue: 7 },
-  { path: 'axis0.encoder.config.pre_calibrated', type: 'bool', defaultValue: false },
 ];
 
 export const FFB_SPECS: SetupFormSpec[] = [

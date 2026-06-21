@@ -48,6 +48,9 @@ export function DfuPage() {
         <li>{translate(state.locale, 'dfuStep4')}</li>
       </ol>
 
+      <p className="setup-checkpoint-hint">{translate(state.locale, 'dfuConfigPreserve')}</p>
+      <p className="muted">{translate(state.locale, 'dfuZadigHint')}</p>
+
       {!state.usbSupported ? <p className="warning">{translate(state.locale, 'noUsb')}</p> : null}
 
       <div className="status-row">
@@ -119,6 +122,7 @@ export function DfuPage() {
                 return;
               }
               await dfuService.flash(firmware, report);
+              setBootloader('');
               toastKey(dispatch, state.locale, 'dfuFlashComplete', 'ok');
               report(translate(state.locale, 'dfuFlashCompleteHint'));
             })

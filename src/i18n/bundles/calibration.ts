@@ -94,6 +94,8 @@ export const calibrationPt = {
   setupStep6Desc: 'Modo, CPR, direção e pinos. Para AS5047 onboard use o preset na aba Calibração.',
   setupStep6Apply: 'Aplicar no device',
   setupStep6Open: 'Abrir aba Calibração',
+  setupEncoderPreCalHint:
+    'Pré-calibrado (encoder) não aparece aqui — será definido no passo Boot + Salvar, após calibração do encoder.',
   setupStep7Title: 'Calibração do motor',
   setupStep7Desc: 'Mede R e L de fase (state=4). Motor apita mas não deve girar. Aguarda IDLE automaticamente.',
   setupStep7Action: 'Executar calibração do motor',
@@ -454,6 +456,8 @@ export const calibrationEn = {
   setupStep6Desc: 'Mode, CPR, direction and pins. For onboard AS5047 use the preset on the Calibration tab.',
   setupStep6Apply: 'Apply to device',
   setupStep6Open: 'Open Calibration tab',
+  setupEncoderPreCalHint:
+    'Encoder pre_calibrated is not shown here — it is set in the Boot + Save step after encoder calibration.',
   setupStep7Title: 'Motor calibration',
   setupStep7Desc: 'Measures phase R and L (state=4). Motor beeps but should not spin. Waits for IDLE automatically.',
   setupStep7Action: 'Run motor calibration',

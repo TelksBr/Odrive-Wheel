@@ -10,6 +10,15 @@ const DfuRequest = {
   Abort: 6,
 } as const;
 
+/** USB DFU 1.1 device states (subset used during manifest). */
+const DfuState = {
+  dfuIDLE: 2,
+  dfuDNLOAD_IDLE: 5,
+  dfuMANIFEST_SYNC: 6,
+  dfuMANIFEST: 7,
+  dfuMANIFEST_WAIT_RESET: 8,
+} as const;
+
 type DfuRequestCode = (typeof DfuRequest)[keyof typeof DfuRequest];
 
 interface DfuStatus {
@@ -18,7 +27,46 @@ interface DfuStatus {
   state: number;
 }
 
+interface FlashSector {
+  start: number;
+  size: number;
+}
+
+interface ProtectedRange {
+  start: number;
+  end: number;
+  name: string;
+}
+
+/** STM32F405 sector layout — matches odrive-wheel.html DfuSe logic. */
+const STM32F4_SECTORS: FlashSector[] = [
+  { start: 0x08000000, size: 16 * 1024 }, // S0
+  { start: 0x08004000, size: 16 * 1024 }, // S1 — FFB EEPROM (protected)
+  { start: 0x08008000, size: 16 * 1024 }, // S2 — FFB EEPROM (protected)
+  { start: 0x0800c000, size: 16 * 1024 }, // S3
+  { start: 0x08010000, size: 64 * 1024 }, // S4
+  { start: 0x08020000, size: 128 * 1024 }, // S5
+  { start: 0x08040000, size: 128 * 1024 }, // S6
+  { start: 0x08060000, size: 128 * 1024 }, // S7
+  { start: 0x08080000, size: 128 * 1024 }, // S8
+  { start: 0x080a0000, size: 128 * 1024 }, // S9
+  // S10/S11 @ 0x080C0000 — ODrive NVM, outside typical .bin image
+];
+
+/** FFB emulated EEPROM — must not be erased or overwritten during DFU. */
+const PROTECTED_RANGES: ProtectedRange[] = [
+  { start: 0x08004000, end: 0x0800c000, name: 'FFB EEPROM (S1+S2)' },
+];
+
 export type DfuProgress = (message: string, progress?: number) => void;
+
+function inProtected(addr: number): boolean {
+  return PROTECTED_RANGES.some((range) => addr >= range.start && addr < range.end);
+}
+
+function sectorIndex(sector: FlashSector): number {
+  return STM32F4_SECTORS.indexOf(sector);
+}
 
 export class DfuService {
   private device: USBDevice | null = null;
@@ -47,27 +95,139 @@ export class DfuService {
     onProgress('Clearing DFU status', 0);
     await this.clearStatus();
     await this.abort();
-    await this.setAddress(APP_BASE_ADDRESS);
-
-    const pageSize = 16 * 1024;
-    const totalErase = Math.ceil(binary.byteLength / pageSize);
-    for (let page = 0; page < totalErase; page += 1) {
-      await this.erasePage(APP_BASE_ADDRESS + page * pageSize);
-      onProgress(`Erased page ${page + 1}/${totalErase}`, page / totalErase * 20);
-    }
 
     const data = new Uint8Array(binary);
-    let block = 2;
-    for (let offset = 0; offset < data.byteLength; offset += TRANSFER_SIZE) {
-      const chunk = data.slice(offset, offset + TRANSFER_SIZE);
-      await this.download(block, chunk);
-      block += 1;
-      onProgress(`Wrote ${Math.min(offset + chunk.byteLength, data.byteLength)} / ${data.byteLength} bytes`, 20 + (offset / data.byteLength) * 75);
+    const endAddr = APP_BASE_ADDRESS + data.byteLength;
+    const sectorsAll = STM32F4_SECTORS.filter(
+      (sector) => sector.start < endAddr && sector.start + sector.size > APP_BASE_ADDRESS,
+    );
+    const sectorsToErase = sectorsAll.filter((sector) => !inProtected(sector.start));
+    const skippedSectors = sectorsAll.filter((sector) => inProtected(sector.start));
+
+    if (skippedSectors.length > 0) {
+      onProgress(
+        `Skipping protected sector(s): ${skippedSectors.map((s) => `S${sectorIndex(s)}`).join(', ')} (FFB EEPROM preserved)`,
+        1,
+      );
     }
 
+    onProgress(`Erasing ${sectorsToErase.length} sector(s)...`, 2);
+    for (let i = 0; i < sectorsToErase.length; i += 1) {
+      const sector = sectorsToErase[i];
+      await this.erasePage(sector.start);
+      onProgress(
+        `Erased S${sectorIndex(sector)} @ 0x${sector.start.toString(16)}`,
+        2 + ((i + 1) / sectorsToErase.length) * 18,
+      );
+    }
+
+    const totalChunks = Math.ceil(data.byteLength / TRANSFER_SIZE);
+    onProgress(`Writing ${data.byteLength} bytes (${totalChunks} chunks, skipping protected ranges)...`, 20);
+
+    let curBaseAddr = -1;
+    let curBlockOffset = 0;
+    let chunksWritten = 0;
+    let chunksSkipped = 0;
+
+    for (let i = 0; i < totalChunks; i += 1) {
+      const start = i * TRANSFER_SIZE;
+      const end = Math.min(start + TRANSFER_SIZE, data.byteLength);
+      const chunkAddr = APP_BASE_ADDRESS + start;
+      const chunkEndAddr = APP_BASE_ADDRESS + end;
+
+      const fullyProtected = PROTECTED_RANGES.some(
+        (range) => chunkAddr >= range.start && chunkEndAddr <= range.end,
+      );
+      if (fullyProtected) {
+        chunksSkipped += 1;
+        curBaseAddr = -1;
+        continue;
+      }
+
+      if (curBaseAddr === -1) {
+        await this.setAddressAndIdle(chunkAddr);
+        curBaseAddr = chunkAddr;
+        curBlockOffset = 0;
+      }
+
+      const chunk = data.slice(start, end);
+      const blockNum = 2 + curBlockOffset;
+      await this.download(blockNum, chunk);
+      curBlockOffset += 1;
+      chunksWritten += 1;
+
+      if (i % 16 === 0 || i === totalChunks - 1) {
+        onProgress(
+          `Wrote chunk ${i + 1}/${totalChunks} (${chunksSkipped} skipped)`,
+          20 + ((i + 1) / totalChunks) * 75,
+        );
+      }
+    }
+
+    onProgress(`Download complete — ${chunksWritten} chunks written, ${chunksSkipped} skipped`, 96);
+    await this.manifest(onProgress);
+    onProgress('DFU sequence complete — board rebooting', 100);
+  }
+
+  /** Zero-length DNLOAD + manifest poll. USB may detach — that is success. */
+  private async manifest(onProgress: DfuProgress): Promise<void> {
     onProgress('Manifesting firmware', 98);
-    await this.download(0, new Uint8Array());
-    onProgress('DFU sequence complete', 100);
+    try {
+      await this.controlOut(DfuRequest.Dnload, 0, new Uint8Array());
+    } catch {
+      await this.releaseDevice();
+      onProgress('Bootloader disconnected — board rebooting', 99);
+      return;
+    }
+
+    try {
+      let status = await this.getStatus();
+      for (let attempt = 0; attempt < 200; attempt += 1) {
+        if (status.state === DfuState.dfuMANIFEST || status.state === DfuState.dfuMANIFEST_SYNC) {
+          await new Promise((resolve) => window.setTimeout(resolve, Math.max(status.pollTimeout, 5)));
+          status = await this.getStatus();
+          continue;
+        }
+        if (
+          status.state === DfuState.dfuMANIFEST_WAIT_RESET ||
+          status.state === DfuState.dfuIDLE ||
+          status.state === DfuState.dfuDNLOAD_IDLE
+        ) {
+          break;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, Math.max(status.pollTimeout, 10)));
+        status = await this.getStatus();
+      }
+    } catch {
+      // STM ROM bootloader detaches during manifest reset — expected.
+      onProgress('Bootloader disconnected — board rebooting', 99);
+    }
+
+    await this.releaseDevice();
+  }
+
+  private async releaseDevice(): Promise<void> {
+    if (!this.device) {
+      return;
+    }
+    try {
+      if (this.device.opened) {
+        await this.device.close();
+      }
+    } catch {
+      // device may already be gone after reset
+    }
+    this.device = null;
+  }
+
+  private async setAddressAndIdle(address: number): Promise<void> {
+    await this.setAddress(address);
+    try {
+      await this.abort();
+    } catch {
+      // ignore — bootloader may already be idle
+    }
+    await this.pollIdle();
   }
 
   private async setAddress(address: number): Promise<void> {
@@ -113,7 +273,7 @@ export class DfuService {
       if (status.status !== 0) {
         throw new Error(`DFU error status ${status.status}`);
       }
-      if (status.state === 2 || status.state === 5) {
+      if (status.state === DfuState.dfuIDLE || status.state === DfuState.dfuDNLOAD_IDLE) {
         return;
       }
       await new Promise((resolve) => window.setTimeout(resolve, Math.max(status.pollTimeout, 10)));

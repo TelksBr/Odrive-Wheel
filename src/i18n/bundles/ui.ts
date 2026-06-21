@@ -221,11 +221,16 @@ export const uiPt = {
   dfuStep2: 'Após o reboot, clique em Procurar bootloader (WebUSB — Chrome/Edge).',
   dfuStep3: 'Escolha o arquivo .bin do firmware compilado.',
   dfuStep4: 'Grave o firmware e reconecte a serial quando a placa voltar ao app.',
+  dfuConfigPreserve:
+    'Configs gravadas com Salvar são preservadas: EEPROM FFB (setores S1+S2) e NVM ODrive (S10+) não são apagados durante o flash. Só perde dados se usar Apagar config (se) ou sys.eeformat! antes.',
+  dfuZadigHint:
+    'Windows: se o bootloader não aparecer, instale driver WinUSB no “STM32 BOOTLOADER” via Zadig (https://zadig.akeo.ie/) — uma vez só.',
   dfuBootloaderConnected: 'Bootloader conectado: {name}',
   dfuFirmwareSelected: 'Firmware selecionado: {name}',
   dfuInvalidFirmware: 'Selecione um arquivo .bin válido',
   dfuFlashComplete: 'Gravação DFU concluída',
-  dfuFlashCompleteHint: 'Desconecte o bootloader USB, reconecte a serial e verifique a versão do firmware.',
+  dfuFlashCompleteHint:
+    'A placa está a reiniciar com o novo firmware. Desconecte/reconecte USB se necessário, clique Conectar na barra e confirme sys.swver.',
   observeKpiMode: 'Modo',
   dashboardWheelCenteredLog: 'Volante centralizado (axis.zeroenc!)',
   dashboardWheelCenteredSaved: 'Volante centralizado e zeroOffset gravado na EEPROM FFB (sys.save!)',
@@ -505,11 +510,16 @@ export const uiEn = {
   dfuStep2: 'After reboot, click Find bootloader (WebUSB — Chrome/Edge).',
   dfuStep3: 'Choose the compiled firmware .bin file.',
   dfuStep4: 'Flash firmware, then reconnect serial when the board returns to the app.',
+  dfuConfigPreserve:
+    'Saved configs are preserved: FFB EEPROM (S1+S2) and ODrive NVM (S10+) are not erased during flash. Data is only lost if you run Erase config (se) or sys.eeformat! first.',
+  dfuZadigHint:
+    'Windows: if the bootloader is not found, install WinUSB on “STM32 BOOTLOADER” via Zadig (https://zadig.akeo.ie/) — one-time setup.',
   dfuBootloaderConnected: 'Bootloader connected: {name}',
   dfuFirmwareSelected: 'Firmware selected: {name}',
   dfuInvalidFirmware: 'Select a valid .bin file',
   dfuFlashComplete: 'DFU flash complete',
-  dfuFlashCompleteHint: 'Disconnect the USB bootloader, reconnect serial, and verify firmware version.',
+  dfuFlashCompleteHint:
+    'The board is rebooting with the new firmware. Replug USB if needed, click Connect in the toolbar, and verify sys.swver.',
   observeKpiMode: 'Mode',
   dashboardWheelCenteredLog: 'Wheel centered (axis.zeroenc!)',
   dashboardWheelCenteredSaved: 'Wheel centered and zeroOffset saved to FFB EEPROM (sys.save!)',
