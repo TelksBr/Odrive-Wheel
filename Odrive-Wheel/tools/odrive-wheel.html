@@ -1742,7 +1742,7 @@
   <div class="header-actions">
     <!-- Sponsor / BuyMeACoffee links (à esquerda do Connect) -->
     <span class="tool-version" title="HTML tool version"
-          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px">V0.15</span>
+          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px">V0.16</span>
     <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank" rel="noopener"
        title="Buy Me a Coffee" data-i18n-title="btn.bmc_tip"
        style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#FFDD00;text-decoration:none;font-size:18px;line-height:1"
@@ -7078,10 +7078,13 @@ function wireSetupTab() {
       el.textContent = v.toFixed(2) + ' V';
       el.style.color = v > 10 ? 'var(--ok)' : 'var(--warn)';
 
-      // 2. Calcula os 5 valores de proteção em torno da tensão real
+      // 2. Calcula os 5 valores de proteção em torno da tensão real.
+      // ramp_start = V+0.5 garante que duty do brake só começa a subir
+      // depois que a fonte realmente para de conseguir absorver (deixa
+      // pequena folga acima do nominal antes do brake atuar).
       const uv        = v - 5;
       const ov        = v + 5;
-      const rampStart = v;
+      const rampStart = v + 0.5;
       const rampEnd   = v + 3;
 
       // 3. Escreve TUDO usando _setupWriteFromForm com valores literais.
@@ -7172,7 +7175,9 @@ function wireSetupTab() {
     // que tiramos do form (mas que ainda precisam ser configurados):
     //   enable_brake_resistor = True
     //   dc_max_negative_current = -7
-    //   max_regen_current = 0
+    //   max_regen_current = 0.1   (threshold abaixo do qual regen vai pra
+    //                              fonte; valor pequeno mas != 0 evita que
+    //                              qualquer micro-regen dispare brake)
     const r = await _setupWriteFromForm([
       { path: 'config.brake_resistance',                type: 'number' },
       { path: 'config.dc_bus_undervoltage_trip_level',  type: 'number' },
@@ -7181,7 +7186,7 @@ function wireSetupTab() {
       { path: 'sys.vbusdiv',                            type: 'number' },
       { path: 'config.enable_brake_resistor',           type: 'bool',   value: true },
       { path: 'config.dc_max_negative_current',         type: 'number', value: -7 },
-      { path: 'config.max_regen_current',               type: 'number', value: 0 },
+      { path: 'config.max_regen_current',               type: 'number', value: 0.1 },
     ]);
     toast(t('setup.toast_written').replace('{ok}', r.ok).replace('{fail}', r.fail),
           r.fail === 0 ? 'ok' : 'warn');
