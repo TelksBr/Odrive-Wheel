@@ -1,114 +1,38 @@
-# =============================================================================
-# Build artifacts
-# =============================================================================
-build/
-*.o
-*.d
-*.elf
-*.bin
-*.hex
-*.map
-*.lst
+# Dependencies
+node_modules/
 
-# =============================================================================
-# Compiler / IDE
-# =============================================================================
-*.obj
-*.lib
-*.a
-.vscode/
+# Build output
+dist/
+dist-ssr/
+dev-dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment / local
+*.local
+.env
+.env.*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
 .idea/
 *.code-workspace
-.cache/
-compile_commands.json
-.venv/
-.venv
-# =============================================================================
-# Distribution archives (originals from upstream — not redistributed)
-# =============================================================================
-*.zip
-*.7z
-*.tar.gz
-*.tgz
-
-# =============================================================================
-# Standalone tools (not part of source)
-# =============================================================================
-*.exe
-
-# =============================================================================
-# Documentation binaries (large, not redistributed)
-# Exception: PDFs/Word docs explicitly placed in docs/ are intentional
-# hardware references (schematics, datasheets) — track them.
-# =============================================================================
-*.pdf
-*.docx
-*.doc
-!docs/*.pdf
-!docs/*.docx
-!docs/*.doc
-
-# =============================================================================
-# Logs / temp / OS
-# =============================================================================
-*.log
-*.tmp
-*.swp
-*.swo
-*~
 .DS_Store
 Thumbs.db
 desktop.ini
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# =============================================================================
-# Saved configs (user-specific)
-# Pattern exclui exports timestamp-named do tool. Whitelist específico
-# pros 2 presets que rastreamos como referência de hardware atual.
-# =============================================================================
+# User exports (profiles)
 odrive_config_*.json
-!Odrive-Wheel/tools/odrive_config_2026-05-06T16-33-53-630Z-Hoverboard.json
-!Odrive-Wheel/tools/odrive_config_2026-05-07T21-49-59-444Z_Servo18Nm.json
 odrive_config_dump.txt
-odrive servoconfig.json
-Odrive config.txt
-
-# =============================================================================
-# External tool configs / random logs (not part of project)
-# =============================================================================
-VKB_JoyTester.ini
-logfile.txt
-
-# =============================================================================
-# Extras / legacy that we don't want pushed
-# =============================================================================
-ODrive-fw-v0.5.1/
-ODrive.GUI.Configurador.exe
-OpenFFBoard-configurator/
-Firmware-Merged/
-.claude/
-
-# =============================================================================
-# ODrive Python tooling (unused — our HTML config tool replaces it)
-# Has Git LFS binaries (libfibre.dll etc) that fail to push without LFS server
-# =============================================================================
-ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/Firmware/fibre-cpp/test/
-ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/.gitattributes
-ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/Firmware/.gitattributes
-
-# =============================================================================
-# Allow CMSIS DSP libs (required for linking)
-# =============================================================================
-!ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/Firmware/ThirdParty/CMSIS/Lib/GCC/libarm_cortexM4lf_math.a
-!ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/Firmware/ThirdParty/CMSIS/Lib/GCC/libarm_cortexM7lfsp_math.a
-
-# =============================================================================
-# ODrive upstream tools/ — só rastreamos os 2 scripts que o build precisa
-# (version.py + interface_generator.py via PR #1). O resto do diretório é
-# ferramenta Python CLI do upstream (odrivetool, dfu.py, etc) que não usamos
-# porque nosso HTML config tool substitui essa stack.
-# =============================================================================
-ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/tools/**
-!ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/tools/odrive/
-!ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/tools/odrive/version.py
-!ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/tools/fibre-tools/
-!ODrive-fw-v0.5.6/ODrive-fw-v0.5.6/tools/fibre-tools/interface_generator.py

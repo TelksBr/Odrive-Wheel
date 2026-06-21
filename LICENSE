@@ -1,23 +1,14 @@
-                    GNU GENERAL PUBLIC LICENSE
-                       Version 3, 29 June 2007
+WheelForge — Web Application
+Copyright (C) 2024–2026 WheelForge contributors
 
- Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
- Everyone is permitted to copy and distribute verbatim copies
- of this license document, but changing it is not allowed.
+WheelForge is a Progressive Web App for configuring FFB wheel hardware
+running Odrive-Wheel-compatible firmware.
 
-This project incorporates code from:
+Firmware is maintained separately at:
+https://github.com/eagabriel/Odrive-Wheel
 
-  * ODrive Firmware (https://github.com/odriverobotics/ODrive)
-    Licensed under MIT License (see ODrive-fw-v0.5.6/LICENSE)
-
-  * OpenFFBoard (https://github.com/Ultrawipf/OpenFFBoard)
-    Licensed under GNU General Public License v3.0
-    (see OpenFFBoard-master/LICENSE)
-
-Because this project links against and includes GPL-licensed code from
-OpenFFBoard, the combined work is distributed under the terms of the
-GNU General Public License v3.0 as published by the Free Software
-Foundation.
+Unless otherwise noted in individual source files, this web application is
+distributed under the GNU General Public License v3.0.
 
 The full text of the GPLv3 is available at:
 https://www.gnu.org/licenses/gpl-3.0.txt

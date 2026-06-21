@@ -1,0 +1,472 @@
+[
+  {
+    "path": "config.enable_dc_bus_overvoltage_ramp",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "config.enable_i2c_a",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "config.enable_uart_a",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "config.enable_uart_b",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "config.enable_uart_c",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "config.uart0_protocol",
+    "protocol": "odrive",
+    "type": "int"
+  },
+  {
+    "path": "config.uart1_protocol",
+    "protocol": "odrive",
+    "type": "int"
+  },
+  {
+    "path": "config.uart2_protocol",
+    "protocol": "odrive",
+    "type": "int"
+  },
+  {
+    "path": "config.uart_a_baudrate",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "config.uart_b_baudrate",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "config.uart_c_baudrate",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "config.usb_cdc_protocol",
+    "protocol": "odrive",
+    "type": "int"
+  },
+  {
+    "path": "config.error_gpio_pin",
+    "protocol": "odrive",
+    "type": "int"
+  },
+  {
+    "path": "axis0.config.startup_homing",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.config.enable_sensorless_mode",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.config.enable_step_dir",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.config.step_dir_always_on",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.step_gpio_pin",
+    "protocol": "odrive",
+    "type": "int"
+  },
+  {
+    "path": "axis0.config.dir_gpio_pin",
+    "protocol": "odrive",
+    "type": "int"
+  },
+  {
+    "path": "axis0.config.enable_watchdog",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.config.watchdog_timeout",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.calibration_lockin.current",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.calibration_lockin.ramp_time",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.calibration_lockin.ramp_distance",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.calibration_lockin.accel",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.calibration_lockin.vel",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.general_lockin.current",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.general_lockin.ramp_time",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.general_lockin.ramp_distance",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.general_lockin.accel",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.general_lockin.vel",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.general_lockin.finish_distance",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.general_lockin.finish_on_distance",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.config.general_lockin.finish_on_enc_idx",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.config.general_lockin.finish_on_vel",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.config.sensorless_ramp.current",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.sensorless_ramp.ramp_time",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.sensorless_ramp.ramp_distance",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.sensorless_ramp.accel",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.sensorless_ramp.vel",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.sensorless_ramp.finish_distance",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.config.sensorless_ramp.finish_on_distance",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.config.sensorless_ramp.finish_on_enc_idx",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.config.sensorless_ramp.finish_on_vel",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.motor.config.dc_calib_tau",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.current_lim_margin",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.torque_lim",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.I_bus_hard_min",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.I_bus_hard_max",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.I_leak_max",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.inverter_temp_limit_lower",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.inverter_temp_limit_upper",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.R_wL_FF_enable",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.bEMF_FF_enable",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.acim_gain_min_flux",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.acim_autoflux_enable",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.acim_autoflux_min_Id",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.acim_autoflux_attack_gain",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.motor.config.acim_autoflux_decay_gain",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.encoder.config.enable_phase_interpolation",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.encoder.config.use_index_offset",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.encoder.config.index_offset",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.encoder.config.find_idx_on_lockin_only",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.encoder.config.calib_range",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.encoder.config.calib_scan_distance",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.encoder.config.calib_scan_omega",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.encoder.config.hall_polarity",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.encoder.config.hall_polarity_calibrated",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.encoder.config.ignore_illegal_hall_state",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.encoder.config.sincos_gpio_pin_sin",
+    "protocol": "odrive",
+    "type": "int"
+  },
+  {
+    "path": "axis0.encoder.config.sincos_gpio_pin_cos",
+    "protocol": "odrive",
+    "type": "int"
+  },
+  {
+    "path": "axis0.controller.config.input_filter_bandwidth",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.torque_ramp_rate",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.vel_ramp_rate",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.vel_integrator_limit",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.enable_gain_scheduling",
+    "protocol": "odrive",
+    "type": "bool"
+  },
+  {
+    "path": "axis0.controller.config.gain_scheduling_width",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.vel_limit_tolerance",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.circular_setpoints",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.circular_setpoint_range",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.steps_per_circular_range",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.homing_speed",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.load_encoder_axis",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.axis_to_mirror",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.mirror_ratio",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.torque_mirror_ratio",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.electrical_power_bandwidth",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.mechanical_power_bandwidth",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.spinout_electrical_power_threshold",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.spinout_mechanical_power_threshold",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.anticogging.calib_anticogging",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.anticogging.cogging_ratio",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.anticogging.calib_pos_threshold",
+    "protocol": "odrive",
+    "type": "float"
+  },
+  {
+    "path": "axis0.controller.config.anticogging.calib_vel_threshold",
+    "protocol": "odrive",
+    "type": "float"
+  }
+]
