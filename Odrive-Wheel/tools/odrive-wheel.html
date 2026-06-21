@@ -1742,7 +1742,7 @@
   <div class="header-actions">
     <!-- Sponsor / BuyMeACoffee links (à esquerda do Connect) -->
     <span class="tool-version" title="HTML tool version"
-          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px">V0.13</span>
+          style="font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:0.5px;margin-right:2px">V0.14</span>
     <a href="https://www.buymeacoffee.com/eduardogabq" target="_blank" rel="noopener"
        title="Buy Me a Coffee" data-i18n-title="btn.bmc_tip"
        style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#FFDD00;text-decoration:none;font-size:18px;line-height:1"
@@ -2421,6 +2421,8 @@ const I18N = {
     'setup.step6_title':       'Passo 6 — Configurar encoder',
     'setup.step6_desc':        'Edite os campos abaixo conforme o seu encoder. Defaults são pra ABZ incremental (caso mais comum — encoder externo no eixo do motor). Se você usa o AS5047P onboard da MKS, mude apenas mode=257, cpr=16384 e abs_spi_cs_gpio_pin=7. Os hints à direita explicam cada campo.',
     'setup.step6_apply':       '✓ Aplicar valores',
+    'setup.step6_save':        'Save',
+    'setup.step6_save_hint':   '← AS5047 (absoluto) precisa Salvar + reboot pra trocar de modo antes dos passos 7/8',
     'setup.step6_open':        '→ Abrir aba Encoder',
 
     'setup.step7_title':       'Passo 7 — Calibrar motor',
@@ -3340,6 +3342,8 @@ const I18N = {
     'setup.step6_title':       'Step 6 — Encoder configuration',
     'setup.step6_desc':        'Edit the fields below to match your encoder. Defaults are for incremental ABZ (most common — external encoder on the motor shaft). If you use the onboard MKS AS5047P, just change mode=257, cpr=16384 and abs_spi_cs_gpio_pin=7. Hints on the right explain each field.',
     'setup.step6_apply':       '✓ Apply values',
+    'setup.step6_save':        'Save',
+    'setup.step6_save_hint':   '← AS5047 (absolute) needs Save + reboot to switch modes before steps 7/8',
     'setup.step6_open':        '→ Open Encoder tab',
 
     'setup.step7_title':       'Step 7 — Motor calibration',
@@ -6897,6 +6901,8 @@ function buildSetupHTML() {
     ], 'form')}
     ${_setupStepCard(6, 'setup.step6_title', 'setup.step6_desc', FORM_ENC, [
       { id: 'btn-setup-apply-enc', i18n: 'setup.step6_apply', cls: 'danger' },
+      { id: 'btn-setup-save-enc',  i18n: 'setup.step6_save',  cls: 'ok',
+        hint: 'setup.step6_save_hint' },
       { id: 'btn-setup-go-enc', i18n: 'setup.step6_open' }
     ], 'form')}
     ${_setupStepCard(7, 'setup.step7_title', 'setup.step7_desc',
@@ -7231,6 +7237,9 @@ function wireSetupTab() {
     toast(t('setup.toast_written').replace('{ok}', r.ok).replace('{fail}', r.fail),
           r.fail === 0 ? 'ok' : 'warn');
     if (r.fail === 0) _setupSetBtnState('btn-setup-apply-enc', 'ok');
+  });
+  document.getElementById('btn-setup-save-enc')?.addEventListener('click', () => {
+    document.getElementById('btn-save')?.click();
   });
   document.getElementById('btn-setup-go-enc')?.addEventListener('click', () => {
     selectTab('encoder');
