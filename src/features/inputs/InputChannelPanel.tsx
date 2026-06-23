@@ -16,6 +16,19 @@ import {
   LinearAnalogAxis,
   ZeroWheelInputControl,
 } from './InputControls';
+import { AnalogSignalTuning } from './AnalogSignalTuning';
+
+interface AnalogProcessorControls {
+  filterOn: boolean;
+  cutoffRaw: string;
+  cutoffValid: boolean;
+  cutoffNum: number;
+  processorDisabled: boolean;
+  onToggleFilter: (enabled: boolean) => void;
+  onCutoffChange: (value: string) => void;
+  onCutoffCommit: () => void;
+  onCutoffPreset: (hz: number) => void;
+}
 
 interface InputChannelPanelProps {
   channel: GpioChannel;
@@ -23,11 +36,13 @@ interface InputChannelPanelProps {
   dirtyPaths: string[];
   locale: Locale;
   disabled: boolean;
+  analogProcessor?: AnalogProcessorControls;
   onChange: (field: ConfigField, value: string) => void;
   onRead: () => void;
   onApply: () => void;
   onCaptureMin: () => void;
   onCaptureMax: () => void;
+  onResetMinMax: () => void;
 }
 
 export function InputChannelPanel({
@@ -36,11 +51,13 @@ export function InputChannelPanel({
   dirtyPaths,
   locale,
   disabled,
+  analogProcessor,
   onChange,
   onRead,
   onApply,
   onCaptureMin,
   onCaptureMax,
+  onResetMinMax,
 }: InputChannelPanelProps) {
   const fields = useMemo(
     () => ({
@@ -56,12 +73,14 @@ export function InputChannelPanel({
 
   const mode = channelValue(channel, 'mode', values);
   const raw = parseChannelNumber(channelValue(channel, 'cur', values));
-  const filtered = parseChannelNumber(channelValue(channel, 'filt', values));
+  const isAnalog = mode === '2';
+  const filteredRaw = parseChannelNumber(channelValue(channel, 'filt', values));
+  const filtered = filteredRaw === 65535 ? null : filteredRaw;
+  const filterBypassed = isAnalog && filteredRaw === 65535;
   const min = parseChannelNumber(channelValue(channel, 'amin', values)) ?? 0;
   const max = parseChannelNumber(channelValue(channel, 'amax', values)) ?? 4095;
   const dirty = Object.values(channel.fields).some((field) => dirtyPaths.includes(field.path));
   const emptyLabel = translate(locale, 'metricEmpty');
-  const isAnalog = mode === '2';
 
   return (
     <Card
@@ -73,6 +92,7 @@ export function InputChannelPanel({
           mode={mode}
           raw={raw ?? null}
           filtered={filtered ?? null}
+          filterBypassed={filterBypassed}
           min={min}
           max={max}
           locale={locale}
@@ -130,6 +150,21 @@ export function InputChannelPanel({
             />
           </div>
 
+          {isAnalog && analogProcessor ? (
+            <AnalogSignalTuning
+              locale={locale}
+              filterOn={analogProcessor.filterOn}
+              cutoffRaw={analogProcessor.cutoffRaw}
+              cutoffValid={analogProcessor.cutoffValid}
+              cutoffNum={analogProcessor.cutoffNum}
+              disabled={disabled || analogProcessor.processorDisabled}
+              onToggleFilter={(v) => void analogProcessor.onToggleFilter(v)}
+              onCutoffChange={analogProcessor.onCutoffChange}
+              onCutoffCommit={analogProcessor.onCutoffCommit}
+              onCutoffPreset={(hz) => void analogProcessor.onCutoffPreset(hz)}
+            />
+          ) : null}
+
           <details className="input-channel-help">
             <summary>{translate(locale, 'inputsChannelHelp')}</summary>
             <div className="input-channel-help-body">
@@ -159,6 +194,14 @@ export function InputChannelPanel({
           </button>
           <button type="button" disabled={disabled || !isAnalog || raw === undefined} onClick={onCaptureMax}>
             {translate(locale, 'inputsCaptureMax')}
+          </button>
+          <button
+            type="button"
+            disabled={disabled || !isAnalog}
+            title={translate(locale, 'inputsResetMinMaxTip')}
+            onClick={onResetMinMax}
+          >
+            {translate(locale, 'inputsResetMinMax')}
           </button>
           <button type="button" disabled={disabled || !dirty} onClick={onApply}>
             {translate(locale, 'inputsApplyChannel')}
@@ -230,6 +273,7 @@ function InputLiveDisplay({
   mode,
   raw,
   filtered,
+  filterBypassed,
   min,
   max,
   locale,
@@ -238,6 +282,7 @@ function InputLiveDisplay({
   mode: string;
   raw: number | null;
   filtered: number | null;
+  filterBypassed: boolean;
   min: number;
   max: number;
   locale: Locale;
@@ -251,7 +296,12 @@ function InputLiveDisplay({
       {mode === '2' ? (
         <>
           <LinearAnalogAxis label={label} value={raw} min={min} max={max} tone="ok" emptyLabel={emptyLabel} />
-          {filtered !== null ? (
+          {filterBypassed ? (
+            <div className="input-channel-filter-off">
+              <span className="input-control-label">{filteredLabel}</span>
+              <span className="input-channel-live-idle-value">{translate(locale, 'inputsFilterBypassed')}</span>
+            </div>
+          ) : filtered !== null ? (
             <LinearAnalogAxis
               label={filteredLabel}
               value={filtered}

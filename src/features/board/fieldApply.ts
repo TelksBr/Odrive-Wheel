@@ -45,3 +45,17 @@ export async function applyConfigFields(
 export async function applyConfigField(field: ConfigField, value: string): Promise<ConfigApplyResult> {
   return applyConfigFields([{ field, value }]);
 }
+
+/** Write OpenFFBoard fields to device RAM only — no sys.save! (live tuning, HTML writePropOffb). */
+export async function applyOpenffboardRam(
+  entries: { field: ConfigField; value: string }[],
+): Promise<Record<string, string>> {
+  const applied: Record<string, string> = {};
+  for (const { field, value } of entries) {
+    if (field.protocol !== 'openffboard') {
+      throw new Error(`applyOpenffboardRam: ${field.path} is not openffboard`);
+    }
+    applied[field.path] = await applyField(field, value, false);
+  }
+  return applied;
+}

@@ -606,7 +606,7 @@ Ver `gpio_inputs.h` para pinout e modos.
 
 Persistência: flags + freq×10 em EEPROM FFB layout **v0x0003** (`ADR_GPIO_AXIS_FLAGS`, `ADR_GPIO_AXIS_FREQ_X10`).
 
-**Web:** `GpioAxisProcessorCard`, barras raw+filtrado em `InputChannelPanel`.
+**Web:** secção «Suavização» em cada card GPIO em modo eixo (`AnalogSignalTuning`); barras raw+filtrado em `InputChannelPanel`.
 
 ### 11.2 Offset virtual de zero
 

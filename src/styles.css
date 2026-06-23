@@ -2113,6 +2113,86 @@ html[data-display-mode='standalone'] .app-shell {
   gap: 12px;
 }
 
+.input-analog-tuning {
+  margin-top: 8px;
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  padding-top: 8px;
+  font-size: 12px;
+}
+
+.input-analog-tuning summary {
+  cursor: pointer;
+  color: var(--muted);
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-analog-tuning summary::-webkit-details-marker {
+  display: none;
+}
+
+.input-analog-tuning-badge {
+  font-size: 11px;
+  color: var(--accent, #6ea8fe);
+  font-variant-numeric: tabular-nums;
+}
+
+.input-analog-tuning-body {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-analog-tuning-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.input-analog-tuning-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.input-analog-tuning-cutoff {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-analog-tuning-cutoff input {
+  width: 52px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.input-analog-tuning-presets {
+  margin-top: 0;
+}
+
+.input-analog-tuning-presets button {
+  min-width: 36px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.input-channel-filter-off {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .as5047-diag-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

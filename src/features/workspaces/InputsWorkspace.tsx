@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAppState } from '../../app/AppState';
 import { readField } from '../board/BoardProtocol';
-import { applyConfigFields } from '../board/fieldApply';
+import { applyConfigFields, applyOpenffboardRam } from '../board/fieldApply';
 import type { ConfigField } from '../config/fieldCatalog';
 import {
   channelValue,
@@ -11,15 +11,29 @@ import {
   type GpioChannel,
 } from '../inputs/gpioChannel';
 import { InputChannelPanel } from '../inputs/InputChannelPanel';
-import { GpioAxisProcessorCard } from '../inputs/GpioAxisProcessorCard';
+import { useGpioAnalogProcessor } from '../inputs/useGpioAnalogProcessor';
 import { useInputsLivePoller } from '../inputs/useInputsLivePoller';
 import { translate } from '../../i18n/messages';
 import { SectionHeader } from '../../shared/ui';
+import { toast } from '../../shared/toastActions';
 
 export function InputsWorkspace() {
   const { state, dispatch } = useAppState();
   const channels = useMemo(() => GPIO_CHANNELS.map(createGpioChannel), []);
   const { liveValues, polling } = useInputsLivePoller(channels, state.connected, state.busy);
+  const processor = useGpioAnalogProcessor();
+
+  const analogProcessorProps = {
+    filterOn: processor.filterOn,
+    cutoffRaw: processor.cutoffRaw,
+    cutoffValid: processor.cutoffValid,
+    cutoffNum: processor.cutoffNum,
+    processorDisabled: processor.disabled,
+    onToggleFilter: processor.toggleFilter,
+    onCutoffChange: processor.setCutoffDraft,
+    onCutoffCommit: processor.flushCutoff,
+    onCutoffPreset: (hz: number) => void processor.commitCutoff(String(hz)),
+  };
 
   const mergedValues = useMemo(
     () => ({ ...state.fieldValues, ...liveValues }),
@@ -57,6 +71,7 @@ export function InputsWorkspace() {
           dispatch({ type: 'set-field', path: field.path, value, dirty: false });
         }
       }
+      await processor.reload();
     } catch (error) {
       dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -104,6 +119,30 @@ export function InputsWorkspace() {
     setValue(channel.fields[target], current);
   }
 
+  async function resetMinMax(channel: GpioChannel) {
+    if (
+      !window.confirm(translate(state.locale, 'inputsResetMinMaxConfirm', { n: channel.gpio }))
+    ) {
+      return;
+    }
+    dispatch({ type: 'set-busy', busy: true });
+    try {
+      const applied = await applyOpenffboardRam([
+        { field: channel.fields.amin, value: '4095' },
+        { field: channel.fields.amax, value: '0' },
+      ]);
+      for (const [path, value] of Object.entries(applied)) {
+        dispatch({ type: 'set-field', path, value, dirty: false });
+        dispatch({ type: 'mark-nvm-pending-path', path });
+      }
+      toast(dispatch, translate(state.locale, 'inputsResetMinMaxDone', { n: channel.gpio }), 'ok');
+    } catch (error) {
+      dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
+    } finally {
+      dispatch({ type: 'set-busy', busy: false });
+    }
+  }
+
   return (
     <div className="inputs-page">
       <SectionHeader
@@ -130,10 +169,10 @@ export function InputsWorkspace() {
         <InputKpi label={translate(state.locale, 'inputsDirtyChannels')} value={String(dirtyCount)} tone={dirtyCount > 0 ? 'warn' : 'ok'} />
       </div>
 
-      <GpioAxisProcessorCard />
-
       <div className="input-channel-grid">
-        {channels.map((channel) => (
+        {channels.map((channel) => {
+          const isAnalog = channelValue(channel, 'mode', mergedValues) === '2';
+          return (
           <InputChannelPanel
             key={channel.gpio}
             channel={channel}
@@ -141,13 +180,16 @@ export function InputsWorkspace() {
             values={mergedValues}
             dirtyPaths={state.dirtyPaths}
             locale={state.locale}
+            analogProcessor={isAnalog ? analogProcessorProps : undefined}
             onRead={() => void readChannel(channel)}
             onApply={() => void applyChannel(channel)}
             onCaptureMin={() => capture(channel, 'amin')}
             onCaptureMax={() => capture(channel, 'amax')}
+            onResetMinMax={() => void resetMinMax(channel)}
             onChange={setValue}
           />
-        ))}
+          );
+        })}
       </div>
     </div>
   );
