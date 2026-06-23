@@ -27,7 +27,7 @@ const EXPORT_STICKY_ID = 'export-read';
 
 export function ProfileActions() {
   const { state, dispatch } = useAppState();
-  const { saveAll, saveBadge, saveBlocked } = useBoardSave();
+  const { saveAll, saveBadge } = useBoardSave();
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function readAll() {
@@ -298,7 +298,7 @@ export function ProfileActions() {
         <button
           type="button"
           className="ok"
-          disabled={!state.connected || state.busy || saveBlocked}
+          disabled={!state.connected || state.busy}
           title={translate(state.locale, 'saveTitle')}
           onClick={() => void saveAll()}
         >

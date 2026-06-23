@@ -140,8 +140,8 @@ export function InputChannelPanel({
                     <code>{field.path}</code>
                     <p>{field.description}</p>
                     <span className="input-channel-help-meta">
-                      {translate(locale, 'fieldRange')}: {help.range}
-                      {help.unit ? ` · ${translate(locale, 'fieldUnit')}: ${help.unit}` : ''}
+                      {help.range ? `${translate(locale, 'fieldRange')}: ${help.range}` : null}
+                      {help.unit ? `${help.range ? ' · ' : ''}${translate(locale, 'fieldUnit')}: ${help.unit}` : ''}
                     </span>
                   </div>
                 );

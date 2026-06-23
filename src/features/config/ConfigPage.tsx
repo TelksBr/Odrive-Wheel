@@ -8,7 +8,16 @@ import { ConfigFieldRow } from './ConfigFieldRow';
 import { isTorqueControlMode } from './fieldEditState';
 import { Card } from '../../shared/ui';
 
-export function ConfigPage({ filter, includeGroups }: { filter?: 'ffb' | 'odrive'; includeGroups?: string[] }) {
+export function ConfigPage({
+  filter,
+  includeGroups,
+  allowOpenffboardPaths,
+}: {
+  filter?: 'ffb' | 'odrive';
+  includeGroups?: string[];
+  /** OpenFFBoard paths shown alongside ODrive on the motor tab (e.g. sys.vbusdiv). */
+  allowOpenffboardPaths?: string[];
+}) {
   const { state } = useAppState();
   const [query, setQuery] = useState('');
   const [activeGroup, setActiveGroup] = useState<string>('all');
@@ -24,8 +33,12 @@ export function ConfigPage({ filter, includeGroups }: { filter?: 'ffb' | 'odrive
           description: translateGroupDescription(locale, group.id, group.description),
           fields: group.fields
             .filter((field) => {
-              if (field.readonly) return false;
-              const protocolMatch = !filter || (filter === 'ffb' ? field.protocol === 'openffboard' : field.protocol === 'odrive');
+              if (field.readonly && !field.configVisible) return false;
+              const protocolMatch =
+                !filter ||
+                (filter === 'ffb'
+                  ? field.protocol === 'openffboard'
+                  : field.protocol === 'odrive' || allowOpenffboardPaths?.includes(field.path));
               const allowedGroupMatch = !includeGroups || includeGroups.includes(group.id);
               const groupMatch = allowedGroupMatch && (activeGroup === 'all' || group.id === activeGroup);
               const localized = localizeField(field, locale);
@@ -39,15 +52,18 @@ export function ConfigPage({ filter, includeGroups }: { filter?: 'ffb' | 'odrive
             .map((field) => localizeField(field, locale)),
         }))
         .filter((group) => group.fields.length > 0),
-    [activeGroup, filter, includeGroups, locale, normalizedQuery],
+    [activeGroup, allowOpenffboardPaths, filter, includeGroups, locale, normalizedQuery],
   );
 
   const candidateGroups = configGroups.filter((group) =>
     (!includeGroups || includeGroups.includes(group.id)) &&
     group.fields.some(
       (field) =>
-        !field.readonly &&
-        (!filter || (filter === 'ffb' ? field.protocol === 'openffboard' : field.protocol === 'odrive')),
+        (!field.readonly || field.configVisible) &&
+        (!filter ||
+          (filter === 'ffb'
+            ? field.protocol === 'openffboard'
+            : field.protocol === 'odrive' || allowOpenffboardPaths?.includes(field.path))),
     ),
   );
   const visibleCount = groups.reduce((count, group) => count + group.fields.length, 0);

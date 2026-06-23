@@ -28,7 +28,7 @@ function desiredFromState(path: string, fieldValues: Record<string, string>): bo
 export function BootFlagsPanel() {
   const { state, dispatch } = useAppState();
   const locale = state.locale;
-  const { saveAll, saveBadge, saveBlocked } = useBoardSave();
+  const { saveAll, saveBadge } = useBoardSave();
   const [draft, setDraft] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -155,7 +155,7 @@ export function BootFlagsPanel() {
         <button type="button" disabled={!state.connected || state.busy} onClick={() => void applyDraft()}>
           {translate(locale, 'calBootApplyCustom')}
         </button>
-        <button type="button" className="ok" disabled={!state.connected || state.busy || saveBlocked} onClick={() => void saveAll()}>
+        <button type="button" className="ok" disabled={!state.connected || state.busy} onClick={() => void saveAll()}>
           {translate(locale, 'calNvmSaveNow')}{saveBadge}
         </button>
         <span className="cal-boot-hint">{translate(locale, 'calBootSaveHint')}</span>

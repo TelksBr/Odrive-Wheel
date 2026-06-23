@@ -3,6 +3,7 @@ export type SerialEvent =
   | { type: 'disconnected' }
   | { type: 'rx'; line: string; command?: string }
   | { type: 'tx'; line: string }
+  | { type: 'info'; message: string }
   | { type: 'error'; message: string };
 
 type SerialListener = (event: SerialEvent) => void;
@@ -16,9 +17,15 @@ interface PendingCommand {
   timeoutId: number;
 }
 
+import { isOdriveErrorReply } from '../board/BoardProtocol';
+import { probeControlSerialPort } from './serialPortProbe';
+
+const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
 export class SerialService {
   private port: SerialPort | null = null;
   private authorizedPort: SerialPort | null = null;
+  private authorizedPortInfo: SerialPortInfo | null = null;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
   private listeners = new Set<SerialListener>();
@@ -47,8 +54,10 @@ export class SerialService {
       await this.disconnect();
     }
 
-    this.port = existingPort ?? (await navigator.serial.requestPort());
-    this.authorizedPort = this.port;
+    const picked = existingPort ?? (await this.resolvePortForConnect());
+    this.logInfo(existingPort ? 'connect: using provided port handle' : `connect: picked granted port (${this.describePort(picked)})`);
+    this.port = picked;
+
     await this.port.open({ baudRate: 115200, bufferSize: 4096 });
 
     if (!this.port.readable || !this.port.writable) {
@@ -56,13 +65,138 @@ export class SerialService {
     }
 
     this.closing = false;
+    this.readBuffer = '';
     this.reader = this.port.readable.getReader();
     this.writer = this.port.writable.getWriter();
+
+    this.authorizedPort = this.port;
+    this.authorizedPortInfo = this.readPortInfo(this.port);
     this.emit({ type: 'connected' });
     void this.readLoop();
   }
 
-  async reconnectKnownPort(): Promise<boolean> {
+  /**
+   * Prefer a previously used control port (no picker). With multiple COM ports,
+   * probe for sys.swver before falling back to requestPort().
+   */
+  private async resolvePortForConnect(): Promise<SerialPort> {
+    if (!navigator.serial) {
+      throw new Error('Web Serial is not available');
+    }
+    const serial = navigator.serial;
+    const ports = await serial.getPorts();
+    this.logInfo(`resolvePort: ${ports.length} granted port(s) — ${this.describeGrantedPorts(ports)}`);
+    const granted = await this.pickControlPortFromGranted(ports);
+    if (granted) {
+      this.logInfo(`resolvePort: reusing granted port (${this.describePort(granted)})`);
+      return granted;
+    }
+
+    this.logInfo('resolvePort: no granted control port — opening browser picker');
+    try {
+      return await serial.requestPort();
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'NotFoundError') {
+        throw new Error('serialConnectCancelled');
+      }
+      throw error;
+    }
+  }
+
+  /** Pick ODrive control CDC from ports the user already granted — never opens the picker. */
+  private async pickControlPortFromGranted(ports: SerialPort[]): Promise<SerialPort | null> {
+    if (ports.length === 0) {
+      return null;
+    }
+
+    if (this.authorizedPort && ports.includes(this.authorizedPort)) {
+      this.logInfo('pick: matched previous port handle');
+      return this.authorizedPort;
+    }
+
+    if (this.authorizedPortInfo) {
+      const byInfo = ports.find((port) => this.matchesAuthorizedInfo(port));
+      if (byInfo) {
+        this.logInfo(`pick: matched saved USB id ${this.formatPortInfo(this.authorizedPortInfo)}`);
+        return byInfo;
+      }
+    }
+
+    if (ports.length === 1) {
+      this.logInfo(`pick: single granted port (${this.describePort(ports[0]!)})`);
+      return ports[0]!;
+    }
+
+    for (const port of ports) {
+      const label = this.describePort(port);
+      if (await probeControlSerialPort(port)) {
+        this.logInfo(`pick: probe OK on ${label}`);
+        return port;
+      }
+      this.logInfo(`pick: probe failed on ${label}`);
+    }
+
+    return null;
+  }
+
+  private logInfo(message: string): void {
+    if (import.meta.env.DEV) {
+      console.info(`[serial] ${message}`);
+    }
+    this.emit({ type: 'info', message });
+  }
+
+  private describeGrantedPorts(ports: SerialPort[]): string {
+    if (ports.length === 0) {
+      return 'none';
+    }
+    return ports.map((port) => this.describePort(port)).join('; ');
+  }
+
+  private describePort(port: SerialPort): string {
+    return this.formatPortInfo(this.readPortInfo(port)) ?? 'unknown USB id';
+  }
+
+  private formatPortInfo(info: SerialPortInfo | null): string | null {
+    if (!info || (info.usbVendorId === undefined && info.usbProductId === undefined)) {
+      return null;
+    }
+    const vendor = info.usbVendorId !== undefined ? `0x${info.usbVendorId.toString(16)}` : '?';
+    const product = info.usbProductId !== undefined ? `0x${info.usbProductId.toString(16)}` : '?';
+    return `${vendor}:${product}`;
+  }
+
+  private readPortInfo(port: SerialPort): SerialPortInfo | null {
+    try {
+      const info = port.getInfo();
+      if (!info || (info.usbVendorId === undefined && info.usbProductId === undefined)) {
+        return null;
+      }
+      return info;
+    } catch {
+      return null;
+    }
+  }
+
+  private matchesAuthorizedInfo(port: SerialPort): boolean {
+    if (!this.authorizedPortInfo) {
+      return false;
+    }
+    const info = this.readPortInfo(port);
+    if (!info) {
+      return false;
+    }
+    return (
+      info.usbVendorId === this.authorizedPortInfo.usbVendorId &&
+      info.usbProductId === this.authorizedPortInfo.usbProductId
+    );
+  }
+
+  /**
+   * Reconnect after reboot — retry until a granted control port opens.
+   * USB re-enumeration replaces SerialPort handles; never spin only on a stale ref.
+   */
+  async reconnectKnownPort(maxAttempts = 12, delayMs = 1000): Promise<boolean> {
     if (!navigator.serial) {
       return false;
     }
@@ -70,25 +204,27 @@ export class SerialService {
       return true;
     }
 
-    const candidates: SerialPort[] = [];
-    if (this.authorizedPort) {
-      candidates.push(this.authorizedPort);
-    }
-    const ports = await navigator.serial.getPorts();
-    for (const port of ports) {
-      if (!candidates.includes(port)) {
-        candidates.push(port);
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const ports = await navigator.serial.getPorts();
+      this.logInfo(`reconnect attempt ${attempt + 1}/${maxAttempts}: ${ports.length} granted — ${this.describeGrantedPorts(ports)}`);
+      const candidate = await this.pickControlPortFromGranted(ports);
+      if (candidate) {
+        try {
+          this.logInfo(`reconnect: trying ${this.describePort(candidate)}`);
+          await this.connect(candidate);
+          this.logInfo('reconnect: success');
+          return true;
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          this.logInfo(`reconnect: open failed — ${msg}`);
+        }
+      } else {
+        this.logInfo('reconnect: no control candidate in granted ports');
       }
+      await sleep(delayMs);
     }
 
-    for (const port of candidates) {
-      try {
-        await this.connect(port);
-        return true;
-      } catch {
-        // Port may still be rebooting or busy — try next candidate / retry later
-      }
-    }
+    this.logInfo(`reconnect: failed after ${maxAttempts} attempts`);
     return false;
   }
 
@@ -128,6 +264,59 @@ export class SerialService {
     return this.sendCommandNow(command, expectReply, timeoutMs, log);
   }
 
+  /**
+   * ODrive `w` commands are silent on success; rejections arrive within ~80 ms.
+   * Returns the error line when rejected, undefined when no error (HTML writeProp).
+   */
+  writeOdrive(command: string, log = true): Promise<string | undefined> {
+    return this.enqueue(() => this.writeOdriveNow(command, log));
+  }
+
+  async writeOdriveNow(command: string, log = true): Promise<string | undefined> {
+    if (!this.writer) {
+      throw new Error('Serial is not connected');
+    }
+
+    const cleanCommand = command.trim();
+    if (!cleanCommand) {
+      return undefined;
+    }
+
+    if (log) {
+      this.emit({ type: 'tx', line: cleanCommand });
+    }
+    await this.writer.write(this.encoder.encode(`${cleanCommand}\n`));
+
+    return new Promise<string | undefined>((resolve, reject) => {
+      const entry: PendingCommand = {
+        command: cleanCommand,
+        expectReply: true,
+        log: false,
+        resolve: (line: string) => {
+          window.clearTimeout(entry.timeoutId);
+          this.pending = this.pending.filter((item) => item !== entry);
+          if (log) {
+            this.emit({ type: 'rx', line, command: cleanCommand });
+          }
+          if (isOdriveErrorReply(line)) {
+            reject(new Error(line.trim()));
+            return;
+          }
+          resolve(undefined);
+        },
+        reject,
+        timeoutId: 0,
+      };
+
+      entry.timeoutId = window.setTimeout(() => {
+        this.pending = this.pending.filter((item) => item !== entry);
+        resolve(undefined);
+      }, 80);
+
+      this.pending.push(entry);
+    });
+  }
+
   private enqueue<T>(operation: () => Promise<T>): Promise<T> {
     const next = this.queue.then(operation, operation);
     this.queue = next.catch(() => undefined);
@@ -155,7 +344,7 @@ export class SerialService {
 
     return new Promise<string>((resolve, reject) => {
       const timeoutId = window.setTimeout(() => {
-        this.pending = this.pending.filter((item) => item.timeoutId !== timeoutId);
+        this.flushPendingQueue(`Timeout waiting for reply to: ${cleanCommand}`);
         reject(new Error(`Timeout waiting for reply to: ${cleanCommand}`));
       }, timeoutMs);
 
@@ -221,11 +410,17 @@ export class SerialService {
   }
 
   private rejectPending(error: Error): void {
+    this.flushPendingQueue(error.message);
+  }
+
+  /** Drop stale UART lines after timeout — prevents permanent TX/RX desync (odrive-wheel.html). */
+  private flushPendingQueue(reason: string): void {
     for (const pending of this.pending) {
       window.clearTimeout(pending.timeoutId);
-      pending.reject(error);
+      pending.reject(new Error(reason));
     }
     this.pending = [];
+    this.readBuffer = '';
   }
 
   private emit(event: SerialEvent): void {

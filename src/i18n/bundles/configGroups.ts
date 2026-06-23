@@ -2,12 +2,12 @@ import type { Locale } from '../messages';
 
 const groupMeta: Record<string, Record<Locale, { title: string; description: string }>> = {
   psu: {
-    pt: { title: 'PSU / Freio', description: 'Limites de alimentação e resistor de freio do ODrive.' },
-    en: { title: 'PSU / Brake', description: 'Power supply and brake resistor limits from the ODrive config.' },
+    pt: { title: 'PSU / Freio', description: 'Limites de alimentação, resistor de freio e divisor VBUS (sys.vbusdiv).' },
+    en: { title: 'PSU / Brake', description: 'Power supply limits, brake resistor, and VBUS divider (sys.vbusdiv).' },
   },
   axis: {
-    pt: { title: 'Eixo 0', description: 'Estado do eixo, boot e comportamento em closed loop.' },
-    en: { title: 'Axis 0', description: 'Axis state, startup behavior, and closed-loop defaults.' },
+    pt: { title: 'Eixo 0', description: 'Estado atual vs. solicitado, boot e closed loop.' },
+    en: { title: 'Axis 0', description: 'Current vs. requested state, startup, and closed-loop defaults.' },
   },
   motor: {
     pt: { title: 'Motor', description: 'Calibração, constante de torque e limites de corrente.' },
@@ -46,8 +46,8 @@ const groupMeta: Record<string, Record<Locale, { title: string; description: str
     en: { title: 'Inputs', description: 'GPIO joystick inputs exposed as buttons, analog axes, or zero-wheel trigger.' },
   },
   system: {
-    pt: { title: 'Sistema', description: 'Identidade da placa e parâmetro configurável de sistema.' },
-    en: { title: 'System', description: 'Board identity and one configurable system parameter.' },
+    pt: { title: 'Sistema', description: 'Identidade da placa (versão, hardware, heap). Divisor VBUS está em PSU / Freio.' },
+    en: { title: 'System', description: 'Board identity (version, hardware, heap). VBUS divider is under PSU / Brake.' },
   },
   live: {
     pt: { title: 'Telemetria ao vivo', description: 'Valores somente leitura para painéis de observação.' },

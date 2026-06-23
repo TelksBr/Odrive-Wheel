@@ -1,5 +1,6 @@
+import { HIGH_SIGNAL_PATHS } from '../../app/refreshPolicy';
 import { flatFields, type ConfigField } from '../config/fieldCatalog';
-import { readField, writeFieldNow } from './BoardProtocol';
+import { normalizeReply, readCommandFor, readField, writeFieldNow } from './BoardProtocol';
 import { persistFfbEeprom } from './fieldApply';
 import { serialService } from '../serial/SerialService';
 
@@ -33,6 +34,8 @@ export interface UnifiedSaveResult {
 
 const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
+const POST_SAVE_READ_TIMEOUT_MS = 1200;
+
 async function tryReconnect(maxAttempts = 12, delayMs = 1000): Promise<boolean> {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
@@ -47,9 +50,12 @@ async function tryReconnect(maxAttempts = 12, delayMs = 1000): Promise<boolean> 
   return false;
 }
 
-function editableDirtyFields(dirtyPaths: string[]): ConfigField[] {
+function editableDirtyFields(paths: string[]): ConfigField[] {
   const fields: ConfigField[] = [];
-  for (const path of dirtyPaths) {
+  const seen = new Set<string>();
+  for (const path of paths) {
+    if (seen.has(path)) continue;
+    seen.add(path);
     const field = flatFields.find((item) => item.path === path);
     if (field && !field.readonly) {
       fields.push(field);
@@ -58,8 +64,32 @@ function editableDirtyFields(dirtyPaths: string[]): ConfigField[] {
   return fields;
 }
 
+function pathsForPostSaveRead(extraPaths: string[]): string[] {
+  return [...new Set([...HIGH_SIGNAL_PATHS, ...extraPaths])];
+}
 
-/** Read all catalog fields — used after reconnect to hydrate app state. */
+/** Fast read after reconnect — high-signal + fields that were just written. */
+export async function readFieldsAfterSave(extraPaths: string[] = []): Promise<Record<string, string>> {
+  const values: Record<string, string> = {};
+  for (const path of pathsForPostSaveRead(extraPaths)) {
+    const field = flatFields.find((item) => item.path === path);
+    if (!field) continue;
+    try {
+      const raw = await serialService.sendCommand(
+        readCommandFor(field),
+        true,
+        POST_SAVE_READ_TIMEOUT_MS,
+        false,
+      );
+      values[path] = normalizeReply(raw);
+    } catch {
+      // Skip unreadable fields — do not block save completion
+    }
+  }
+  return values;
+}
+
+/** Read all catalog fields — manual refresh / erase only (slow). */
 export async function readAllFields(): Promise<Record<string, string>> {
   const values: Record<string, string> = {};
   for (const field of flatFields) {
@@ -74,23 +104,26 @@ export async function readAllFields(): Promise<Record<string, string>> {
  * 2. Write dirty fields to device RAM (skipped when none pending)
  * 3. Persist FFB EEPROM (sys.save!) — warn on failure, continue
  * 4. ODrive NVM (ss + reboot) — always
- * 5. Auto-reconnect + readAll
+ * 5. Auto-reconnect + read back high-signal fields
  */
 export async function unifiedSave({
   dirtyPaths,
+  nvmPendingPaths,
   fieldValues,
   onProgress,
 }: {
   dirtyPaths: string[];
+  nvmPendingPaths: string[];
   fieldValues: Record<string, string>;
   onProgress?: (step: SaveProgress) => void;
 }): Promise<UnifiedSaveResult> {
-  const pending = editableDirtyFields(dirtyPaths);
+  const pathsToWrite = [...new Set([...dirtyPaths, ...nvmPendingPaths])];
+  const pending = editableDirtyFields(pathsToWrite);
   let ffbSaved = false;
 
   await serialService.runAtomic(async () => {
     onProgress?.('disarming');
-    await serialService.commandNow('w axis0.requested_state 1', false);
+    await serialService.writeOdriveNow('w axis0.requested_state 1', false);
     await sleep(300);
 
     if (pending.length > 0) {
@@ -111,7 +144,7 @@ export async function unifiedSave({
     onProgress?.('persisting_odrive');
     await serialService.commandNow('ss', false);
     // Let the UART flush ss before closing the port — otherwise the board never reboots.
-    await sleep(250);
+    await sleep(500);
 
     onProgress?.('rebooting');
     await serialService.disconnect().catch(() => undefined);
@@ -127,6 +160,6 @@ export async function unifiedSave({
 
   await sleep(500);
   onProgress?.('reading_back');
-  const values = await readAllFields();
+  const values = await readFieldsAfterSave(pathsToWrite);
   return { outcome: 'full', reconnected: true, ffbSaved, values };
 }

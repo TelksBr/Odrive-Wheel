@@ -29,9 +29,11 @@ export const fieldsPt: Record<string, string> = {
 
   // ── Axis 0 ───────────────────────────────────────────────────────────────
   'field.axis0.current_state.label': 'Estado atual',
-  'field.axis0.current_state.desc': 'Estado atual do eixo ODrive.',
+  'field.axis0.current_state.desc':
+    'Estado real do eixo ODrive (leitura ao vivo). Com FFB ativo deve ser 8 (closed-loop). Use este campo — não o estado solicitado — para saber o que o eixo está a fazer.',
   'field.axis0.requested_state.label': 'Estado solicitado',
-  'field.axis0.requested_state.desc': 'Comando de estado do eixo ODrive. 1 = IDLE (seguro), 8 = CLOSED_LOOP_CONTROL (FFB ativo). Nunca envie 3 com volante montado.',
+  'field.axis0.requested_state.desc':
+    'Comando de estado (escrita). Depois de atingir o alvo, o ODrive muitas vezes repõe 0 (sem pedido pendente) enquanto o estado atual permanece activo (ex.: 8). 1 = IDLE, 8 = closed-loop. Nunca envie 3 com volante montado.',
   'field.axis0.config.startup_closed_loop_control.label': 'Closed loop no boot',
   'field.axis0.config.startup_closed_loop_control.desc': 'Entra em closed-loop automaticamente após o boot. Habilite só após motor e encoder estarem pre_calibrated.',
   'field.axis0.config.startup_closed_loop_control.opt.true': 'Sim',
@@ -309,7 +311,8 @@ export const fieldsPt: Record<string, string> = {
   'field.sys.heap.label': 'Heap livre (bytes)',
   'field.sys.heap.desc': 'Heap FreeRTOS restante. Valor abaixo de ~4 kB pode causar instabilidade.',
   'field.sys.vbusdiv.label': 'Divisor VBUS',
-  'field.sys.vbusdiv.desc': '⚠ Parâmetro de hardware. Razão do divisor de tensão ADC. Valor errado = leituras VBUS incorretas e proteções quebradas. Altere só se a placa usar resistores não padrão.',
+  'field.sys.vbusdiv.desc':
+    '⚠ Parâmetro de hardware. Razão do divisor ADC (não é volts). Valor errado = leituras VBUS e proteções incorrectas. Padrão MKS XDrive Mini: 19 — calibre no Setup se a leitura não coincidir com multímetro.',
 
   // ── Campos em falta (complemento PT) ─────────────────────────────────────
   'field.config.max_regen_current.label': 'Corrente máx. de regeneração',
@@ -319,7 +322,7 @@ export const fieldsPt: Record<string, string> = {
   'field.axis0.config.startup_motor_calibration.opt.true': 'Sim',
   'field.axis0.config.startup_motor_calibration.opt.false': 'Não',
   'field.axis0.config.startup_encoder_offset_calibration.label': 'Calibração encoder no boot',
-  'field.axis0.config.startup_encoder_offset_calibration.desc': 'Executa calibração de offset do encoder no boot. Desative após calibrar e salvar.',
+  'field.axis0.config.startup_encoder_offset_calibration.desc': 'Executa calibração de offset do encoder no boot. Obrigatório para encoder incremental sem Z; desative só com encoder absoluto ou com pulso Z.',
   'field.axis0.config.startup_encoder_offset_calibration.opt.true': 'Sim',
   'field.axis0.config.startup_encoder_offset_calibration.opt.false': 'Não',
   'field.axis0.config.startup_encoder_index_search.label': 'Busca de índice no boot',
@@ -333,7 +336,8 @@ export const fieldsPt: Record<string, string> = {
   'field.axis0.motor.config.phase_inductance.label': 'Indutância de fase',
   'field.axis0.motor.config.phase_inductance.desc': 'Indutância de fase medida na calibração do motor (H).',
   'field.axis0.encoder.config.direction.label': 'Direção',
-  'field.axis0.encoder.config.direction.desc': 'Direção da contagem do encoder: 1 = normal, −1 = invertido.',
+  'field.axis0.encoder.config.direction.desc':
+    'Somente leitura — definido pela calibração motor/encoder (1 ou −1). Não edite manualmente; valor errado desestabiliza o FOC. Para inverter o sentido do volante no jogo use axis.invert (aba FFB). Para detectar: estado 10 (encoder dir find) na Calibração.',
   'field.axis0.encoder.config.abs_spi_cs_gpio_pin.label': 'Pino CS SPI ABS',
   'field.axis0.encoder.config.abs_spi_cs_gpio_pin.desc': 'GPIO chip-select para encoder absoluto SPI.',
   'field.axis0.encoder.config.phase_offset.label': 'Offset de fase',

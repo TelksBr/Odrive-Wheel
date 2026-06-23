@@ -23,6 +23,9 @@ export function localizeField(field: ConfigField, locale: Locale): ConfigField {
 
 /** Localize enum/bool option label for a field value. */
 export function localizeOptionLabel(locale: Locale, field: ConfigField, value: string, fallback: string): string {
+  if (field.path === 'axis0.requested_state') {
+    return `${value} — ${axisStateLabel(locale, value)}`;
+  }
   const key = `field.${field.path}.opt.${value}`;
   const text = messages[locale][key] ?? messages.en[key];
   return text ?? fallback;

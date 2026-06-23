@@ -26,7 +26,6 @@ export const MOTOR_SPECS: SetupFormSpec[] = [
 export const ENC_SPECS: SetupFormSpec[] = [
   { path: 'axis0.encoder.config.mode', type: 'number', defaultValue: 0 },
   { path: 'axis0.encoder.config.cpr', type: 'number', defaultValue: 8192 },
-  { path: 'axis0.encoder.config.direction', type: 'number', defaultValue: 1 },
   { path: 'axis0.encoder.config.bandwidth', type: 'number', defaultValue: 200 },
   { path: 'axis0.encoder.config.use_index', type: 'bool', defaultValue: false },
   { path: 'axis0.encoder.config.abs_spi_cs_gpio_pin', type: 'number', defaultValue: 7 },

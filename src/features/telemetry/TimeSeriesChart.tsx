@@ -558,8 +558,12 @@ function scaleFor(samples: TelemetrySample[], series: TelemetrySeries[]) {
   if (values.length === 0) {
     return { min: -1, max: 1 };
   }
-  let min = Math.min(...values);
-  let max = Math.max(...values);
+  let min = values[0];
+  let max = values[0];
+  for (let i = 1; i < values.length; i += 1) {
+    if (values[i] < min) min = values[i];
+    if (values[i] > max) max = values[i];
+  }
   const crossesZero = min < 0 && max > 0;
   if (crossesZero) {
     const abs = Math.max(Math.abs(min), Math.abs(max), 0.5) * 1.1;

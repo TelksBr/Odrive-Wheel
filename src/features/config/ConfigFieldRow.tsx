@@ -3,7 +3,8 @@ import { applyConfigField } from '../board/fieldApply';
 import { markOdriveRamPending } from '../board/persistPending';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
-import { localizeOptionLabel } from '../../i18n/fieldMeta';
+import type { Locale } from '../../i18n/messages';
+import { axisStateLabel, localizeOptionLabel } from '../../i18n/fieldMeta';
 import { getFieldHelp } from './fieldHelp';
 import { getFieldEditState } from './fieldEditState';
 
@@ -20,7 +21,8 @@ export function ConfigFieldRow({ field }: { field: ConfigField }) {
 /* ── Readonly — value shown, no per-field read button (use header ↻) ─────── */
 function ReadonlyRow({ field }: { field: ConfigField }) {
   const { state } = useAppState();
-  const value = state.fieldValues[field.path] ?? '';
+  const raw = state.fieldValues[field.path] ?? '';
+  const value = formatReadonlyValue(field, raw, state.locale);
   const isBool = field.type === 'bool';
 
   return (
@@ -114,24 +116,34 @@ function EditableRow({ field }: { field: ConfigField }) {
         </div>
         <code>{field.path}</code>
         <p>{field.description}</p>
-        <div className="field-help-grid">
-          <HelpItem label={translate(state.locale, 'fieldDefault')} value={help.defaultValue} />
-          <HelpItem label={translate(state.locale, 'fieldExample')} value={help.exampleValue} />
-          <HelpItem label={translate(state.locale, 'fieldRange')} value={help.range} />
-          {help.unit ? <HelpItem label={translate(state.locale, 'fieldUnit')} value={help.unit} /> : null}
-        </div>
+        {help.defaultValue || help.exampleValue || help.range || help.unit ? (
+          <div className="field-help-grid">
+            {help.defaultValue ? (
+              <HelpItem label={translate(state.locale, 'fieldDefault')} value={help.defaultValue} />
+            ) : null}
+            {help.exampleValue ? (
+              <HelpItem label={translate(state.locale, 'fieldExample')} value={help.exampleValue} />
+            ) : null}
+            {help.range ? <HelpItem label={translate(state.locale, 'fieldRange')} value={help.range} /> : null}
+            {help.unit ? <HelpItem label={translate(state.locale, 'fieldUnit')} value={help.unit} /> : null}
+          </div>
+        ) : null}
         {help.options ? (
           <details className="field-help-details">
             <summary>{translate(state.locale, 'fieldOptions')}</summary>
             <span>{help.options}</span>
           </details>
         ) : null}
-        <details className="field-help-details">
-          <summary>{translate(state.locale, 'fieldGuidance')}</summary>
-          <span>{help.guidance}</span>
-          <code>{translate(state.locale, 'fieldReadCommand')}: {help.readCommand}</code>
-          {help.writeCommand ? <code>{translate(state.locale, 'fieldWriteCommand')}: {help.writeCommand}</code> : null}
-        </details>
+        {help.guidance || help.readCommand ? (
+          <details className="field-help-details">
+            <summary>{translate(state.locale, 'fieldGuidance')}</summary>
+            {help.guidance ? <span>{help.guidance}</span> : null}
+            <code>{translate(state.locale, 'fieldReadCommand')}: {help.readCommand}</code>
+            {help.writeCommand ? (
+              <code>{translate(state.locale, 'fieldWriteCommand')}: {help.writeCommand}</code>
+            ) : null}
+          </details>
+        ) : null}
       </div>
 
       <div className="field-control">
@@ -195,6 +207,16 @@ function HelpItem({ label, value }: { label: string; value: string }) {
       <code>{value}</code>
     </span>
   );
+}
+
+function formatReadonlyValue(field: ConfigField, raw: string, locale: Locale): string {
+  if (!raw) return '';
+  if (field.path === 'axis0.current_state') {
+    const code = raw.trim().split(/\s/)[0] ?? raw;
+    const label = axisStateLabel(locale, code);
+    return label !== code ? `${code} — ${label}` : code;
+  }
+  return raw;
 }
 
 /* ── Toggle switch for boolean fields ─────────────────────────────────────── */

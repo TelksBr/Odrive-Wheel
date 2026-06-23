@@ -1,463 +1,218 @@
 import { useState } from 'react';
-
 import { useAppState } from '../../app/AppState';
-
 import { translate } from '../../i18n/messages';
-
 import { axisStateLabel } from '../../i18n/fieldMeta';
-
-import { Card, SectionHeader } from '../../shared/ui';
-
-import { calibrationAxisActions, encoderCalErrorFields, motorCalErrorFields } from './calibrationActions';
-
-import { anticogBootPersist, applyBootPersist } from './calibrationBootPresets';
-
+import { SectionHeader } from '../../shared/ui';
+import { calibrationAxisActions } from './calibrationActions';
 import { clearErrors, runAxisState } from './calibrationRunner';
-
-import { AnticoggingPanel } from './AnticoggingPanel';
-
-import { BootFlagsPanel } from './BootFlagsPanel';
-
-import { CalibrationSection } from './CalibrationSection';
-
-import { CalibrationWizardCard } from './CalibrationWizardCard';
-
-import { CalibrationIntegrityBanner } from './CalibrationIntegrityBanner';
-
-import { EncoderToolsPanel } from './EncoderToolsPanel';
-
-import { CalibrationTargetsPanel } from './CalibrationTargetsPanel';
-
-import { useBoardSave } from '../board/useBoardSave';
-
-
-
-function findAction(id: string) {
-
-  return calibrationAxisActions.find((action) => action.id === id);
-
-}
-
-
+import { applyAs5047Preset, zeroWheel } from './calibrationPresets';
+import { CalibrationWorkflowCard } from './CalibrationWorkflowCard';
+import { CalibrationFinalizeCard } from './CalibrationFinalizeCard';
+import { AnticogWorkflowCard } from './AnticogWorkflowCard';
+import { MechanicalCenterPanel } from './MechanicalCenterPanel';
+import {
+  calibrationRunWorkflows,
+  closedLoopWorkflow,
+  optionalCalibrationWorkflows,
+} from './calibrationWorkflows';
+import { type CalibrationLiveStatus } from './calibrationFinalize';
+import { mergeCalFlag } from './calibrationStatus';
+import { parseBoolField, isPresetSynced, getPostCalibrationPreset } from './calibrationBootPresets';
+import { NtcCalculatorModal } from './NtcCalculatorModal';
 
 export function CalibrationPage() {
-
   const { state, dispatch } = useAppState();
-
   const locale = state.locale;
+  const [ntcOpen, setNtcOpen] = useState(false);
+  const [liveStatus, setLiveStatus] = useState<CalibrationLiveStatus | null>(null);
+  const [calRefreshToken, setCalRefreshToken] = useState(0);
 
-  const { saveAll, saveBadge, saveBlocked } = useBoardSave();
+  const bumpCalStatus = () => setCalRefreshToken((token) => token + 1);
 
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-
-
-
-  const axisState = state.fieldValues['axis0.current_state'] ?? '—';
-
-  const motorCal = state.fieldValues['axis0.motor.is_calibrated'];
-
-  const encoderReady = state.fieldValues['axis0.encoder.is_ready'];
-
-
+  const fv = state.fieldValues;
+  const axisState = fv['axis0.current_state'] ?? '—';
+  const motorOk = mergeCalFlag(fv, 'axis0.motor.is_calibrated', liveStatus?.motorCalibrated);
+  const encOk = mergeCalFlag(fv, 'axis0.encoder.is_ready', liveStatus?.encoderReady);
+  const useIndex = parseBoolField(fv['axis0.encoder.config.use_index']);
+  const finalized = isPresetSynced(getPostCalibrationPreset(fv), fv) && motorOk && encOk;
+  const canClosedLoop = finalized || (motorOk && encOk);
 
   async function handleIdle() {
-
     dispatch({ type: 'set-busy', busy: true });
-
     try {
-
       const result = await runAxisState(1, 5000, false);
-
       dispatch({
-
         type: 'append-log',
-
         direction: result.ok ? 'info' : 'error',
-
         message: result.ok ? translate(locale, 'setupToastStateDone') : translate(locale, 'setupToastStateFail'),
-
       });
-
     } finally {
-
       dispatch({ type: 'set-busy', busy: false });
-
     }
-
   }
-
-
 
   async function handleClearErrors() {
-
     dispatch({ type: 'set-busy', busy: true });
-
     try {
-
       await clearErrors();
-
       dispatch({ type: 'append-log', direction: 'info', message: 'sc' });
-
     } finally {
-
       dispatch({ type: 'set-busy', busy: false });
-
     }
-
   }
 
-
-
-  async function handleAnticogBoot() {
-
+  async function runAdvanced(stateNum: number, timeoutMs: number) {
     dispatch({ type: 'set-busy', busy: true });
-
     try {
-
-      const { ok, fail } = await applyBootPersist(anticogBootPersist, dispatch);
-
+      const result = await runAxisState(stateNum, timeoutMs, true);
       dispatch({
-
         type: 'append-log',
-
-        direction: fail === 0 ? 'info' : 'error',
-
-        message: translate(locale, 'calBootApplied', { ok: String(ok), fail: String(fail) }),
-
+        direction: result.ok ? 'info' : 'error',
+        message: result.ok
+          ? translate(locale, 'setupToastStateDone')
+          : `${translate(locale, 'setupToastStateFail')} (${result.reason ?? 'unknown'})`,
       });
-
-      if (fail === 0) {
-
-        dispatch({ type: 'set-nvm-pending', pending: true });
-
-      }
-
     } finally {
-
       dispatch({ type: 'set-busy', busy: false });
-
     }
-
   }
 
-
-
-  async function runAdvanced(actionId: string) {
-
-    const action = findAction(actionId);
-
-    if (!action) {
-
-      return;
-
-    }
-
-    dispatch({ type: 'set-busy', busy: true });
-
-    try {
-
-      const result = await runAxisState(action.state, action.timeoutMs, action.clearFirst !== false);
-
-      const msg = result.ok
-
-        ? translate(locale, 'setupToastStateDone')
-
-        : `${translate(locale, 'setupToastStateFail')} (${result.reason ?? 'unknown'})`;
-
-      dispatch({ type: 'append-log', direction: result.ok ? 'info' : 'error', message: msg });
-
-    } finally {
-
-      dispatch({ type: 'set-busy', busy: false });
-
-    }
-
-  }
-
-
+  let step = 1;
+  const nextStep = () => step++;
 
   return (
-
-    <div className="page-stack">
-
+    <div className="page-stack cal-page">
       <SectionHeader
-
         title={translate(locale, 'tabCalibration')}
-
-        description={translate(locale, 'tabCalibrationDescription')}
-
+        description={translate(locale, 'calFlowPageDesc')}
       />
 
-
-
-      {state.nvmPending || state.dirtyPaths.length > 0 ? (
-
-        <div className="cal-nvm-banner">
-
-          <p>
-
-            {state.dirtyPaths.length > 0
-
-              ? translate(locale, 'calNvmPendingDirty', { n: String(state.dirtyPaths.length) })
-
-              : translate(locale, 'calNvmPendingBanner')}
-
-          </p>
-
-          <button type="button" className="ok" disabled={!state.connected || state.busy || saveBlocked} onClick={() => void saveAll()}>
-
-            {translate(locale, 'calNvmSaveNow')}{saveBadge}
-
-          </button>
-
+      <div className="cal-workflow-status">
+        <div className="cal-status-item">
+          <span className="lbl">{translate(locale, 'calStatusAxisState')}</span>
+          <span className="val">
+            {axisState} <span className="muted">({axisStateLabel(locale, axisState)})</span>
+          </span>
         </div>
-
-      ) : null}
-
-
-
-      <CalibrationWizardCard />
-
-      <CalibrationIntegrityBanner />
-
-
-
-      <Card title={translate(locale, 'calStatusTitle')} description={translate(locale, 'calStatusDescription')}>
-
-        <div className="cal-status-grid">
-
-          <div className="cal-status-item">
-
-            <span className="lbl">{translate(locale, 'calStatusAxisState')}</span>
-
-            <span className="val">
-
-              {axisState}{' '}
-
-              <span className="muted">({axisStateLabel(locale, axisState)})</span>
-
-            </span>
-
-          </div>
-
-          <div className="cal-status-item">
-
-            <span className="lbl">{translate(locale, 'calStatusMotorCal')}</span>
-
-            <span className={`val ${motorCal === '1' || motorCal === 'true' ? 'ok' : 'warn'}`}>
-
-              {motorCal === '1' || motorCal === 'true' ? translate(locale, 'liveValueTrue') : translate(locale, 'liveValueFalse')}
-
-            </span>
-
-          </div>
-
-          <div className="cal-status-item">
-
-            <span className="lbl">{translate(locale, 'calStatusEncoderReady')}</span>
-
-            <span className={`val ${encoderReady === '1' || encoderReady === 'true' ? 'ok' : 'warn'}`}>
-
-              {encoderReady === '1' || encoderReady === 'true' ? translate(locale, 'liveValueTrue') : translate(locale, 'liveValueFalse')}
-
-            </span>
-
-          </div>
-
+        <div className="cal-status-item">
+          <span className="lbl">{translate(locale, 'calStatusMotorCal')}</span>
+          <span className={`val ${motorOk ? 'ok' : 'warn'}`}>
+            {motorOk ? translate(locale, 'liveValueTrue') : translate(locale, 'liveValueFalse')}
+          </span>
         </div>
-
-        <div className="toolbar" style={{ flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
-
+        <div className="cal-status-item">
+          <span className="lbl">{translate(locale, 'calStatusEncoderReady')}</span>
+          <span className={`val ${encOk ? 'ok' : 'warn'}`}>
+            {encOk ? translate(locale, 'liveValueTrue') : translate(locale, 'liveValueFalse')}
+          </span>
+        </div>
+        <div className="cal-workflow-status-actions">
           <button type="button" className="warn" disabled={!state.connected || state.busy} onClick={() => void handleClearErrors()}>
-
             {translate(locale, 'setupErrClear')}
-
           </button>
-
           <button type="button" disabled={!state.connected || state.busy} onClick={() => void handleIdle()}>
-
             {translate(locale, 'calActionIdle')}
-
           </button>
-
         </div>
-
-      </Card>
-
-
-
-      <CalibrationTargetsPanel />
-
-
-
-      <EncoderToolsPanel />
-
-
-
-      <CalibrationSection
-
-        titleKey="calSectionMotorTitle"
-
-        descriptionKey="calSectionMotorDesc"
-
-        prereqKey="calSectionMotorPrereq"
-
-        action={findAction('motor-cal')}
-
-        errorFields={motorCalErrorFields}
-
-        showMotorResults
-
-      />
-
-
-
-      <CalibrationSection
-
-        titleKey="calSectionEncoderTitle"
-
-        descriptionKey="calSectionEncoderDesc"
-
-        prereqKey="calSectionEncoderPrereq"
-
-        action={findAction('encoder-cal')}
-
-        errorFields={encoderCalErrorFields}
-
-        showEncoderResults
-
-      />
-
-
-
-      <CalibrationSection
-
-        titleKey="calSectionIndexTitle"
-
-        descriptionKey="calSectionIndexDesc"
-
-        prereqKey="calSectionIndexPrereq"
-
-        action={findAction('index-search')}
-
-      />
-
-
-
-      <CalibrationSection
-
-        titleKey="calSectionDirTitle"
-
-        descriptionKey="calSectionDirDesc"
-
-        action={findAction('encoder-dir')}
-
-      />
-
-
-
-      <CalibrationSection
-
-        titleKey="calSectionClosedLoopTitle"
-
-        descriptionKey="calSectionClosedLoopDesc"
-
-        prereqKey="calSectionClosedLoopPrereq"
-
-        action={findAction('closed-loop')}
-
-      />
-
-
-
-      <BootFlagsPanel />
-
-
-
-      <Card title={translate(locale, 'anticogTitle')} description={translate(locale, 'anticogDescription')}>
-
-        <AnticoggingPanel embedded />
-
-        <div className="cal-boot-block" style={{ marginTop: 12 }}>
-
-          <div className="toolbar" style={{ flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-
-            <button type="button" disabled={!state.connected || state.busy} onClick={() => void handleAnticogBoot()}>
-
-              {translate(locale, 'calBootApply')}
-
-            </button>
-
-            <span className="cal-boot-hint">{translate(locale, 'calAnticogBootHint')}</span>
-
-          </div>
-
-        </div>
-
-      </Card>
-
-
-
-      <Card title={translate(locale, 'calAdvancedTitle')} description={translate(locale, 'calAdvancedDesc')}>
-
-        <button type="button" className="ghost" onClick={() => setAdvancedOpen((open) => !open)}>
-
-          {advancedOpen ? translate(locale, 'calAdvancedHide') : translate(locale, 'calAdvancedShow')}
-
-        </button>
-
-        {advancedOpen ? (
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 6, marginTop: 10 }}>
-
-            {(['full-cal', 'lockin', 'homing'] as const).map((id) => {
-
-              const action = findAction(id);
-
-              if (!action) {
-
-                return null;
-
-              }
-
-              return (
-
+      </div>
+
+      <p className="cal-flow-intro">{translate(locale, 'calFlowIntro')}</p>
+
+      {calibrationRunWorkflows.map((workflow) => {
+        const idx = nextStep();
+        if (workflow.id === 'encoder') {
+          return (
+            <CalibrationWorkflowCard key={workflow.id} workflow={workflow} index={idx} onCalComplete={bumpCalStatus}>
+              <div className="cal-workflow-tools">
                 <button
-
-                  key={id}
-
                   type="button"
-
-                  disabled={!state.connected || state.busy}
-
-                  className={action.tone === 'danger' ? 'danger' : action.tone === 'warn' ? 'warn' : ''}
-
-                  style={{ display: 'grid', gap: 3, textAlign: 'left', minHeight: 56, padding: '8px 10px' }}
-
-                  onClick={() => void runAdvanced(id)}
-
+                  disabled={state.busy}
+                  onClick={() => {
+                    if (window.confirm(translate(locale, 'encoderAs5047Confirm'))) {
+                      applyAs5047Preset(dispatch);
+                      dispatch({
+                        type: 'append-log',
+                        direction: 'info',
+                        message: translate(locale, 'calAs5047PresetStaged'),
+                      });
+                    }
+                  }}
                 >
-
-                  <strong style={{ fontSize: 13 }}>{translate(locale, action.labelKey)}</strong>
-
-                  <code style={{ fontSize: 10, color: 'var(--muted-2)' }}>{translate(locale, action.subKey)}</code>
-
+                  {translate(locale, 'encoderAs5047Preset')}
                 </button>
+                {!useIndex ? (
+                  <button
+                    type="button"
+                    disabled={!state.connected || state.busy}
+                    onClick={() => {
+                      void (async () => {
+                        dispatch({ type: 'set-busy', busy: true });
+                        try {
+                          await zeroWheel(dispatch);
+                        } finally {
+                          dispatch({ type: 'set-busy', busy: false });
+                        }
+                      })();
+                    }}
+                  >
+                    {translate(locale, 'encoderZeroWheel')}
+                  </button>
+                ) : null}
+              </div>
+              {useIndex ? (
+                <MechanicalCenterPanel />
+              ) : (
+                <p className="cal-workflow-prereq muted">{translate(locale, 'encoderIncrementalWarn')}</p>
+              )}
+            </CalibrationWorkflowCard>
+          );
+        }
+        return <CalibrationWorkflowCard key={workflow.id} workflow={workflow} index={idx} onCalComplete={bumpCalStatus} />;
+      })}
 
-              );
+      <CalibrationFinalizeCard index={nextStep()} onStatusChange={setLiveStatus} refreshToken={calRefreshToken} />
 
-            })}
+      <CalibrationWorkflowCard
+        workflow={closedLoopWorkflow}
+        index={nextStep()}
+        canRun={canClosedLoop}
+        disabledReasonKey={canClosedLoop ? undefined : 'calFlowClosedLoopBlocked'}
+      />
 
-          </div>
+      {optionalCalibrationWorkflows.map((workflow) => (
+        <CalibrationWorkflowCard key={workflow.id} workflow={workflow} index={nextStep()} />
+      ))}
 
-        ) : null}
+      <AnticogWorkflowCard index={nextStep()} />
 
-      </Card>
+      <details className="cal-advanced-details">
+        <summary>{translate(locale, 'calAdvancedTitle')}</summary>
+        <p className="cal-workflow-prereq">{translate(locale, 'calAdvancedDesc')}</p>
+        <div className="cal-workflow-actions">
+          {(['full-cal', 'lockin', 'homing'] as const).map((id) => {
+            const action = calibrationAxisActions.find((item) => item.id === id);
+            if (!action) {
+              return null;
+            }
+            return (
+              <button
+                key={id}
+                type="button"
+                className={action.tone === 'danger' ? 'danger' : 'warn'}
+                disabled={!state.connected || state.busy}
+                onClick={() => void runAdvanced(action.state, action.timeoutMs)}
+              >
+                {translate(locale, action.labelKey)}
+              </button>
+            );
+          })}
+          <button type="button" disabled={state.busy} onClick={() => setNtcOpen(true)}>
+            {translate(locale, 'ntcOpenCalc')}
+          </button>
+        </div>
+      </details>
 
+      {ntcOpen ? <NtcCalculatorModal onClose={() => setNtcOpen(false)} /> : null}
     </div>
-
   );
-
 }
-
-

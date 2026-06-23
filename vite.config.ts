@@ -10,6 +10,8 @@ const PWA_ICONS = [
 
 export default defineConfig({
   base: './',
+  logLevel: 'info',
+  clearScreen: false,
   plugins: [
     react(),
     VitePWA({

@@ -18,5 +18,11 @@ export const MAX_TELEMETRY_WINDOW_MS = TELEMETRY_WINDOW_OPTIONS[TELEMETRY_WINDOW
 
 const MIN_TELEMETRY_INTERVAL_MS = TELEMETRY_INTERVAL_OPTIONS[0].ms;
 
-/** Enough slots for 5 min at 100 ms poll (fastest interval). */
+/** Enough slots for 5 min at 100 ms poll (fastest serial interval). */
 export const MAX_TELEMETRY_SAMPLES = Math.ceil(MAX_TELEMETRY_WINDOW_MS / MIN_TELEMETRY_INTERVAL_MS);
+
+/** HID input reports arrive at ~1 kHz — downsample for charts to avoid OOM. */
+export const HID_TELEMETRY_MIN_INTERVAL_MS = 50;
+
+/** React state sync from the in-memory ring buffer. */
+export const TELEMETRY_UI_SYNC_MS = 500;

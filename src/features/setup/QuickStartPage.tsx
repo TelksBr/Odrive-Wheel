@@ -49,7 +49,7 @@ export function QuickStartPage() {
   const { state, dispatch } = useAppState();
   const locale = state.locale;
   const hid = useHidConnection(locale);
-  const { saveAll, saveBadge, saveBlocked } = useBoardSave();
+  const { saveAll, saveBadge } = useBoardSave();
   const { skipStep, unskipStep, isSkipped } = useSetupSkipped();
 
   const [activeStep, setActiveStep] = useState<SetupStepId>('connect');
@@ -527,7 +527,7 @@ export function QuickStartPage() {
             <button
               type="button"
               className="ok"
-              disabled={!state.connected || state.busy || saveBlocked}
+              disabled={!state.connected || state.busy}
               onClick={() => {
                 void saveAll().then(() => setAppliedFlags((p) => ({ ...p, saveNvm1: true })));
               }}
@@ -621,7 +621,7 @@ export function QuickStartPage() {
               </button>
               <button
                 type="button"
-                disabled={!state.connected || state.busy || saveBlocked}
+                disabled={!state.connected || state.busy}
                 onClick={() => {
                   void saveAll().then(() => setAppliedFlags((p) => ({ ...p, bootSave: true })));
                 }}

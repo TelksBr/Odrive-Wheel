@@ -45,6 +45,8 @@ export const messages: Record<Locale, MessageMap> = {
     disconnected: 'Desconectado',
     connect: 'Conectar',
     disconnect: 'Desconectar',
+    connectSerialTitle:
+      'Serial de controle ODrive (ex.: COM6) — não use a porta de jogo (ex.: COM1). Para o volante no simulador, use Conectar HID.',
     busy: 'Ocupado',
     reconnecting: 'Reconectando',
     refreshed: 'Atualizado',
@@ -73,6 +75,11 @@ export const messages: Record<Locale, MessageMap> = {
     pwaPanelDescription: 'Instale o configurador para abrir em janela propria no Windows, Linux ou macOS — ideal para o pit lane, mesmo offline.',
     serialConnectedLog: 'Serial conectado',
     serialDisconnectedLog: 'Serial desconectado',
+    serialConnecting: 'Conectando…',
+    serialConnectCancelled: 'Conexão cancelada — nenhuma porta selecionada.',
+    serialUnsupported: 'Web Serial indisponível — use Chrome ou Edge em localhost/https.',
+    serialWrongPort:
+      'Porta errada — escolha a COM de controle ODrive (ex.: COM6), não a porta de jogo (ex.: COM1). O jogo usa Conectar HID, não serial.',
     noKnownPortLog: 'Nenhuma porta serial autorizada anteriormente foi encontrada',
     heroEyebrow: 'WheelForge Control Center',
     heroTitle: 'Configure, ajuste e monitore seu volante FFB em um cockpit.',
@@ -254,6 +261,8 @@ export const messages: Record<Locale, MessageMap> = {
     disconnected: 'Disconnected',
     connect: 'Connect',
     disconnect: 'Disconnect',
+    connectSerialTitle:
+      'ODrive control serial (e.g. COM6) — not the game port (e.g. COM1). For sim racing, use Connect HID.',
     busy: 'Busy',
     reconnecting: 'Reconnecting',
     refreshed: 'Refreshed',
@@ -282,6 +291,11 @@ export const messages: Record<Locale, MessageMap> = {
     pwaPanelDescription: 'Install the configurator to launch in its own window on Windows, Linux, or macOS — ideal for the pit lane, even offline.',
     serialConnectedLog: 'Serial connected',
     serialDisconnectedLog: 'Serial disconnected',
+    serialConnecting: 'Connecting…',
+    serialConnectCancelled: 'Connection cancelled — no port selected.',
+    serialUnsupported: 'Web Serial unavailable — use Chrome or Edge on localhost/https.',
+    serialWrongPort:
+      'Wrong port — pick the ODrive control COM (e.g. COM6), not the game port (e.g. COM1). Racing uses Connect HID, not serial.',
     noKnownPortLog: 'No previously authorized serial port found',
     heroEyebrow: 'WheelForge Control Center',
     heroTitle: 'Configure, tune and watch your FFB wheel from one cockpit.',

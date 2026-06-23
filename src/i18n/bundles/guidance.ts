@@ -18,10 +18,20 @@ export const guidanceEn: Record<string, string> = {
     'Limits regen current pushed back into the PSU. Keep negative (e.g. −5). For non-regen lab supplies set to −0.1 to prevent backfeed damage. For LiPo packs that support charging set to match the charger C-rate.',
 
   // Axis
+  'axis0.current_state':
+    'Live axis state — poll with r axis0.current_state. 8 = closed-loop (FFB active), 1 = IDLE (no torque). This is the field to watch during operation; requested_state often reads 0 after a command completes.',
   'axis0.requested_state':
-    'Write to command axis state. Key values: 1 = IDLE (safe, no torque), 3 = FULL_CALIBRATION_SEQUENCE (motor rotates — hold or remove wheel!), 8 = CLOSED_LOOP_CONTROL (FFB active). Never send state 3 with wheel firmly mounted; the motor spins freely during calibration.',
+    'Write-only command (w axis0.requested_state N). ODrive clears this to 0 once the transition finishes — seeing 0 while current_state is 8 is normal. Key values: 1 = IDLE (safe), 3 = full calibration (motor spins — hold wheel!), 8 = closed-loop. Never send 3 with wheel mounted.',
   'axis0.config.startup_closed_loop_control':
     'When true, ODrive enters closed-loop automatically after boot — no need to send state=8 each time. Only enable after motor and encoder are pre_calibrated. Combine with pre_calibrated flags for a fully autonomous startup.',
+  'axis0.config.startup_motor_calibration':
+    'Runs R/L motor calibration on every boot when true. After a successful cal + Save, set false and enable motor pre_calibrated instead.',
+  'axis0.config.startup_encoder_offset_calibration':
+    'Runs encoder offset calibration on every boot when true. After success + Save, set false and enable encoder pre_calibrated.',
+  'axis0.config.startup_encoder_index_search':
+    'Searches encoder Z index on boot. Only for incremental encoders with index wired. Disable after index is found and saved.',
+  'config.max_regen_current':
+    'Caps regen current into the DC bus (separate from dc_max_negative_current). Set 0 for PSUs that cannot accept backfeed.',
 
   // Motor
   'axis0.motor.config.current_lim':
@@ -42,6 +52,8 @@ export const guidanceEn: Record<string, string> = {
     'Suppresses low-level noise in the current PI loop. 0 = sharpest response (recommended for FFB). Increase to 0.02–0.05 if motor produces an audible hum or buzz when idle without game input.',
   'axis0.motor.config.pre_calibrated':
     'Skip motor calibration on boot. Only set true after a successful calibration where measured R/L values are plausible. Combine with encoder.pre_calibrated and startup_closed_loop_control for a fully silent auto-start.',
+  'axis0.motor.config.requested_current_range':
+    'Current sense ADC range in amps. Set slightly above current_lim (e.g. current_lim + 2 A). Too low = current clipping; too high = reduced resolution.',
 
   // Encoder
   'axis0.encoder.config.mode':
@@ -54,6 +66,10 @@ export const guidanceEn: Record<string, string> = {
     'Enable when the encoder has a Z (index) pulse wired and you want sub-revolution homing. ODrive will search for the Z pulse on startup before entering closed-loop. Without Z, encoder offset is arbitrary but still valid after calibration.',
   'axis0.encoder.config.pre_calibrated':
     'Skip encoder offset calibration on boot. Only valid after at least one successful calibration cycle. With use_index=true, this also skips the index search — requires the index to be reliably found beforehand.',
+  'axis0.encoder.config.direction':
+    'READONLY calibration result (1 or −1). The firmware sets this during motor/encoder calibration — manual writes can invert the Park transform and cause oscillation or disarm. To flip wheel direction for the user/game, use axis.invert on the FFB Wheel tab. To auto-detect, run axis state 10 (encoder dir find) on the Calibration tab.',
+  'axis0.encoder.config.abs_spi_cs_gpio_pin':
+    'Chip-select GPIO for SPI absolute encoders. MKS XDrive Mini default for AS5047: pin 7. Must match your wiring.',
 
   // Controller
   'axis0.controller.config.control_mode':
@@ -152,10 +168,20 @@ export const guidancePt: Record<string, string> = {
     'Limita a corrente de regeneração devolvida à PSU. Mantenha negativa (ex.: −5). Para fontes de bancada sem regeneração use −0,1 para evitar dano por backfeed. Para packs LiPo que suportam carga, ajuste à taxa C do carregador.',
 
   // Eixo
+  'axis0.current_state':
+    'Estado real do eixo — leia com r axis0.current_state. 8 = closed-loop (FFB ativo), 1 = IDLE (sem torque). É este campo que importa em operação; requested_state muitas vezes fica 0 após o comando concluir.',
   'axis0.requested_state':
-    'Escreva para comandar o estado do eixo. Valores-chave: 1 = IDLE (seguro, sem torque), 3 = FULL_CALIBRATION_SEQUENCE (motor gira — segure ou remova o volante!), 8 = CLOSED_LOOP_CONTROL (FFB ativo). Nunca envie estado 3 com volante firmemente montado; o motor gira livremente na calibração.',
+    'Comando de escrita (w axis0.requested_state N). O ODrive repõe 0 quando a transição termina — ver 0 com current_state=8 é normal. Valores-chave: 1 = IDLE, 3 = calibração completa (motor gira!), 8 = closed-loop. Nunca envie 3 com volante montado.',
   'axis0.config.startup_closed_loop_control':
     'Quando true, o ODrive entra em closed-loop automaticamente após o boot — sem precisar enviar state=8 toda vez. Habilite só após motor e encoder estarem pre_calibrated. Combine com flags pre_calibrated para arranque totalmente autônomo.',
+  'axis0.config.startup_motor_calibration':
+    'Executa calibração R/L do motor em todo boot quando true. Após calibração OK + Salvar, defina false e active motor pre_calibrated.',
+  'axis0.config.startup_encoder_offset_calibration':
+    'Executa calibração de offset do encoder em todo boot quando true. Após sucesso + Salvar, defina false e active encoder pre_calibrated.',
+  'axis0.config.startup_encoder_index_search':
+    'Procura índice Z no boot. Só para encoders incrementais com índice ligado. Desative após encontrar e salvar.',
+  'config.max_regen_current':
+    'Limita corrente de regeneração no barramento DC (separado de dc_max_negative_current). Use 0 em PSUs que não aceitam backfeed.',
 
   // Motor
   'axis0.motor.config.current_lim':
@@ -176,6 +202,8 @@ export const guidancePt: Record<string, string> = {
     'Suprime ruído de baixo nível no loop PI de corrente. 0 = resposta mais nítida (recomendado para FFB). Aumente para 0,02–0,05 se o motor produzir zumbido ou buzz em idle sem input do jogo.',
   'axis0.motor.config.pre_calibrated':
     'Pula calibração do motor no boot. Defina true só após calibração bem-sucedida com valores R/L plausíveis. Combine com encoder.pre_calibrated e startup_closed_loop_control para arranque silencioso e automático.',
+  'axis0.motor.config.requested_current_range':
+    'Faixa da escala de corrente em amperes. Defina ligeiramente acima de current_lim (ex.: current_lim + 2 A). Muito baixo = clipping; muito alto = menos resolução.',
 
   // Encoder
   'axis0.encoder.config.mode':
@@ -188,6 +216,10 @@ export const guidancePt: Record<string, string> = {
     'Habilite quando o encoder tem pulso Z (index) ligado e você quer homing sub-revolução. O ODrive busca o pulso Z no boot antes de entrar em closed-loop. Sem Z, o offset do encoder é arbitrário mas ainda válido após calibração.',
   'axis0.encoder.config.pre_calibrated':
     'Pula calibração de offset do encoder no boot. Válido só após pelo menos um ciclo de calibração bem-sucedido. Com use_index=true, também pula a busca do index — exige que o index seja encontrado de forma confiável antes.',
+  'axis0.encoder.config.direction':
+    'Resultado de calibração somente leitura (1 ou −1). O firmware define isto na calibração motor/encoder — escrita manual pode inverter o Park transform e causar oscilação ou desarme. Para inverter o sentido do volante para o utilizador/jogo, use axis.invert na aba FFB Wheel. Para detetar automaticamente, execute estado 10 (encoder dir find) na Calibração.',
+  'axis0.encoder.config.abs_spi_cs_gpio_pin':
+    'GPIO chip-select para encoders absolutos SPI. Padrão MKS XDrive Mini com AS5047: pino 7. Deve coincidir com a fiação.',
 
   // Controlador
   'axis0.controller.config.control_mode':

@@ -1,32 +1,54 @@
 import { guidanceEn, guidancePt } from '../../i18n/bundles/guidance';
 import type { Locale } from '../../i18n/messages';
 import { translate } from '../../i18n/messages';
+import { localizeOptionLabel } from '../../i18n/fieldMeta';
 import type { ConfigField } from './fieldCatalog';
 import { fieldDefaults, fieldExamples, fieldRanges } from './fieldMetaValues';
 
 export interface FieldHelp {
-  defaultValue: string;
-  exampleValue: string;
-  range: string;
+  defaultValue?: string;
+  exampleValue?: string;
+  range?: string;
   unit?: string;
   readCommand: string;
   writeCommand?: string;
   options?: string;
-  guidance: string;
+  guidance?: string;
 }
 
 export function getFieldHelp(field: ConfigField, locale: Locale): FieldHelp {
   const unit = field.unit ?? inferUnit(field);
+  const choiceControl = field.type === 'bool' || field.type === 'enum';
+  const defaultValue = field.defaultValue ?? inferDefault(field, locale);
+  const exampleValue = field.exampleValue ?? inferExample(field, locale);
+  const range = choiceControl ? undefined : formatRange(field, locale);
+  const options = choiceControl ? undefined : formatOptions(field, locale);
+  const guidance = resolveGuidance(field, locale);
+
   return {
-    defaultValue: field.defaultValue ?? inferDefault(field, locale),
-    exampleValue: field.exampleValue ?? inferExample(field),
-    range: formatRange(field, locale),
-    unit,
+    defaultValue: choiceControl ? undefined : defaultValue,
+    exampleValue: choiceControl ? undefined : exampleValue,
+    range: range || undefined,
+    unit: choiceControl ? undefined : unit,
     readCommand: field.protocol === 'openffboard' ? `${field.path}?` : `r ${field.path}`,
     writeCommand: field.readonly ? undefined : field.protocol === 'openffboard' ? `${field.path}=<value>` : `w ${field.path} <value>`,
-    options: field.options?.map((option) => `${option.value}: ${option.label}`).join(' · '),
-    guidance: field.help ?? inferGuidance(field, locale),
+    options,
+    guidance,
   };
+}
+
+function formatOptions(field: ConfigField, locale: Locale): string | undefined {
+  if (!field.options?.length) return undefined;
+  return field.options
+    .map((option) => `${option.value}: ${localizeOptionLabel(locale, field, option.value, option.label)}`)
+    .join(' · ');
+}
+
+function resolveGuidance(field: ConfigField, locale: Locale): string | undefined {
+  const raw = (field.help ?? inferGuidance(field, locale)).trim();
+  const desc = field.description.trim();
+  if (!raw || raw === desc) return undefined;
+  return raw;
 }
 
 function inferDefault(field: ConfigField, locale: Locale): string {
@@ -55,7 +77,7 @@ function inferDefault(field: ConfigField, locale: Locale): string {
     return '4095';
   }
   if (field.type === 'bool') {
-    return 'false';
+    return translate(locale, 'boolOff');
   }
   if (field.options?.[0]) {
     return field.options[0].value;
@@ -64,7 +86,7 @@ function inferDefault(field: ConfigField, locale: Locale): string {
   return translate(locale, 'fieldFirmwareDefault');
 }
 
-function inferExample(field: ConfigField): string {
+function inferExample(field: ConfigField, locale: Locale): string {
   const exact = fieldExamples[field.path];
   if (exact !== undefined) {
     return exact;
@@ -83,7 +105,7 @@ function inferExample(field: ConfigField): string {
     return '3850';
   }
   if (field.type === 'bool') {
-    return 'true';
+    return translate(locale, 'boolOn');
   }
   if (field.options?.[0]) {
     return field.options[0].value;
@@ -146,6 +168,9 @@ function inferGuidance(field: ConfigField, locale: Locale): string {
   if (field.path.startsWith('fx.filter') && field.path.endsWith('Q')) {
     return guidance['fx.filterQ'] ?? translate(locale, 'fieldGuidanceFallback');
   }
+  if (field.description && field.description.length >= 48) {
+    return field.description;
+  }
   return guidance['field.guidance.fallback'] ?? translate(locale, 'fieldGuidanceFallback');
 }
 
@@ -154,14 +179,8 @@ function formatRange(field: ConfigField, locale: Locale): string {
   if (catalogRange) {
     return catalogRange;
   }
-  if (field.options?.length) {
-    return field.options.map((option) => option.value).join(' / ');
-  }
   if (field.min !== undefined || field.max !== undefined) {
     return `${field.min ?? '-inf'} .. ${field.max ?? '+inf'}`;
-  }
-  if (field.type === 'bool') {
-    return 'true / false';
   }
   if (field.readonly) {
     return translate(locale, 'fieldRangeReadonly');

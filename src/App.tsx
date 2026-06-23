@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AppStateProvider, useAppState } from './app/AppState';
 import { tabs } from './app/tabs';
 import { translate } from './i18n/messages';
@@ -6,7 +6,8 @@ import { serialService, type SerialEvent } from './features/serial/SerialService
 import { formatSerialRxLine } from './features/serial/serialLogFormat';
 import { readField } from './features/board/BoardProtocol';
 import { useBoardSave } from './features/board/useBoardSave';
-import { initialFieldsForTab } from './app/refreshPolicy';
+import { initialFieldsForTab, refreshFieldsForTab } from './app/refreshPolicy';
+import { toast, toastKey } from './shared/toastActions';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { CalibrationPage } from './features/calibration/CalibrationPage';
 import { ConfigPage } from './features/config/ConfigPage';
@@ -32,17 +33,28 @@ import { ToastHost } from './shared/ToastHost';
 function AppShell() {
   const { state, dispatch } = useAppState();
   const [navQuery, setNavQuery] = useState('');
-  const { saveAll, saveButtonLabel, saveBadge, saveBlocked } = useBoardSave();
+  const [serialConnecting, setSerialConnecting] = useState(false);
+  const reconnectInFlightRef = useRef(false);
+  const reconnectCooldownUntilRef = useRef(0);
+  const manualDisconnectRequestedRef = useRef(false);
+  const autoReconnectBlockedRef = useRef(false);
+  const { saveAll, saveButtonLabel, saveBadge } = useBoardSave();
   const skipReadPaths = [...new Set([...state.dirtyPaths, ...state.nvmPendingPaths])];
   const skipReadKey = skipReadPaths.join('\0');
-  const wheelPositionDegRef = useWheelPositionPoll(state.connected, state.connected && !state.busy);
+  const wheelPollActive = state.connected && !state.busy && state.activeTab !== 'calibration';
+  const wheelPositionDegRef = useWheelPositionPoll(state.connected, wheelPollActive);
 
   useEffect(() => {
     function onSerialEvent(event: SerialEvent) {
       if (event.type === 'connected') {
+        autoReconnectBlockedRef.current = false;
         dispatch({ type: 'set-connected', connected: true });
         dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'serialConnectedLog') });
       } else if (event.type === 'disconnected') {
+        if (manualDisconnectRequestedRef.current) {
+          autoReconnectBlockedRef.current = true;
+          manualDisconnectRequestedRef.current = false;
+        }
         dispatch({ type: 'set-connected', connected: false });
         dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'serialDisconnectedLog') });
       } else if (event.type === 'rx') {
@@ -53,6 +65,8 @@ function AppShell() {
         });
       } else if (event.type === 'tx') {
         dispatch({ type: 'append-log', direction: 'tx', message: event.line });
+      } else if (event.type === 'info') {
+        dispatch({ type: 'append-log', direction: 'info', message: event.message });
       } else {
         dispatch({ type: 'append-log', direction: 'error', message: event.message });
       }
@@ -64,20 +78,32 @@ function AppShell() {
   useEffect(() => {
     let cancelled = false;
     async function reconnect() {
-      if (!state.serialSupported || !state.autoReconnect || state.connected || state.busy) {
+      if (!state.serialSupported || !state.autoReconnect || state.connected || state.busy || autoReconnectBlockedRef.current) {
         return;
       }
+      if (reconnectInFlightRef.current) {
+        return;
+      }
+      if (Date.now() < reconnectCooldownUntilRef.current) {
+        return;
+      }
+      reconnectInFlightRef.current = true;
       dispatch({ type: 'set-reconnecting', reconnecting: true });
       try {
         const ok = await serialService.reconnectKnownPort();
         if (!ok && !cancelled) {
           dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'noKnownPortLog') });
+          reconnectCooldownUntilRef.current = Date.now() + 5000;
+        } else if (ok) {
+          reconnectCooldownUntilRef.current = 0;
         }
       } catch (error) {
         if (!cancelled) {
           dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
         }
+        reconnectCooldownUntilRef.current = Date.now() + 5000;
       } finally {
+        reconnectInFlightRef.current = false;
         if (!cancelled) {
           dispatch({ type: 'set-reconnecting', reconnecting: false });
         }
@@ -96,7 +122,10 @@ function AppShell() {
 
     let cancelled = false;
     async function readInitialPageFields() {
-      const fields = initialFieldsForTab(state.activeTab, skipReadPaths);
+      const fields =
+        state.activeTab === 'calibration'
+          ? refreshFieldsForTab(state.activeTab, skipReadPaths)
+          : initialFieldsForTab(state.activeTab, skipReadPaths);
       if (fields.length === 0) {
         return;
       }
@@ -123,14 +152,34 @@ function AppShell() {
   }, [skipReadKey, dispatch, state.activeTab, state.busy, state.connected]);
 
   async function toggleConnection() {
+    if (serialConnecting) {
+      return;
+    }
+    setSerialConnecting(true);
     try {
       if (state.connected) {
+        manualDisconnectRequestedRef.current = true;
         await serialService.disconnect();
       } else {
+        autoReconnectBlockedRef.current = false;
+        toastKey(dispatch, state.locale, 'serialConnecting', 'info');
         await serialService.connect();
+        toastKey(dispatch, state.locale, 'serialConnectedLog', 'ok');
       }
     } catch (error) {
-      dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
+      const raw = error instanceof Error ? error.message : String(error);
+      let msg = raw;
+      if (raw === 'serialWrongPort') {
+        msg = translate(state.locale, 'serialWrongPort');
+      } else if (raw === 'serialConnectCancelled') {
+        msg = translate(state.locale, 'serialConnectCancelled');
+      } else if (raw === 'Web Serial is not available') {
+        msg = translate(state.locale, 'serialUnsupported');
+      }
+      dispatch({ type: 'append-log', direction: 'error', message: msg });
+      toast(dispatch, msg, 'error');
+    } finally {
+      setSerialConnecting(false);
     }
   }
 
@@ -161,7 +210,13 @@ function AppShell() {
       case 'calibration':
         return <CalibrationPage />;
       case 'motor':
-        return <ConfigPage filter="odrive" />;
+        return (
+          <ConfigPage
+            filter="odrive"
+            includeGroups={['psu', 'axis', 'motor', 'encoder', 'controller', 'fet-thermistor', 'motor-thermistor']}
+            allowOpenffboardPaths={['sys.vbusdiv']}
+          />
+        );
       case 'tune':
         return <TuneWorkspace />;
       case 'ffb-test':
@@ -239,7 +294,7 @@ function AppShell() {
             <button
               type="button"
               className="topbar-save-btn ok"
-              disabled={!state.connected || state.busy || saveBlocked}
+              disabled={!state.connected || state.busy}
               onClick={() => void saveAll()}
               title={translate(state.locale, 'saveTitle')}
             >
@@ -277,11 +332,14 @@ function AppShell() {
             {/* Connect / Disconnect */}
             <button
               type="button"
-              disabled={!state.serialSupported}
+              disabled={!state.serialSupported || serialConnecting}
               className={state.connected ? 'danger' : ''}
+              title={state.connected ? undefined : translate(state.locale, 'connectSerialTitle')}
               onClick={() => void toggleConnection()}
             >
-              {translate(state.locale, state.connected ? 'disconnect' : 'connect')}
+              {serialConnecting
+                ? translate(state.locale, 'serialConnecting')
+                : translate(state.locale, state.connected ? 'disconnect' : 'connect')}
             </button>
           </div>
         </header>

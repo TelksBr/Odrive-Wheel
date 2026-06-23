@@ -17,6 +17,14 @@ export function pushTelemetrySample(
   }
 }
 
-export function snapshotTelemetry(buffer: TelemetrySample[]): TelemetrySample[] {
-  return buffer.slice();
+export function snapshotTelemetry(buffer: TelemetrySample[], windowMs?: number): TelemetrySample[] {
+  if (windowMs === undefined || buffer.length === 0) {
+    return buffer.slice();
+  }
+  const cutoff = (buffer.at(-1)?.t ?? 0) - windowMs;
+  let start = 0;
+  while (start < buffer.length && buffer[start].t < cutoff) {
+    start += 1;
+  }
+  return start === 0 ? buffer.slice() : buffer.slice(start);
 }

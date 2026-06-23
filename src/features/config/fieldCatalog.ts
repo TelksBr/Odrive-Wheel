@@ -22,6 +22,8 @@ export interface ConfigField {
   caution?: string;
   options?: FieldOption[];
   readonly?: boolean;
+  /** Show in config editor even when readonly (e.g. axis current_state). */
+  configVisible?: boolean;
   groupId?: string;
 }
 
@@ -65,6 +67,22 @@ const motorTypeOptions: FieldOption[] = [
   { value: '0', label: 'High current BLDC' },
   { value: '2', label: 'Gimbal' },
   { value: '3', label: 'ACIM' },
+];
+
+/** ODrive axis state codes (requested_state command / current_state live). */
+export const axisStateOptions: FieldOption[] = [
+  { value: '0', label: 'Undefined (no pending request)' },
+  { value: '1', label: 'IDLE' },
+  { value: '2', label: 'Startup sequence' },
+  { value: '3', label: 'Full calibration sequence' },
+  { value: '4', label: 'Motor calibration' },
+  { value: '5', label: 'Encoder calibration' },
+  { value: '6', label: 'Encoder index search' },
+  { value: '7', label: 'Encoder offset calibration' },
+  { value: '8', label: 'Closed-loop control' },
+  { value: '9', label: 'Lockin spin' },
+  { value: '10', label: 'Encoder direction find' },
+  { value: '11', label: 'Homing' },
 ];
 
 const gpioModeOptions: FieldOption[] = [
@@ -192,6 +210,19 @@ export const configGroups: ConfigGroup[] = [
         step: 0.1,
         description: 'Maximum regen current into the DC bus. Set 0 when using a non-regen PSU.',
       },
+      {
+        path: 'sys.vbusdiv',
+        label: 'VBUS divider',
+        type: 'int',
+        protocol: 'openffboard',
+        min: 1,
+        max: 50,
+        step: 1,
+        defaultValue: '19',
+        exampleValue: '19',
+        description:
+          '⚠ Hardware parameter. ADC voltage divider ratio (not volts). Wrong value = incorrect VBUS readings and broken protection thresholds. MKS XDrive Mini default is 19 — calibrate in Setup if readings disagree with a multimeter.',
+      },
     ],
   },
   {
@@ -205,17 +236,18 @@ export const configGroups: ConfigGroup[] = [
         type: 'readonly',
         protocol: 'odrive',
         readonly: true,
-        description: 'Current ODrive axis state.',
+        configVisible: true,
+        description:
+          'Live ODrive axis state. When FFB is active this should read 8 (closed-loop). Use this — not requested_state — to know what the axis is doing.',
       },
       {
         path: 'axis0.requested_state',
         label: 'Requested state',
-        type: 'int',
+        type: 'enum',
         protocol: 'odrive',
-        min: 1,
-        max: 16,
-        step: 1,
-        description: 'ODrive axis state command. 1 = IDLE (safe), 8 = CLOSED_LOOP_CONTROL (FFB active). Never send 3 with wheel mounted.',
+        options: axisStateOptions,
+        description:
+          'Write-only state command. After the axis reaches the target, ODrive often resets this to 0 (no pending request) while current_state stays at the active state (e.g. 8). 1 = IDLE, 8 = closed-loop. Never send 3 with the wheel mounted.',
       },
       {
         path: 'axis0.config.startup_closed_loop_control',
@@ -412,12 +444,12 @@ export const configGroups: ConfigGroup[] = [
       {
         path: 'axis0.encoder.config.direction',
         label: 'Direction',
-        type: 'int',
+        type: 'readonly',
         protocol: 'odrive',
-        min: -1,
-        max: 1,
-        step: 1,
-        description: 'Encoder count direction: 1 or −1. Use ENCODER_DIR_FIND (state=10) to detect.',
+        readonly: true,
+        configVisible: true,
+        description:
+          'READONLY — set by motor/encoder calibration (1 or −1). Do not edit manually; wrong value breaks FOC. For user/game direction use axis.invert (FFB Wheel). To detect: calibration state 10 (encoder dir find).',
       },
       {
         path: 'axis0.encoder.config.bandwidth',
@@ -436,6 +468,22 @@ export const configGroups: ConfigGroup[] = [
         protocol: 'odrive',
         options: boolOptions,
         description: 'Enable when encoder has a Z pulse wired. ODrive searches for it on startup before entering closed-loop.',
+      },
+      {
+        path: 'axis0.encoder.config.use_index_offset',
+        label: 'Use index offset',
+        type: 'bool',
+        protocol: 'odrive',
+        options: boolOptions,
+        description: 'Apply index_offset when the Z pulse is detected.',
+      },
+      {
+        path: 'axis0.encoder.config.index_offset',
+        label: 'Index offset',
+        type: 'float',
+        protocol: 'odrive',
+        step: 0.0001,
+        description: 'Offset in turns applied at Z pulse — defines mechanical zero relative to index. Use Capture mechanical center on Calibration tab.',
       },
       {
         path: 'axis0.encoder.config.abs_spi_cs_gpio_pin',
@@ -1200,7 +1248,7 @@ export const configGroups: ConfigGroup[] = [
   {
     id: 'system',
     title: 'System',
-    description: 'Board identity and one configurable system parameter. Live telemetry (position, torque, VBUS) is in the Debug and Observe pages.',
+    description: 'Board identity. VBUS divider is under PSU / Brake. Live telemetry is in Debug and Observe.',
     fields: [
       {
         path: 'sys.swver',
@@ -1225,19 +1273,6 @@ export const configGroups: ConfigGroup[] = [
         protocol: 'openffboard',
         readonly: true,
         description: 'FreeRTOS heap remaining. A value below ~4 kB may cause instability.',
-      },
-      {
-        path: 'sys.vbusdiv',
-        label: 'VBUS divider',
-        type: 'int',
-        protocol: 'openffboard',
-        min: 1,
-        max: 50,
-        step: 1,
-        unit: 'V',
-        defaultValue: '10',
-        exampleValue: '10',
-        description: '⚠ Hardware parameter. ADC voltage divider ratio. Wrong value = incorrect VBUS readings and broken protection thresholds. Only change if board uses non-standard resistors.',
       },
     ],
   },

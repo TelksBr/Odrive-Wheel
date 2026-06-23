@@ -2,11 +2,7 @@ import { useCallback, useState } from 'react';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
 import { unifiedSave, type SaveProgress } from './unifiedSave';
-import {
-  assessCalibrationIntegrity,
-  parseAxisError,
-  shouldBlockSave,
-} from '../calibration/calibrationIntegrity';
+import { assessCalibrationIntegrity, parseAxisError, shouldBlockSave } from '../calibration/calibrationIntegrity';
 import { toast, toastSticky, toastStickyClose } from '../../shared/toastActions';
 import { countSavePending } from './persistPending';
 
@@ -54,7 +50,7 @@ export function useBoardSave() {
     if (state.busy) {
       return;
     }
-    const integrity = assessCalibrationIntegrity(state.fieldValues, state.dirtyPaths);
+    const integrity = assessCalibrationIntegrity(state.fieldValues, state.dirtyPaths, state.nvmPendingPaths);
     if (shouldBlockSave(integrity)) {
       for (const key of integrity.blockers) {
         const msg = translate(state.locale, `calIntegrity_${key}`);
@@ -71,6 +67,7 @@ export function useBoardSave() {
     try {
       const result = await unifiedSave({
         dirtyPaths: state.dirtyPaths,
+        nvmPendingPaths: state.nvmPendingPaths,
         fieldValues: state.fieldValues,
         onProgress: (step) => {
           setSaveProgress(step);
@@ -137,7 +134,7 @@ export function useBoardSave() {
       setSaveProgress(null);
       dispatch({ type: 'set-busy', busy: false });
     }
-  }, [dispatch, state.busy, state.connected, state.dirtyPaths, state.fieldValues, state.locale]);
+  }, [dispatch, state.busy, state.connected, state.dirtyPaths, state.fieldValues, state.locale, state.nvmPendingPaths]);
 
   function saveButtonLabel(): string {
     if (!saveProgress) {
@@ -149,8 +146,7 @@ export function useBoardSave() {
   const pendingCount = countSavePending(state);
   const saveBadge = pendingCount > 0 ? ` (${pendingCount})` : '';
 
-  const integrity = assessCalibrationIntegrity(state.fieldValues, state.dirtyPaths);
-  const saveBlocked = shouldBlockSave(integrity);
+  const integrity = assessCalibrationIntegrity(state.fieldValues, state.dirtyPaths, state.nvmPendingPaths);
 
-  return { saveAll, saveProgress, saveButtonLabel, saveBadge, saveBlocked };
+  return { saveAll, saveProgress, saveButtonLabel, saveBadge, saveBlocked: shouldBlockSave(integrity) };
 }

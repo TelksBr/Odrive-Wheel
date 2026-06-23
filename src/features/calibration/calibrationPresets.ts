@@ -1,7 +1,7 @@
 import type { Dispatch } from 'react';
 import type { AppAction } from '../../app/types';
 import { flatFields, type ConfigField } from '../config/fieldCatalog';
-import { readField, applyField } from '../board/BoardProtocol';
+import { readField, applyField, applyFieldNow } from '../board/BoardProtocol';
 import { persistFfbEeprom } from '../board/fieldApply';
 import { markOdriveRamPending } from '../board/persistPending';
 import { serialService } from '../serial/SerialService';
@@ -37,19 +37,53 @@ export async function writePath(
 export async function writePaths(
   specs: { path: string; value: string | boolean }[],
   dispatch: Dispatch<AppAction>,
-): Promise<{ ok: number; fail: number }> {
+): Promise<{ ok: number; fail: number; errors: string[] }> {
+  return serialService.runAtomic(() => writePathsNow(specs, dispatch));
+}
+
+/** For use inside an existing serialService.runAtomic() — no nested queue lock. */
+export async function writePathsNow(
+  specs: { path: string; value: string | boolean }[],
+  dispatch: Dispatch<AppAction>,
+  options?: { markNvmPending?: boolean; retries?: number },
+): Promise<{ ok: number; fail: number; errors: string[] }> {
   let ok = 0;
   let fail = 0;
+  const errors: string[] = [];
+  const retries = options?.retries ?? 0;
+
   for (const spec of specs) {
-    try {
-      const success = await writePath(spec.path, spec.value, dispatch);
-      if (success) ok += 1;
-      else fail += 1;
-    } catch {
+    let applied = false;
+    let lastError = 'unknown';
+    for (let attempt = 0; attempt <= retries && !applied; attempt += 1) {
+      if (attempt > 0) {
+        await sleep(400);
+      }
+      try {
+        const field = fieldByPath(spec.path);
+        if (!field || field.readonly) {
+          lastError = 'field missing or readonly';
+          break;
+        }
+        const normalized = typeof spec.value === 'boolean' ? (spec.value ? 'true' : 'false') : spec.value;
+        const readback = await applyFieldNow(field, normalized, true);
+        dispatch({ type: 'append-log', direction: 'rx', message: `${spec.path} = ${readback}` });
+        dispatch({ type: 'set-field', path: spec.path, value: readback, dirty: false });
+        if (options?.markNvmPending !== false) {
+          markOdriveRamPending(dispatch, field);
+        }
+        ok += 1;
+        applied = true;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
+    }
+    if (!applied) {
       fail += 1;
+      errors.push(`${spec.path}: ${lastError}`);
     }
   }
-  return { ok, fail };
+  return { ok, fail, errors };
 }
 
 export function markDirtyPaths(

@@ -6,6 +6,8 @@ export interface CalibrationAxisAction {
   timeoutMs: number;
   tone?: 'warn' | 'ok' | 'danger';
   clearFirst?: boolean;
+  /** When set, success = reaching this state (e.g. 8 closed loop) instead of IDLE. */
+  successState?: number;
 }
 
 export const calibrationAxisActions: CalibrationAxisAction[] = [
@@ -42,6 +44,7 @@ export const calibrationAxisActions: CalibrationAxisAction[] = [
     timeoutMs: 10000,
     tone: 'ok',
     clearFirst: false,
+    successState: 8,
   },
   {
     id: 'index-search',

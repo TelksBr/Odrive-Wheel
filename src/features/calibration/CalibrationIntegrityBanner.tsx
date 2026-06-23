@@ -5,7 +5,7 @@ import { assessCalibrationIntegrity } from './calibrationIntegrity';
 export function CalibrationIntegrityBanner() {
   const { state } = useAppState();
   const locale = state.locale;
-  const report = assessCalibrationIntegrity(state.fieldValues, state.dirtyPaths);
+  const report = assessCalibrationIntegrity(state.fieldValues, state.dirtyPaths, state.nvmPendingPaths);
 
   if (report.blockers.length === 0 && report.warnings.length === 0) {
     return null;

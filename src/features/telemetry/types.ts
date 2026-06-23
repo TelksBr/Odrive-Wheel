@@ -51,10 +51,10 @@ export function computeStats(samples: TelemetrySample[], keys: (keyof TelemetryS
     }
 
     const current = values.at(-1) ?? null;
-    const min = Math.min(...values);
-    const max = Math.max(...values);
+    const min = values.reduce((a, b) => Math.min(a, b), values[0]);
+    const max = values.reduce((a, b) => Math.max(a, b), values[0]);
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
-    const peak = Math.max(...values.map(Math.abs));
+    const peak = values.reduce((a, b) => Math.max(a, Math.abs(b)), 0);
     result[key] = { current, min, max, avg, peak };
   }
   return result;

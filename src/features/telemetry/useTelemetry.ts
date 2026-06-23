@@ -1,15 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { readField } from '../board/BoardProtocol';
 import { flatFields } from '../config/fieldCatalog';
 import { serialService } from '../serial/SerialService';
 import { computeStats } from './types';
 import { allSeriesKeys } from './series';
 import { pushTelemetrySample, snapshotTelemetry } from './telemetryBuffer';
-import { MAX_TELEMETRY_SAMPLES, MAX_TELEMETRY_WINDOW_MS } from './controlOptions';
+import {
+  HID_TELEMETRY_MIN_INTERVAL_MS,
+  MAX_TELEMETRY_SAMPLES,
+  MAX_TELEMETRY_WINDOW_MS,
+  TELEMETRY_UI_SYNC_MS,
+} from './controlOptions';
+import { updateBrakePowerRef } from './telemetryBrakePower';
 import { useHidTelemetryListener } from './useHidTelemetryListener';
 import { hidFfbService } from '../hid/HidFfbService';
 import type { BrakePowerState, TelemetrySample, TelemetryStats } from './types';
-const UI_SYNC_MS = 500;
 
 const fieldByPath = new Map(flatFields.map((field) => [field.path, field]));
 
@@ -22,16 +27,12 @@ function odriveField(path: string) {
 }
 
 export interface TelemetryHandle {
-  /** All samples in the rolling buffer (up to MAX_TELEMETRY_WINDOW_MS). */
   samples: TelemetrySample[];
-  /** Samples trimmed to the current display window — frozen when paused. */
   displaySamples: TelemetrySample[];
   brakePower: BrakePowerState;
   stats: TelemetryStats;
   lastError: string | null;
-  /** Effective samples-per-second over the last 5 s. */
   hz: number;
-  /** rc12: true when 1 kHz HID input reports feed the chart. */
   hidTelemetryActive: boolean;
   paused: boolean;
   setPaused: (paused: boolean) => void;
@@ -53,11 +54,8 @@ export function useTelemetry({
   enabled: boolean;
   intervalMs: number;
   windowMs?: number;
-  /** axis.maxtorque value — used to convert raw HID torque counts (lt) to Nm. */
   maxTorqueNm?: number;
-  /** axis.range / 2 — required for HID position scaling. */
   halfRangeDeg?: number;
-  /** Pause polling while serial is busy (e.g. unified save). */
   holdPolling?: boolean;
 }): TelemetryHandle {
   const [samples, setSamples] = useState<TelemetrySample[]>([]);
@@ -72,12 +70,19 @@ export function useTelemetry({
   const pausedRef = useRef(false);
   const samplesRef = useRef<TelemetrySample[]>([]);
   const syncVersionRef = useRef(0);
+  const lastAcceptedSampleRef = useRef(0);
+  const brakePowerRef = useRef<BrakePowerState>({ resistance: null, watts: null, sampleCount: 0 });
+  const brakePowerDirtyRef = useRef(false);
+  const hidActiveRef = useRef(false);
+  const windowMsRef = useRef(windowMs);
 
-  // Keep pausedRef in sync so the interval closure can read it
+  useEffect(() => {
+    windowMsRef.current = windowMs;
+  }, [windowMs]);
+
   useEffect(() => {
     pausedRef.current = paused;
     if (paused) {
-      // Snapshot current samples as frozen display
       setFrozenSamples(samples.filter((s) => s.t >= (samples.at(-1)?.t ?? 0) - windowMs));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,22 +93,36 @@ export function useTelemetry({
     const resistance = Number(raw);
     if (Number.isFinite(resistance) && resistance > 0.05 && resistance < 500) {
       resistanceRef.current = resistance;
-      setBrakePower((prev) => ({ ...prev, resistance }));
+      brakePowerRef.current = { ...brakePowerRef.current, resistance };
+      brakePowerDirtyRef.current = true;
     }
   }, []);
 
-  const applySample = useCallback((sample: TelemetrySample) => {
+  const applySample = useCallback((sample: TelemetrySample, force = false) => {
+    if (
+      !force &&
+      hidActiveRef.current &&
+      sample.t - lastAcceptedSampleRef.current < HID_TELEMETRY_MIN_INTERVAL_MS
+    ) {
+      updateBrakePowerRef(sample, brakeSamplesRef.current, resistanceRef.current, brakePowerRef, brakePowerDirtyRef);
+      return;
+    }
+    lastAcceptedSampleRef.current = sample.t;
     pushTelemetrySample(samplesRef.current, sample, MAX_TELEMETRY_WINDOW_MS, MAX_TELEMETRY_SAMPLES);
     syncVersionRef.current += 1;
-    updateBrakePower(sample, brakeSamplesRef.current, resistanceRef.current, setBrakePower);
+    updateBrakePowerRef(sample, brakeSamplesRef.current, resistanceRef.current, brakePowerRef, brakePowerDirtyRef);
   }, []);
 
   const hidRange = halfRangeDeg && halfRangeDeg > 0 ? halfRangeDeg : 0;
   const hidTelemetryActive = useHidTelemetryListener(
     connected && enabled && !holdPolling,
     hidRange,
-    applySample,
+    (sample) => applySample(sample, false),
   );
+
+  useEffect(() => {
+    hidActiveRef.current = hidTelemetryActive;
+  }, [hidTelemetryActive]);
 
   const pollOnce = useCallback(async () => {
     if (!connected || inFlight.current || holdPolling) {
@@ -130,9 +149,8 @@ export function useTelemetry({
         readField(odriveField('axis.curspd')).catch(() => undefined),
       ]);
 
-      const now = performance.now();
       const sample: TelemetrySample = {
-        t: now,
+        t: performance.now(),
         vbus: parseNumber(vbus),
         ibus: parseNumber(ibus),
         iq: parseNumber(iq),
@@ -142,7 +160,7 @@ export function useTelemetry({
         velocityDegS: parseNumber(velRaw),
       };
 
-      applySample(sample);
+      applySample(sample, true);
       setLastError(null);
     } catch (error) {
       setLastError(error instanceof Error ? error.message : String(error));
@@ -162,16 +180,19 @@ export function useTelemetry({
     const pollId = window.setInterval(() => void pollOnce(), Math.max(intervalMs, 200));
     const syncId = window.setInterval(() => {
       if (!pausedRef.current && syncVersionRef.current > 0) {
-        setSamples(snapshotTelemetry(samplesRef.current));
+        setSamples(snapshotTelemetry(samplesRef.current, windowMsRef.current));
+        if (brakePowerDirtyRef.current) {
+          brakePowerDirtyRef.current = false;
+          setBrakePower({ ...brakePowerRef.current });
+        }
       }
-    }, UI_SYNC_MS);
+    }, TELEMETRY_UI_SYNC_MS);
     return () => {
       window.clearInterval(pollId);
       window.clearInterval(syncId);
     };
   }, [connected, enabled, intervalMs, pollOnce]);
 
-  // Trim samples to current windowMs for display when not paused
   const displaySamples = useMemo(() => {
     if (paused) {
       return frozenSamples;
@@ -180,19 +201,20 @@ export function useTelemetry({
     return samples.filter((s) => s.t >= cutoff);
   }, [paused, frozenSamples, samples, windowMs]);
 
-  // Samples-per-second over the last 5 s
   const hz = useMemo(() => {
     const last5s = samples.filter((s) => s.t >= (samples.at(-1)?.t ?? 0) - 5000);
     return last5s.length > 1 ? (last5s.length - 1) / 5 : 0;
   }, [samples]);
 
-  // Aggregate stats over the display window
   const stats = useMemo(() => computeStats(displaySamples, allSeriesKeys), [displaySamples]);
 
   const clear = useCallback(() => {
     brakeSamplesRef.current = [];
     resistanceRef.current = null;
     samplesRef.current = [];
+    lastAcceptedSampleRef.current = 0;
+    brakePowerRef.current = { resistance: null, watts: null, sampleCount: 0 };
+    brakePowerDirtyRef.current = false;
     setSamples([]);
     setFrozenSamples([]);
     setBrakePower({ resistance: null, watts: null, sampleCount: 0 });
@@ -252,51 +274,15 @@ function parseNumber(raw: string | undefined): number | undefined {
   return Number.isFinite(value) ? value : undefined;
 }
 
-/**
- * Parse torque from the `T` diagnostic command reply: "lt=<int> nm=<float>"
- *
- * Some firmware versions output the raw HID count (0–32767) in the `nm=` field
- * instead of actual Nm, so we prefer the `lt` count + `maxTorqueNm` conversion.
- * Falls back to the `nm=` field when `maxTorqueNm` is not yet loaded.
- */
 function parseTorque(raw: string | undefined, maxTorqueNm?: number): number | undefined {
   if (!raw) {
     return undefined;
   }
-  // Primary: parse raw HID count (lt) and convert to Nm using the configured scale.
   const ltMatch = raw.match(/lt=(-?\d+(?:\.\d+)?)/);
   if (ltMatch && maxTorqueNm !== undefined && maxTorqueNm > 0) {
     const lt = Number(ltMatch[1]);
     return Number.isFinite(lt) ? (lt / 32767) * maxTorqueNm : undefined;
   }
-  // Fallback: read nm= field directly (older firmware that reports correct Nm).
   const nmMatch = raw.match(/nm=(-?\d+(?:\.\d+)?)/);
   return nmMatch ? Number(nmMatch[1]) : undefined;
-}
-
-function updateBrakePower(
-  sample: TelemetrySample,
-  brakeSamples: Array<{ t: number; i2: number }>,
-  resistance: number | null,
-  setBrakePower: Dispatch<SetStateAction<BrakePowerState>>,
-) {
-  if (!resistance || typeof sample.ibrake !== 'number' || !Number.isFinite(sample.ibrake)) {
-    return;
-  }
-  const maxPhysicalCurrent = Math.max(15, ((sample.vbus ?? 30) / resistance) * 1.5);
-  if (Math.abs(sample.ibrake) > maxPhysicalCurrent) {
-    return;
-  }
-
-  brakeSamples.push({ t: sample.t, i2: sample.ibrake * sample.ibrake });
-  const cutoff = sample.t - MAX_TELEMETRY_WINDOW_MS;
-  while (brakeSamples.length > 0 && brakeSamples[0].t < cutoff) {
-    brakeSamples.shift();
-  }
-  const meanI2 = brakeSamples.reduce((sum, item) => sum + item.i2, 0) / brakeSamples.length;
-  setBrakePower({
-    resistance,
-    watts: resistance * meanI2,
-    sampleCount: brakeSamples.length,
-  });
 }

@@ -16,11 +16,17 @@ const workspaceGroups: Partial<Record<TabId, string[]>> = {
 const highSignalPaths = new Set([
   'vbus_voltage',
   'axis0.current_state',
+  'axis0.error',
+  'axis0.motor.error',
+  'axis0.encoder.error',
   'axis0.motor.is_calibrated',
   'axis0.encoder.is_ready',
   'axis0.encoder.config.mode',
   'axis0.encoder.config.cpr',
+  'axis0.encoder.config.direction',
   'axis0.encoder.config.use_index',
+  'axis0.encoder.config.use_index_offset',
+  'axis0.encoder.config.index_offset',
   'axis0.encoder.config.abs_spi_cs_gpio_pin',
   'axis0.encoder.config.pre_calibrated',
   'axis0.encoder.config.phase_offset',
@@ -64,6 +70,9 @@ const highSignalPaths = new Set([
   'gpio.3.cur',
   'gpio.4.cur',
 ]);
+
+/** Paths re-read after save/reboot — avoids scanning the full catalog. */
+export const HIGH_SIGNAL_PATHS: readonly string[] = [...highSignalPaths];
 
 export function refreshFieldsForTab(tab: TabId, skipPaths: string[]): ConfigField[] {
   const fields = fieldsForTab(tab, skipPaths).filter(

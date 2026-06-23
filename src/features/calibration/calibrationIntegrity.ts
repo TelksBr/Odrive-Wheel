@@ -26,9 +26,12 @@ const ENCODER_CONFIG_DIRTY_PATHS = new Set([
 export function assessCalibrationIntegrity(
   fieldValues: Record<string, string>,
   dirtyPaths?: string[],
+  nvmPendingPaths?: string[],
 ): CalibrationIntegrityReport {
   const blockers: string[] = [];
   const warnings: string[] = [];
+  const pending = new Set([...(dirtyPaths ?? []), ...(nvmPendingPaths ?? [])]);
+  const isPending = (path: string) => pending.has(path);
 
   const encoderReady = isReady(fieldValues['axis0.encoder.is_ready']);
   const motorCalibrated = isReady(fieldValues['axis0.motor.is_calibrated']);
@@ -45,14 +48,21 @@ export function assessCalibrationIntegrity(
   if (encoderConfigDirty && !encoderReady) {
     blockers.push('encoderDirtyNeedsCal');
   }
-  if (encoderPreCal && !encoderReady) {
+  if (encoderPreCal && !encoderReady && isPending('axis0.encoder.config.pre_calibrated')) {
     blockers.push('encoderPreCalWithoutReady');
   }
-  if (motorPreCal && !motorCalibrated) {
+  if (motorPreCal && !motorCalibrated && isPending('axis0.motor.config.pre_calibrated')) {
     blockers.push('motorPreCalWithoutCal');
   }
-  if (startupClosedLoop && (!encoderReady || !motorCalibrated)) {
-    blockers.push('closedLoopWithoutCal');
+  if (
+    startupClosedLoop &&
+    isPending('axis0.config.startup_closed_loop_control')
+  ) {
+    const motorOk = motorCalibrated || startupMotorCal;
+    const encOk = encoderReady || startupEncCal;
+    if (!motorOk || !encOk) {
+      warnings.push('closedLoopWithoutCal');
+    }
   }
   if (profile === 'as5047' && encoderReady && !encoderPreCal) {
     warnings.push('as5047ReadyNeedsPreCal');

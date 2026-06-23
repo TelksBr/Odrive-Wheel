@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { readField } from '../board/BoardProtocol';
 import { flatFields } from '../config/fieldCatalog';
 import { useAppLocale } from '../../app/AppState';
@@ -13,7 +13,13 @@ import {
   type LiveMap,
 } from './observePollCore';
 import { pushTelemetrySample, snapshotTelemetry } from '../telemetry/telemetryBuffer';
-import { MAX_TELEMETRY_SAMPLES, MAX_TELEMETRY_WINDOW_MS } from '../telemetry/controlOptions';
+import {
+  HID_TELEMETRY_MIN_INTERVAL_MS,
+  MAX_TELEMETRY_SAMPLES,
+  MAX_TELEMETRY_WINDOW_MS,
+  TELEMETRY_UI_SYNC_MS,
+} from '../telemetry/controlOptions';
+import { updateBrakePowerRef } from '../telemetry/telemetryBrakePower';
 import { useHidTelemetryListener } from '../telemetry/useHidTelemetryListener';
 import { hidFfbService } from '../hid/HidFfbService';
 import { computeStats } from '../telemetry/types';
@@ -21,7 +27,6 @@ import { allSeriesKeys } from '../telemetry/series';
 import type { BrakePowerState, TelemetrySample } from '../telemetry/types';
 import type { TelemetryHandle } from '../telemetry/useTelemetry';
 
-const UI_SYNC_MS = 500;
 const MIN_INTERVAL_MS = 500;
 
 const fieldByPath = new Map(flatFields.map((field) => [field.path, field]));
@@ -83,6 +88,15 @@ export function useObservePolling({
   const pausedRef = useRef(false);
   const samplesRef = useRef<TelemetrySample[]>([]);
   const syncVersionRef = useRef(0);
+  const lastAcceptedSampleRef = useRef(0);
+  const brakePowerRef = useRef<BrakePowerState>({ resistance: null, watts: null, sampleCount: 0 });
+  const brakePowerDirtyRef = useRef(false);
+  const hidActiveRef = useRef(false);
+  const windowMsRef = useRef(windowMs);
+
+  useEffect(() => {
+    windowMsRef.current = windowMs;
+  }, [windowMs]);
 
   useEffect(() => {
     pausedRef.current = paused;
@@ -101,21 +115,31 @@ export function useObservePolling({
     }
   }, []);
 
-  const applySample = useCallback(
-    (sample: TelemetrySample) => {
-      pushTelemetrySample(samplesRef.current, sample, MAX_TELEMETRY_WINDOW_MS, MAX_TELEMETRY_SAMPLES);
-      syncVersionRef.current += 1;
-      updateBrakePower(sample, brakeSamplesRef.current, resistanceRef.current, setBrakePower);
-    },
-    [],
-  );
+  const applySample = useCallback((sample: TelemetrySample, force = false) => {
+    if (
+      !force &&
+      hidActiveRef.current &&
+      sample.t - lastAcceptedSampleRef.current < HID_TELEMETRY_MIN_INTERVAL_MS
+    ) {
+      updateBrakePowerRef(sample, brakeSamplesRef.current, resistanceRef.current, brakePowerRef, brakePowerDirtyRef);
+      return;
+    }
+    lastAcceptedSampleRef.current = sample.t;
+    pushTelemetrySample(samplesRef.current, sample, MAX_TELEMETRY_WINDOW_MS, MAX_TELEMETRY_SAMPLES);
+    syncVersionRef.current += 1;
+    updateBrakePowerRef(sample, brakeSamplesRef.current, resistanceRef.current, brakePowerRef, brakePowerDirtyRef);
+  }, []);
 
   const hidRange = halfRangeDeg && halfRangeDeg > 0 ? halfRangeDeg : 0;
   const hidTelemetryActive = useHidTelemetryListener(
     connected && enabled && !holdPolling,
     hidRange,
-    applySample,
+    (sample) => applySample(sample, false),
   );
+
+  useEffect(() => {
+    hidActiveRef.current = hidTelemetryActive;
+  }, [hidTelemetryActive]);
 
   const pollOnce = useCallback(async () => {
     if (!connected || inFlight.current || holdPolling) return;
@@ -137,7 +161,7 @@ export function useObservePolling({
       setLastPoll(new Date());
 
       if (!(hidFfbService.connected && hidRange > 0)) {
-        applySample(telemetrySampleFromLive(result.live, result.torqueRaw, maxTorqueNm));
+        applySample(telemetrySampleFromLive(result.live, result.torqueRaw, maxTorqueNm), true);
       }
       setLastError(null);
     } catch (error) {
@@ -171,9 +195,13 @@ export function useObservePolling({
     const pollId = window.setInterval(() => void pollOnce(), Math.max(intervalMs, MIN_INTERVAL_MS));
     const syncId = window.setInterval(() => {
       if (!pausedRef.current && syncVersionRef.current > 0) {
-        setSamples(snapshotTelemetry(samplesRef.current));
+        setSamples(snapshotTelemetry(samplesRef.current, windowMsRef.current));
+        if (brakePowerDirtyRef.current) {
+          brakePowerDirtyRef.current = false;
+          setBrakePower({ ...brakePowerRef.current });
+        }
       }
-    }, UI_SYNC_MS);
+    }, TELEMETRY_UI_SYNC_MS);
 
     return () => {
       window.clearInterval(pollId);
@@ -199,6 +227,9 @@ export function useObservePolling({
     resistanceRef.current = null;
     samplesRef.current = [];
     cycleRef.current = 0;
+    lastAcceptedSampleRef.current = 0;
+    brakePowerRef.current = { resistance: null, watts: null, sampleCount: 0 };
+    brakePowerDirtyRef.current = false;
     setSamples([]);
     setFrozenSamples([]);
     setBrakePower({ resistance: null, watts: null, sampleCount: 0 });
@@ -267,27 +298,4 @@ export function useObservePolling({
       stats,
     ],
   );
-}
-
-function updateBrakePower(
-  sample: TelemetrySample,
-  brakeSamples: Array<{ t: number; i2: number }>,
-  resistance: number | null,
-  setBrakePower: Dispatch<SetStateAction<BrakePowerState>>,
-) {
-  if (!resistance || typeof sample.ibrake !== 'number' || !Number.isFinite(sample.ibrake)) return;
-  const maxPhysicalCurrent = Math.max(15, ((sample.vbus ?? 30) / resistance) * 1.5);
-  if (Math.abs(sample.ibrake) > maxPhysicalCurrent) return;
-
-  brakeSamples.push({ t: sample.t, i2: sample.ibrake * sample.ibrake });
-  const cutoff = sample.t - MAX_TELEMETRY_WINDOW_MS;
-  while (brakeSamples.length > 0 && brakeSamples[0].t < cutoff) {
-    brakeSamples.shift();
-  }
-  const meanI2 = brakeSamples.reduce((sum, item) => sum + item.i2, 0) / brakeSamples.length;
-  setBrakePower({
-    resistance,
-    watts: resistance * meanI2,
-    sampleCount: brakeSamples.length,
-  });
 }
