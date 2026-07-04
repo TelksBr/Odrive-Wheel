@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
+import { chartHzToSyncMs, type ChartHz } from './controlOptions';
 import { useThrottledValue } from '../../shared/useThrottledValue';
 import { TimeSeriesChart } from './TimeSeriesChart';
 import { busSeries, localizedSeries, motionSeries } from './series';
@@ -14,6 +15,10 @@ interface TelemetryOverlayProps {
   samples: TelemetrySample[];
   brakePower: BrakePowerState;
   windowMs?: number;
+  chartHz?: ChartHz;
+  backgroundActive?: boolean;
+  onPipWindowChange?: (win: Window | null) => void;
+  onPipOpenChange?: (open: boolean) => void;
 }
 
 import type { Locale } from '../../i18n/messages';
@@ -34,16 +39,26 @@ function windowOptions(locale: Locale) {
 
 function renderOverlayRoot(
   root: Root,
-  props: Required<TelemetryOverlayProps> & { locale: import('../../i18n/messages').Locale },
+  props: TelemetryOverlayProps & { locale: import('../../i18n/messages').Locale; windowMs: number; chartHz: ChartHz },
 ) {
   root.render(<OverlayWindow {...props} />);
 }
 
-export function TelemetryOverlay({ connected, samples, brakePower, windowMs: externalWindowMs = 60_000 }: TelemetryOverlayProps) {
+export function TelemetryOverlay({
+  connected,
+  samples,
+  brakePower,
+  windowMs: externalWindowMs = 60_000,
+  chartHz = 30,
+  backgroundActive = false,
+  onPipWindowChange,
+  onPipOpenChange,
+}: TelemetryOverlayProps) {
   const { state, dispatch } = useAppState();
   const locale = state.locale;
-  const throttledSamples = useThrottledValue(samples, 500);
-  const throttledBrake = useThrottledValue(brakePower, 500);
+  const syncMs = chartHzToSyncMs(chartHz);
+  const throttledSamples = useThrottledValue(samples, syncMs);
+  const throttledBrake = useThrottledValue(brakePower, syncMs);
   const [pipOpen, setPipOpen] = useState(false);
   const [overlayWindowMs, setOverlayWindowMs] = useState(externalWindowMs);
   const [overlayError, setOverlayError] = useState<string | null>(null);
@@ -59,10 +74,16 @@ export function TelemetryOverlay({ connected, samples, brakePower, windowMs: ext
     samples: throttledSamples,
     brakePower: throttledBrake,
     windowMs: overlayWindowMs,
+    chartHz,
     locale,
   };
   const propsRef = useRef(overlayProps);
   propsRef.current = overlayProps;
+
+  useEffect(() => {
+    onPipOpenChange?.(pipOpen);
+    onPipWindowChange?.(pipOpen && pipRef.current && !pipRef.current.closed ? pipRef.current : null);
+  }, [onPipOpenChange, onPipWindowChange, pipOpen]);
 
   const openOverlay = useCallback(async () => {
     setOverlayError(null);
@@ -103,26 +124,30 @@ export function TelemetryOverlay({ connected, samples, brakePower, windowMs: ext
       rootRef.current = root;
       renderOverlayRoot(root, propsRef.current);
       setPipOpen(true);
+      onPipOpenChange?.(true);
+      onPipWindowChange?.(pip);
 
       pip.addEventListener('pagehide', () => {
         rootRef.current?.unmount();
         rootRef.current = null;
         pipRef.current = null;
         setPipOpen(false);
+        onPipOpenChange?.(false);
+        onPipWindowChange?.(null);
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setOverlayError(message);
       dispatch({ type: 'append-log', direction: 'error', message: `PiP: ${message}` });
     }
-  }, [connected, dispatch, locale]);
+  }, [connected, dispatch, locale, onPipOpenChange, onPipWindowChange]);
 
   useEffect(() => {
     if (!rootRef.current || !pipOpen) {
       return;
     }
     renderOverlayRoot(rootRef.current, propsRef.current);
-  }, [connected, pipOpen, throttledSamples, throttledBrake, overlayWindowMs, locale]);
+  }, [chartHz, connected, pipOpen, throttledBrake, throttledSamples, overlayWindowMs, locale]);
 
   const pipAvailable = Boolean(window.documentPictureInPicture);
 
@@ -158,6 +183,12 @@ export function TelemetryOverlay({ connected, samples, brakePower, windowMs: ext
           : translate(locale, 'overlayPipUnavailable')}
       </span>
 
+      {backgroundActive && (
+        <span className="muted" style={{ fontSize: 12, width: '100%' }} title={translate(locale, 'observeBackgroundHint')}>
+          {translate(locale, 'observeBackgroundRecording')}
+        </span>
+      )}
+
       {overlayError && (
         <span style={{ fontSize: 12, color: 'var(--error)', width: '100%' }}>{overlayError}</span>
       )}
@@ -170,8 +201,16 @@ function OverlayWindow({
   samples,
   brakePower,
   windowMs,
+  chartHz,
   locale,
-}: Required<TelemetryOverlayProps> & { locale: import('../../i18n/messages').Locale }) {
+}: {
+  connected: boolean;
+  samples: TelemetrySample[];
+  brakePower: BrakePowerState;
+  windowMs: number;
+  chartHz: ChartHz;
+  locale: import('../../i18n/messages').Locale;
+}) {
   const stats = computeStats(samples, allSeriesKeys);
   const hz = (() => {
     const last5s = samples.filter((s) => s.t >= (samples.at(-1)?.t ?? 0) - 5000);
@@ -215,6 +254,7 @@ function OverlayWindow({
         height={190}
         compact
         locale={locale}
+        drawHz={chartHz}
       />
       <TimeSeriesChart
         title={translate(locale, 'overlayChartWheel')}
@@ -224,6 +264,7 @@ function OverlayWindow({
         height={190}
         compact
         locale={locale}
+        drawHz={chartHz}
       />
     </main>
   );

@@ -4,9 +4,9 @@ import { flatFields } from '../config/fieldCatalog';
 import { useAppLocale } from '../../app/AppState';
 import {
   DEVICE_INFO_EVERY,
+  pollChartSample,
   pollDiagCommands,
   runObservePollCycle,
-  telemetrySampleFromLive,
   type DeviceMap,
   type DiagMap,
   type ErrorMap,
@@ -14,10 +14,14 @@ import {
 } from './observePollCore';
 import { pushTelemetrySample, snapshotTelemetry } from '../telemetry/telemetryBuffer';
 import {
-  HID_TELEMETRY_MIN_INTERVAL_MS,
+  type ChartHz,
+  chartHzToSyncMs,
+  hidSampleIntervalMs,
   MAX_TELEMETRY_SAMPLES,
   MAX_TELEMETRY_WINDOW_MS,
-  TELEMETRY_UI_SYNC_MS,
+  MONITOR_POLL_INTERVAL_MS,
+  serialHzToIntervalMs,
+  type SerialChartHz,
 } from '../telemetry/controlOptions';
 import { updateBrakePowerRef } from '../telemetry/telemetryBrakePower';
 import { useHidTelemetryListener } from '../telemetry/useHidTelemetryListener';
@@ -26,8 +30,6 @@ import { computeStats } from '../telemetry/types';
 import { allSeriesKeys } from '../telemetry/series';
 import type { BrakePowerState, TelemetrySample } from '../telemetry/types';
 import type { TelemetryHandle } from '../telemetry/useTelemetry';
-
-const MIN_INTERVAL_MS = 500;
 
 const fieldByPath = new Map(flatFields.map((field) => [field.path, field]));
 
@@ -48,24 +50,30 @@ export interface ObserveSession {
 export interface ObservePollingHandle extends TelemetryHandle {
   session: ObserveSession;
   pollDiag: () => Promise<void>;
+  flushToUi: () => void;
+  chartHz: ChartHz;
 }
 
 export function useObservePolling({
   connected,
   enabled,
-  intervalMs,
+  chartHz,
+  serialChartHz,
   windowMs = 60_000,
   maxTorqueNm,
   halfRangeDeg,
   holdPolling = false,
+  timerWindow = null,
 }: {
   connected: boolean;
   enabled: boolean;
-  intervalMs: number;
+  chartHz: ChartHz;
+  serialChartHz: SerialChartHz;
   windowMs?: number;
   maxTorqueNm?: number;
   halfRangeDeg?: number;
   holdPolling?: boolean;
+  timerWindow?: Window | null;
 }): ObservePollingHandle {
   const locale = useAppLocale();
 
@@ -81,8 +89,9 @@ export function useObservePolling({
   const [diag, setDiag] = useState<DiagMap>({});
   const [lastPoll, setLastPoll] = useState<Date | null>(null);
 
-  const inFlight = useRef(false);
-  const cycleRef = useRef(0);
+  const chartInFlight = useRef(false);
+  const monitorInFlight = useRef(false);
+  const monitorCycleRef = useRef(0);
   const brakeSamplesRef = useRef<Array<{ t: number; i2: number }>>([]);
   const resistanceRef = useRef<number | null>(null);
   const pausedRef = useRef(false);
@@ -92,7 +101,12 @@ export function useObservePolling({
   const brakePowerRef = useRef<BrakePowerState>({ resistance: null, watts: null, sampleCount: 0 });
   const brakePowerDirtyRef = useRef(false);
   const hidActiveRef = useRef(false);
+  const chartHzRef = useRef(chartHz);
   const windowMsRef = useRef(windowMs);
+
+  useEffect(() => {
+    chartHzRef.current = chartHz;
+  }, [chartHz]);
 
   useEffect(() => {
     windowMsRef.current = windowMs;
@@ -116,10 +130,11 @@ export function useObservePolling({
   }, []);
 
   const applySample = useCallback((sample: TelemetrySample, force = false) => {
+    const minInterval = hidSampleIntervalMs(chartHzRef.current);
     if (
       !force &&
       hidActiveRef.current &&
-      sample.t - lastAcceptedSampleRef.current < HID_TELEMETRY_MIN_INTERVAL_MS
+      sample.t - lastAcceptedSampleRef.current < minInterval
     ) {
       updateBrakePowerRef(sample, brakeSamplesRef.current, resistanceRef.current, brakePowerRef, brakePowerDirtyRef);
       return;
@@ -141,35 +156,51 @@ export function useObservePolling({
     hidActiveRef.current = hidTelemetryActive;
   }, [hidTelemetryActive]);
 
-  const pollOnce = useCallback(async () => {
-    if (!connected || inFlight.current || holdPolling) return;
-    inFlight.current = true;
+  const pollChartOnce = useCallback(async () => {
+    if (!connected || chartInFlight.current || holdPolling) return;
+    if (hidFfbService.connected && hidRange > 0) {
+      return;
+    }
+    chartInFlight.current = true;
     try {
       if (resistanceRef.current === null) {
         await readBrakeResistance().catch(() => undefined);
       }
+      const sample = await pollChartSample(maxTorqueNm);
+      applySample(sample, true);
+      setLastError(null);
+    } catch (error) {
+      setLastError(error instanceof Error ? error.message : String(error));
+    } finally {
+      chartInFlight.current = false;
+    }
+  }, [applySample, connected, hidRange, holdPolling, maxTorqueNm, readBrakeResistance]);
 
-      cycleRef.current += 1;
-      const includeDevice = cycleRef.current === 1 || cycleRef.current % DEVICE_INFO_EVERY === 0;
+  const pollMonitorOnce = useCallback(async () => {
+    if (!connected || monitorInFlight.current || holdPolling) return;
+    monitorInFlight.current = true;
+    try {
+      monitorCycleRef.current += 1;
+      const includeDevice = monitorCycleRef.current === 1 || monitorCycleRef.current % DEVICE_INFO_EVERY === 0;
       const result = await runObservePollCycle(locale, { includeDevice });
-
       setLive(result.live);
       setErrors(result.errors);
       if (result.device) {
         setDevice(result.device);
       }
       setLastPoll(new Date());
-
-      if (!(hidFfbService.connected && hidRange > 0)) {
-        applySample(telemetrySampleFromLive(result.live, result.torqueRaw, maxTorqueNm), true);
-      }
       setLastError(null);
     } catch (error) {
       setLastError(error instanceof Error ? error.message : String(error));
     } finally {
-      inFlight.current = false;
+      monitorInFlight.current = false;
     }
-  }, [applySample, connected, hidRange, holdPolling, locale, maxTorqueNm, readBrakeResistance]);
+  }, [connected, holdPolling, locale]);
+
+  const pollOnce = useCallback(async () => {
+    await pollChartOnce();
+    await pollMonitorOnce();
+  }, [pollChartOnce, pollMonitorOnce]);
 
   const pollDiag = useCallback(async () => {
     if (!connected || holdPolling) return;
@@ -177,9 +208,23 @@ export function useObservePolling({
     setDiag(next);
   }, [connected, holdPolling]);
 
+  const flushToUi = useCallback(() => {
+    if (pausedRef.current) {
+      return;
+    }
+    setSamples(snapshotTelemetry(samplesRef.current, windowMsRef.current));
+    if (brakePowerDirtyRef.current) {
+      brakePowerDirtyRef.current = false;
+      setBrakePower({ ...brakePowerRef.current });
+    }
+  }, []);
+
+  const serialChartIntervalMs = serialHzToIntervalMs(serialChartHz);
+  const uiSyncMs = chartHzToSyncMs(chartHz);
+
   useEffect(() => {
     if (!connected || !enabled) {
-      cycleRef.current = 0;
+      monitorCycleRef.current = 0;
       samplesRef.current = [];
       syncVersionRef.current = 0;
       setSamples([]);
@@ -191,23 +236,41 @@ export function useObservePolling({
       return undefined;
     }
 
-    void pollOnce();
-    const pollId = window.setInterval(() => void pollOnce(), Math.max(intervalMs, MIN_INTERVAL_MS));
-    const syncId = window.setInterval(() => {
+    const timerHost = timerWindow && !timerWindow.closed ? timerWindow : window;
+
+    void pollMonitorOnce();
+    if (!hidTelemetryActive) {
+      void pollChartOnce();
+    }
+
+    const chartPollId = hidTelemetryActive
+      ? undefined
+      : timerHost.setInterval(() => void pollChartOnce(), serialChartIntervalMs);
+    const monitorPollId = timerHost.setInterval(() => void pollMonitorOnce(), MONITOR_POLL_INTERVAL_MS);
+    const syncId = timerHost.setInterval(() => {
       if (!pausedRef.current && syncVersionRef.current > 0) {
-        setSamples(snapshotTelemetry(samplesRef.current, windowMsRef.current));
-        if (brakePowerDirtyRef.current) {
-          brakePowerDirtyRef.current = false;
-          setBrakePower({ ...brakePowerRef.current });
-        }
+        flushToUi();
       }
-    }, TELEMETRY_UI_SYNC_MS);
+    }, uiSyncMs);
 
     return () => {
-      window.clearInterval(pollId);
-      window.clearInterval(syncId);
+      if (chartPollId !== undefined) {
+        timerHost.clearInterval(chartPollId);
+      }
+      timerHost.clearInterval(monitorPollId);
+      timerHost.clearInterval(syncId);
     };
-  }, [connected, enabled, intervalMs, pollOnce]);
+  }, [
+    connected,
+    enabled,
+    flushToUi,
+    hidTelemetryActive,
+    pollChartOnce,
+    pollMonitorOnce,
+    serialChartIntervalMs,
+    timerWindow,
+    uiSyncMs,
+  ]);
 
   const displaySamples = useMemo(() => {
     if (paused) return frozenSamples;
@@ -226,7 +289,7 @@ export function useObservePolling({
     brakeSamplesRef.current = [];
     resistanceRef.current = null;
     samplesRef.current = [];
-    cycleRef.current = 0;
+    monitorCycleRef.current = 0;
     lastAcceptedSampleRef.current = 0;
     brakePowerRef.current = { resistance: null, watts: null, sampleCount: 0 };
     brakePowerDirtyRef.current = false;
@@ -281,12 +344,16 @@ export function useObservePolling({
       exportCsv,
       session,
       pollDiag,
+      flushToUi,
+      chartHz,
     }),
     [
       brakePower,
+      chartHz,
       clear,
       displaySamples,
       exportCsv,
+      flushToUi,
       hidTelemetryActive,
       hz,
       lastError,

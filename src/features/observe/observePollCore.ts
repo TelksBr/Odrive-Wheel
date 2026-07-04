@@ -149,6 +149,34 @@ export async function pollTorqueDiag(): Promise<string | undefined> {
   }
 }
 
+/** Minimal field set for fast chart polling (7 serial round-trips). */
+const CHART_FIELD_CMDS = [
+  { id: 'vbus_voltage', cmd: 'r vbus_voltage' },
+  { id: 'ibus', cmd: 'r ibus' },
+  { id: 'ibrake', cmd: 'r brake_resistor_current' },
+  { id: 'iq_meas', cmd: 'r axis0.motor.current_control.Iq_measured' },
+  { id: 'ffb_pos', cmd: 'axis.curpos?' },
+  { id: 'ffb_spd', cmd: 'axis.curspd?' },
+] as const;
+
+export async function pollChartLive(): Promise<LiveMap> {
+  const next: LiveMap = {};
+  for (const field of CHART_FIELD_CMDS) {
+    try {
+      next[field.id] = await serialService.sendCommand(field.cmd, true, 2000, false);
+    } catch {
+      next[field.id] = '?';
+    }
+  }
+  return next;
+}
+
+export async function pollChartSample(maxTorqueNm?: number): Promise<TelemetrySample> {
+  const live = await pollChartLive();
+  const torqueRaw = await pollTorqueDiag();
+  return telemetrySampleFromLive(live, torqueRaw, maxTorqueNm);
+}
+
 export interface ObservePollCycleResult {
   live: LiveMap;
   errors: ErrorMap;

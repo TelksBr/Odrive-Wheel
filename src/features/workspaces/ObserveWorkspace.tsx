@@ -8,6 +8,7 @@ import { useObservePolling } from '../observe/useObservePolling';
 import { TimeSeriesChart } from '../telemetry/TimeSeriesChart';
 import { TelemetryControlPanel } from '../telemetry/TelemetryControlPanel';
 import { TelemetryOverlay } from '../telemetry/TelemetryOverlay';
+import { type ChartHz, type SerialChartHz } from '../telemetry/controlOptions';
 import { busSeries, localizedSeries, motionSeries } from '../telemetry/series';
 import { ObserveQuickBar } from './ObserveQuickBar';
 import { ObserveStatsTable } from './ObserveStatsTable';
@@ -17,20 +18,25 @@ export function ObserveWorkspace() {
   const locale = state.locale;
   const pageVisible = usePageVisible();
   const [enabled, setEnabled] = useState(true);
-  const [intervalMs, setIntervalMs] = useState(1000);
+  const [chartHz, setChartHz] = useState<ChartHz>(30);
+  const [serialChartHz, setSerialChartHz] = useState<SerialChartHz>(10);
   const [windowMs, setWindowMs] = useState(60_000);
+  const [pipWindow, setPipWindow] = useState<Window | null>(null);
+  const [pipOpen, setPipOpen] = useState(false);
 
   const maxTorqueNm = Number(state.fieldValues['axis.maxtorque'] ?? '');
   const rangeDeg = Number(state.fieldValues['axis.range'] ?? '');
   const halfRangeDeg = Number.isFinite(rangeDeg) && rangeDeg > 0 ? rangeDeg / 2 : undefined;
   const observe = useObservePolling({
     connected: state.connected,
-    enabled: enabled && pageVisible,
-    intervalMs,
+    enabled,
+    chartHz,
+    serialChartHz,
     windowMs,
     maxTorqueNm: Number.isFinite(maxTorqueNm) && maxTorqueNm > 0 ? maxTorqueNm : undefined,
     halfRangeDeg,
     holdPolling: state.busy,
+    timerWindow: pipWindow,
   });
 
   const localizedBusSeries = useMemo(() => localizedSeries(locale, busSeries), [locale]);
@@ -58,8 +64,10 @@ export function ObserveWorkspace() {
               connected={state.connected}
               enabled={enabled}
               onEnabledChange={setEnabled}
-              intervalMs={intervalMs}
-              onIntervalChange={setIntervalMs}
+              chartHz={chartHz}
+              onChartHzChange={setChartHz}
+              serialChartHz={serialChartHz}
+              onSerialChartHzChange={setSerialChartHz}
               windowMs={windowMs}
               onWindowChange={setWindowMs}
               telemetry={observe}
@@ -69,7 +77,16 @@ export function ObserveWorkspace() {
               samples={observe.displaySamples}
               brakePower={observe.brakePower}
               windowMs={windowMs}
+              chartHz={chartHz}
+              backgroundActive={enabled && state.connected && !pageVisible}
+              onPipOpenChange={setPipOpen}
+              onPipWindowChange={setPipWindow}
             />
+            {pipOpen ? (
+              <p className="observe-pip-active-hint muted">
+                {translate(locale, 'overlayChartsInPip')}
+              </p>
+            ) : (
             <div className="chart-grid observe-chart-grid">
               <TimeSeriesChart
                 title={translate(locale, 'observeChartDcBus')}
@@ -77,6 +94,7 @@ export function ObserveWorkspace() {
                 series={localizedBusSeries}
                 windowMs={windowMs}
                 height={240}
+                drawHz={chartHz}
               />
               <TimeSeriesChart
                 title={translate(locale, 'observeChartWheel')}
@@ -84,14 +102,16 @@ export function ObserveWorkspace() {
                 series={localizedMotionSeries}
                 windowMs={windowMs}
                 height={240}
+                drawHz={chartHz}
               />
             </div>
+            )}
             <ObserveStatsTable stats={observe.stats} locale={locale} />
           </section>
 
           <LiveMonitorPanel
             session={observe.session}
-            polling={enabled && state.connected && pageVisible}
+            polling={enabled && state.connected}
             onPollDiag={() => void observe.pollDiag()}
           />
         </div>

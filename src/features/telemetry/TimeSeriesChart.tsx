@@ -12,7 +12,8 @@ interface TimeSeriesChartProps {
   height?: number;
   compact?: boolean;
   locale?: Locale;
-  /** When provided, renders toggle buttons in the legend. */
+  /** Canvas repaint cap — matches chart Hz in observe mode. */
+  drawHz?: number;
   onToggleSeries?: (key: keyof TelemetrySample) => void;
 }
 
@@ -41,6 +42,7 @@ export function TimeSeriesChart({
   height = 280,
   compact = false,
   locale: localeProp,
+  drawHz = 20,
   onToggleSeries,
 }: TimeSeriesChartProps) {
   const locale = useAppLocale(localeProp);
@@ -74,7 +76,7 @@ export function TimeSeriesChart({
       return undefined;
     }
 
-    const DRAW_INTERVAL_MS = 1000 / 20;
+    const DRAW_INTERVAL_MS = 1000 / Math.max(drawHz, 1);
 
     function paint() {
       drawPendingRef.current = false;
@@ -120,7 +122,7 @@ export function TimeSeriesChart({
       }
       drawPendingRef.current = false;
     };
-  }, [compact, localSeries, locale, sampleTick, windowMs]);
+  }, [compact, drawHz, localSeries, locale, sampleTick, windowMs]);
 
   function toggle(key: keyof TelemetrySample) {
     setLocalSeries((prev) =>

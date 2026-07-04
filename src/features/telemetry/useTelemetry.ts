@@ -6,10 +6,11 @@ import { computeStats } from './types';
 import { allSeriesKeys } from './series';
 import { pushTelemetrySample, snapshotTelemetry } from './telemetryBuffer';
 import {
-  HID_TELEMETRY_MIN_INTERVAL_MS,
+  type ChartHz,
+  chartHzToSyncMs,
+  hidSampleIntervalMs,
   MAX_TELEMETRY_SAMPLES,
   MAX_TELEMETRY_WINDOW_MS,
-  TELEMETRY_UI_SYNC_MS,
 } from './controlOptions';
 import { updateBrakePowerRef } from './telemetryBrakePower';
 import { useHidTelemetryListener } from './useHidTelemetryListener';
@@ -49,6 +50,7 @@ export function useTelemetry({
   maxTorqueNm,
   halfRangeDeg,
   holdPolling = false,
+  chartHz = 20,
 }: {
   connected: boolean;
   enabled: boolean;
@@ -57,6 +59,7 @@ export function useTelemetry({
   maxTorqueNm?: number;
   halfRangeDeg?: number;
   holdPolling?: boolean;
+  chartHz?: ChartHz;
 }): TelemetryHandle {
   const [samples, setSamples] = useState<TelemetrySample[]>([]);
   const [brakePower, setBrakePower] = useState<BrakePowerState>({ resistance: null, watts: null, sampleCount: 0 });
@@ -74,7 +77,12 @@ export function useTelemetry({
   const brakePowerRef = useRef<BrakePowerState>({ resistance: null, watts: null, sampleCount: 0 });
   const brakePowerDirtyRef = useRef(false);
   const hidActiveRef = useRef(false);
+  const chartHzRef = useRef(chartHz);
   const windowMsRef = useRef(windowMs);
+
+  useEffect(() => {
+    chartHzRef.current = chartHz;
+  }, [chartHz]);
 
   useEffect(() => {
     windowMsRef.current = windowMs;
@@ -99,10 +107,11 @@ export function useTelemetry({
   }, []);
 
   const applySample = useCallback((sample: TelemetrySample, force = false) => {
+    const minInterval = hidSampleIntervalMs(chartHzRef.current);
     if (
       !force &&
       hidActiveRef.current &&
-      sample.t - lastAcceptedSampleRef.current < HID_TELEMETRY_MIN_INTERVAL_MS
+      sample.t - lastAcceptedSampleRef.current < minInterval
     ) {
       updateBrakePowerRef(sample, brakeSamplesRef.current, resistanceRef.current, brakePowerRef, brakePowerDirtyRef);
       return;
@@ -186,12 +195,12 @@ export function useTelemetry({
           setBrakePower({ ...brakePowerRef.current });
         }
       }
-    }, TELEMETRY_UI_SYNC_MS);
+    }, chartHzToSyncMs(chartHz));
     return () => {
       window.clearInterval(pollId);
       window.clearInterval(syncId);
     };
-  }, [connected, enabled, intervalMs, pollOnce]);
+  }, [chartHz, connected, enabled, intervalMs, pollOnce]);
 
   const displaySamples = useMemo(() => {
     if (paused) {

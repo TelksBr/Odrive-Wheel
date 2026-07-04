@@ -1687,6 +1687,15 @@ html[data-display-mode='standalone'] .app-shell {
   margin-top: 12px;
 }
 
+.observe-pip-active-hint {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
 .observe-stats-block {
   margin-top: 14px;
 }
