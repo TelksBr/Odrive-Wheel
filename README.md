@@ -46,7 +46,13 @@ bun run preview  # local preview of dist/
 ├── public/               Static assets, 3D wheel model
 ├── docs/
 │   ├── firmware-api.md   Serial/HID protocol reference (for contributors)
+│   ├── telemetry-hub.md  LAN hub + AC mod setup
 │   └── screenshots/
+├── tools/
+│   ├── wheelforge-hub/   Go hub — single exe, embedded overlay
+│   └── overlay-lan/      LAN overlay SPA source
+├── mods/assetto-corsa/   CSP Lua app (WheelForgeTelemetry)
+├── scripts/              Start-TelemetryHub.ps1 launcher
 ├── index.html
 ├── vite.config.ts
 └── package.json
@@ -60,6 +66,7 @@ bun run preview  # local preview of dist/
 - **Tune FFB** — wheel feel, effects, filters, torque advisor
 - **Inputs** — GPIO channels with live ADC bars, analog processor (rc12)
 - **Observe** — time-series charts, live monitor, CSV export; HID 1 kHz when connected
+- **Telemetry Hub (LAN + AC)** — Go binary (`dist/wheelforge-hub.exe`): LAN overlay + WebSocket/UDP for Assetto Corsa ([docs](docs/telemetry-hub.md))
 - **FFB Lab** — WebHID PID effect testing
 - **Maintain** — save (ODrive NVM + FFB EEPROM), profiles, DFU, reboot
 - **Command center** — searchable firmware commands
@@ -83,6 +90,9 @@ Push to `main` triggers `.github/workflows/pages.yml` (Bun install → Vite buil
 | `bun run build` | Typecheck + production bundle |
 | `bun run typecheck` | `tsc --noEmit` only |
 | `bun run preview` | Serve `dist/` locally |
+| `scripts/Build-TelemetryHub.ps1` | Build `dist/wheelforge-hub.exe` (Go) |
+| `scripts/Start-TelemetryHub.ps1` | Run hub (`-GameMode` for AC + COM6) |
+| `npm run hub:build-overlay` | Copy overlay-lan sources into legacy hub `public/` |
 
 Field definitions: `src/features/config/fieldCatalog.ts`.
 

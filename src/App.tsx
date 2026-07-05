@@ -15,6 +15,7 @@ import { ConsolePage } from './features/console/ConsolePage';
 import { QuickStartPage } from './features/setup/QuickStartPage';
 import { TuneWorkspace } from './features/workspaces/TuneWorkspace';
 import { MaintainWorkspace } from './features/workspaces/MaintainWorkspace';
+import { ObserveTelemetryProvider } from './features/observe/ObserveTelemetryContext';
 import { ObserveWorkspace } from './features/workspaces/ObserveWorkspace';
 import { InputsWorkspace } from './features/workspaces/InputsWorkspace';
 import { CommandCenterPage } from './features/commands/CommandCenterPage';
@@ -352,7 +353,9 @@ function AppShell() {
 export default function App() {
   return (
     <AppStateProvider>
-      <AppShell />
+      <ObserveTelemetryProvider>
+        <AppShell />
+      </ObserveTelemetryProvider>
     </AppStateProvider>
   );
 }

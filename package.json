@@ -9,7 +9,10 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "import-wheel-textures": "node scripts/import-wheel-textures.mjs"
+    "import-wheel-textures": "node scripts/import-wheel-textures.mjs",
+    "hub": "powershell -ExecutionPolicy Bypass -File scripts/Start-TelemetryHub.ps1 -GameMode",
+    "hub:build": "powershell -ExecutionPolicy Bypass -File scripts/Build-TelemetryHub.ps1",
+    "hub:build-overlay": "node scripts/copy-overlay-lan.mjs"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
