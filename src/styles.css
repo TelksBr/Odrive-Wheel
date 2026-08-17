@@ -236,12 +236,38 @@ button:disabled,
   gap: 8px;
 }
 
-html[data-display-mode='standalone'] .topbar {
-  padding-top: 10px;
+html[data-display-mode='standalone'] .app-shell,
+html[data-display-mode='window-controls-overlay'] .app-shell {
+  min-height: 100dvh;
 }
 
-html[data-display-mode='standalone'] .app-shell {
-  min-height: 100dvh;
+/* Window Controls Overlay: keep Conectar / language clear of OS caption buttons. */
+@media (display-mode: window-controls-overlay) {
+  .topbar {
+    padding-top: max(7px, var(--wco-inset-top, env(titlebar-area-y, 0px)));
+    padding-left: max(14px, var(--wco-inset-left, env(titlebar-area-x, 0px)));
+    padding-right: calc(14px + var(--wco-inset-right, 140px));
+    min-height: max(40px, var(--wco-titlebar-height, env(titlebar-area-height, 32px)));
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+
+  .topbar button,
+  .topbar select,
+  .topbar a,
+  .topbar input,
+  .topbar label,
+  .topbar .pwa-status {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
+}
+
+html[data-wco='on'] .topbar {
+  padding-top: max(7px, var(--wco-inset-top, 0px));
+  padding-left: max(14px, var(--wco-inset-left, 0px));
+  padding-right: calc(14px + var(--wco-inset-right, 140px));
+  min-height: max(40px, var(--wco-titlebar-height, 32px));
 }
 
 /* legacy brand orb â€” kept for references */

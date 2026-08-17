@@ -92,10 +92,31 @@ interface USB {
   }): Promise<USBDevice>;
 }
 
+interface WindowControlsOverlayGeometryChangeEvent extends Event {
+  readonly titlebarAreaRect: DOMRect;
+  readonly visible: boolean;
+}
+
+interface WindowControlsOverlay extends EventTarget {
+  readonly visible: boolean;
+  getTitlebarAreaRect(): DOMRect;
+  addEventListener(
+    type: 'geometrychange',
+    listener: (event: WindowControlsOverlayGeometryChangeEvent) => void,
+    options?: AddEventListenerOptions,
+  ): void;
+  removeEventListener(
+    type: 'geometrychange',
+    listener: (event: WindowControlsOverlayGeometryChangeEvent) => void,
+    options?: EventListenerOptions,
+  ): void;
+}
+
 interface Navigator {
   readonly serial?: Serial;
   readonly hid?: HID;
   readonly usb?: USB;
+  readonly windowControlsOverlay?: WindowControlsOverlay;
 }
 
 interface Window {

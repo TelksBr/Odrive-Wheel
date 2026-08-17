@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { applyTitlebarInsets, titlebarInsetsFromRect } from './titlebarInsets';
 
 function isStandaloneDisplay(): boolean {
   return (
@@ -7,6 +8,26 @@ function isStandaloneDisplay(): boolean {
     window.matchMedia('(display-mode: window-controls-overlay)').matches ||
     ('standalone' in navigator && (navigator as Navigator & { standalone?: boolean }).standalone === true)
   );
+}
+
+function syncWindowControlsOverlay(): void {
+  const overlay = navigator.windowControlsOverlay;
+  const visible = Boolean(overlay?.visible);
+  const rect = overlay?.getTitlebarAreaRect();
+  applyTitlebarInsets(
+    titlebarInsetsFromRect(
+      rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null,
+      { width: window.innerWidth, height: window.innerHeight },
+      visible,
+    ),
+  );
+  document.documentElement.dataset.displayMode = window.matchMedia(
+    '(display-mode: window-controls-overlay)',
+  ).matches
+    ? 'window-controls-overlay'
+    : isStandaloneDisplay()
+      ? 'standalone'
+      : 'browser';
 }
 
 export function usePwaStatus() {
@@ -28,7 +49,7 @@ export function usePwaStatus() {
     function handleInstalled() {
       setInstalled(true);
       setInstallPrompt(null);
-      document.documentElement.dataset.displayMode = 'standalone';
+      syncWindowControlsOverlay();
     }
 
     function handleOnline() {
@@ -43,16 +64,18 @@ export function usePwaStatus() {
     window.addEventListener('appinstalled', handleInstalled);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('resize', syncWindowControlsOverlay);
+    navigator.windowControlsOverlay?.addEventListener('geometrychange', syncWindowControlsOverlay);
 
-    if (isStandaloneDisplay()) {
-      document.documentElement.dataset.displayMode = 'standalone';
-    }
+    syncWindowControlsOverlay();
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('resize', syncWindowControlsOverlay);
+      navigator.windowControlsOverlay?.removeEventListener('geometrychange', syncWindowControlsOverlay);
     };
   }, []);
 
