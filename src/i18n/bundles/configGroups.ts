@@ -30,8 +30,8 @@ const groupMeta: Record<string, Record<Locale, { title: string; description: str
     en: { title: 'FET thermistor', description: 'Onboard gate driver / MOSFET temperature limits.' },
   },
   'ffb-wheel': {
-    pt: { title: 'Volante FFB', description: 'Parâmetros OpenFFBoard do volante persistidos com sys.save.' },
-    en: { title: 'FFB Wheel', description: 'OpenFFBoard-style wheel parameters persisted by sys.save.' },
+    pt: { title: 'Volante FFB', description: 'Parâmetros FFB do volante persistidos com sys.save! (EEPROM S1+S2).' },
+    en: { title: 'FFB Wheel', description: 'Wheel FFB parameters persisted by sys.save! (EEPROM S1+S2).' },
   },
   'ffb-effects': {
     pt: { title: 'Efeitos FFB', description: 'Ganhos master e por efeito do EffectsCalculator.' },

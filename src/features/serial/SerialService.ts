@@ -1,15 +1,30 @@
+import { HANDSHAKE_COMMAND, HANDSHAKE_TIMEOUT_MS, isControlPortReply, unwrapControlReply } from './serialPortProbe';
+import { isOdriveErrorReply } from './odriveErrors';
+import { sleep } from '../../shared/sleep';
+
 export type SerialEvent =
-  | { type: 'connected' }
+  | { type: 'connected'; firmware?: string }
   | { type: 'disconnected' }
   | { type: 'rx'; line: string; command?: string }
   | { type: 'tx'; line: string }
   | { type: 'info'; message: string }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+  | { type: 'desync'; message: string }
+  | { type: 'link-dead'; message: string };
+
+export type ConnectOptions = {
+  port?: SerialPort;
+  /** When true (manual Connect), fall back to the browser port picker. Auto-reconnect must pass false. */
+  allowPicker?: boolean;
+};
 
 type SerialListener = (event: SerialEvent) => void;
 
+type PendingKind = 'reply' | 'silent-write';
+
 interface PendingCommand {
   command: string;
+  kind: PendingKind;
   expectReply: boolean;
   log: boolean;
   resolve: (line: string) => void;
@@ -17,10 +32,7 @@ interface PendingCommand {
   timeoutId: number;
 }
 
-import { isOdriveErrorReply } from '../board/BoardProtocol';
-import { probeControlSerialPort } from './serialPortProbe';
-
-const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+const WATCHDOG_FAILURES = 5;
 
 export class SerialService {
   private port: SerialPort | null = null;
@@ -34,10 +46,22 @@ export class SerialService {
   private encoder = new TextEncoder();
   private readBuffer = '';
   private closing = false;
+  private live = false;
+  private consecutiveTimeouts = 0;
   private queue: Promise<unknown> = Promise.resolve();
+  private sessionOp: Promise<unknown> = Promise.resolve();
 
+  /** True only after `sys.swver?` handshake succeeds — not merely after `port.open()`. */
   get isConnected(): boolean {
-    return Boolean(this.port && this.writer);
+    return this.live;
+  }
+
+  get activePort(): SerialPort | null {
+    return this.port;
+  }
+
+  ownsPort(port: SerialPort): boolean {
+    return this.port === port;
   }
 
   subscribe(listener: SerialListener): () => void {
@@ -45,56 +69,66 @@ export class SerialService {
     return () => this.listeners.delete(listener);
   }
 
-  async connect(existingPort?: SerialPort): Promise<void> {
-    if (!navigator.serial) {
-      throw new Error('Web Serial is not available');
-    }
-
-    if (this.isConnected) {
-      await this.disconnect();
-    }
-
-    const picked = existingPort ?? (await this.resolvePortForConnect());
-    this.logInfo(existingPort ? 'connect: using provided port handle' : `connect: picked granted port (${this.describePort(picked)})`);
-    this.port = picked;
-
-    await this.port.open({ baudRate: 115200, bufferSize: 4096 });
-
-    if (!this.port.readable || !this.port.writable) {
-      throw new Error('Serial port did not expose readable/writable streams');
-    }
-
-    this.closing = false;
-    this.readBuffer = '';
-    this.reader = this.port.readable.getReader();
-    this.writer = this.port.writable.getWriter();
-
-    this.authorizedPort = this.port;
-    this.authorizedPortInfo = this.readPortInfo(this.port);
-    this.emit({ type: 'connected' });
-    void this.readLoop();
+  async connect(options: ConnectOptions = {}): Promise<void> {
+    return this.exclusive(() => this.connectNow(options));
   }
 
   /**
-   * Prefer a previously used control port (no picker). With multiple COM ports,
-   * probe for sys.swver before falling back to requestPort().
+   * Reconnect after reboot or USB drop — granted ports only, never the picker.
+   * True only when handshake succeeds. An open COM without a reply is a failure.
    */
-  private async resolvePortForConnect(): Promise<SerialPort> {
+  async reconnectKnownPort(maxAttempts = 12, delayMs = 1000): Promise<boolean> {
+    return this.exclusive(() => this.reconnectKnownPortNow(maxAttempts, delayMs));
+  }
+
+  async disconnect(): Promise<void> {
+    return this.exclusive(() => this.teardown({ emitDisconnected: true }));
+  }
+
+  private exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.sessionOp.then(fn, fn);
+    this.sessionOp = run.then(() => undefined, () => undefined);
+    return run;
+  }
+
+  private async connectNow(options: ConnectOptions): Promise<void> {
     if (!navigator.serial) {
       throw new Error('Web Serial is not available');
     }
-    const serial = navigator.serial;
-    const ports = await serial.getPorts();
-    this.logInfo(`resolvePort: ${ports.length} granted port(s) — ${this.describeGrantedPorts(ports)}`);
-    const granted = await this.pickControlPortFromGranted(ports);
-    if (granted) {
-      this.logInfo(`resolvePort: reusing granted port (${this.describePort(granted)})`);
-      return granted;
+    if (this.live) {
+      return;
     }
 
-    this.logInfo('resolvePort: no granted control port — opening browser picker');
+    const allowPicker = options.allowPicker ?? true;
+    if (options.port) {
+      this.logInfo(`connect: using provided port handle (${this.describePort(options.port)})`);
+      await this.openAndHandshake(options.port);
+      return;
+    }
+
+    const ports = await navigator.serial.getPorts();
+    this.logInfo(`connect: ${ports.length} granted port(s) — ${this.describeGrantedPorts(ports)}`);
+    const ordered = this.orderGrantedPorts(ports);
+    let lastError: Error | undefined;
+    for (const port of ordered) {
+      try {
+        this.logInfo(`connect: handshake on ${this.describePort(port)}`);
+        await this.openAndHandshake(port);
+        return;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        this.logInfo(`connect: handshake failed on ${this.describePort(port)} — ${lastError.message}`);
+      }
+    }
+
+    if (!allowPicker) {
+      throw lastError ?? new Error('serialNoLivePort');
+    }
+
+    this.logInfo('connect: no live granted port — opening browser picker');
     try {
-      return await serial.requestPort();
+      const picked = await navigator.serial.requestPort();
+      await this.openAndHandshake(picked);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'NotFoundError') {
         throw new Error('serialConnectCancelled');
@@ -103,40 +137,209 @@ export class SerialService {
     }
   }
 
-  /** Pick ODrive control CDC from ports the user already granted — never opens the picker. */
-  private async pickControlPortFromGranted(ports: SerialPort[]): Promise<SerialPort | null> {
-    if (ports.length === 0) {
-      return null;
+  private async reconnectKnownPortNow(maxAttempts: number, delayMs: number): Promise<boolean> {
+    if (!navigator.serial) {
+      return false;
     }
+    if (this.live) {
+      return true;
+    }
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const ports = await navigator.serial.getPorts();
+      this.logInfo(`reconnect attempt ${attempt + 1}/${maxAttempts}: ${ports.length} granted — ${this.describeGrantedPorts(ports)}`);
+      const ordered = this.orderGrantedPorts(ports);
+      if (ordered.length === 0) {
+        this.logInfo('reconnect: no granted ports');
+      }
+      for (const port of ordered) {
+        try {
+          this.logInfo(`reconnect: handshake on ${this.describePort(port)}`);
+          await this.openAndHandshake(port);
+          this.logInfo('reconnect: success');
+          return true;
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          this.logInfo(`reconnect: handshake failed — ${msg}`);
+        }
+      }
+      await sleep(delayMs);
+    }
+
+    this.logInfo(`reconnect: failed after ${maxAttempts} attempts`);
+    return false;
+  }
+
+  async sendCommand(command: string, expectReply = true, timeoutMs = 2000, log = true): Promise<string> {
+    return this.enqueue(() => this.sendCommandNow(command, expectReply, timeoutMs, log));
+  }
+
+  /** Runs as one queue item — use commandNow() inside to avoid interleaved polling. */
+  runAtomic<T>(operation: () => Promise<T>): Promise<T> {
+    return this.enqueue(operation);
+  }
+
+  commandNow(command: string, expectReply = true, timeoutMs = 2000, log = true): Promise<string> {
+    return this.sendCommandNow(command, expectReply, timeoutMs, log);
+  }
+
+  /**
+   * ODrive `w` commands are silent on success; rejections arrive within ~80 ms.
+   * Non-error RX during the window is logged as unsolicited — not treated as ACK.
+   * Returns undefined on success; rejects on an error line.
+   */
+  writeOdrive(command: string, log = true): Promise<string | undefined> {
+    return this.enqueue(() => this.writeOdriveNow(command, log));
+  }
+
+  async writeOdriveNow(command: string, log = true): Promise<string | undefined> {
+    if (!this.writer) {
+      throw new Error('Serial is not connected');
+    }
+
+    const cleanCommand = command.trim();
+    if (!cleanCommand) {
+      return undefined;
+    }
+
+    if (log) {
+      this.emit({ type: 'tx', line: cleanCommand });
+    }
+    await this.writer.write(this.encoder.encode(`${cleanCommand}\n`));
+
+    return new Promise<string | undefined>((resolve, reject) => {
+      const entry: PendingCommand = {
+        command: cleanCommand,
+        kind: 'silent-write',
+        expectReply: true,
+        log,
+        resolve: () => {
+          resolve(undefined);
+        },
+        reject,
+        timeoutId: 0,
+      };
+
+      entry.timeoutId = window.setTimeout(() => {
+        const index = this.pending.indexOf(entry);
+        if (index >= 0) {
+          this.pending.splice(index, 1);
+        }
+        resolve(undefined);
+      }, 80);
+
+      this.pending.push(entry);
+    });
+  }
+
+  private async openAndHandshake(port: SerialPort): Promise<void> {
+    await this.teardown({ emitDisconnected: this.live });
+
+    this.port = port;
+    await this.openPort(port);
+
+    if (!this.port.readable || !this.port.writable) {
+      await this.teardown({ emitDisconnected: false });
+      throw new Error('Serial port did not expose readable/writable streams');
+    }
+
+    this.closing = false;
+    this.readBuffer = '';
+    this.consecutiveTimeouts = 0;
+    this.reader = this.port.readable.getReader();
+    this.writer = this.port.writable.getWriter();
+    void this.readLoop();
+
+    try {
+      const raw = await this.commandNow(HANDSHAKE_COMMAND, true, HANDSHAKE_TIMEOUT_MS, true);
+      if (!isControlPortReply(raw)) {
+        throw new Error('serialHandshakeFailed');
+      }
+      this.live = true;
+      this.consecutiveTimeouts = 0;
+      this.authorizedPort = port;
+      this.authorizedPortInfo = this.readPortInfo(port);
+      this.emit({ type: 'connected', firmware: unwrapControlReply(raw) });
+    } catch (error) {
+      await this.teardown({ emitDisconnected: false });
+      if (error instanceof Error && error.message === 'serialHandshakeFailed') {
+        throw error;
+      }
+      throw new Error('serialHandshakeFailed');
+    }
+  }
+
+  private async openPort(port: SerialPort): Promise<void> {
+    try {
+      await port.open({ baudRate: 115200, bufferSize: 4096 });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'InvalidStateError') {
+        await port.close().catch(() => undefined);
+        await port.open({ baudRate: 115200, bufferSize: 4096 });
+        return;
+      }
+      throw error;
+    }
+  }
+
+  private async teardown(options: { emitDisconnected: boolean }): Promise<void> {
+    const wasLive = this.live;
+    this.live = false;
+    this.closing = true;
+    this.consecutiveTimeouts = 0;
+    this.queue = Promise.resolve();
+    this.rejectPending(new Error('Serial disconnected'));
+
+    const reader = this.reader;
+    const writer = this.writer;
+    const port = this.port;
+    this.reader = null;
+    this.writer = null;
+    this.port = null;
+
+    if (reader) {
+      await reader.cancel().catch(() => undefined);
+      reader.releaseLock();
+    }
+
+    if (writer) {
+      writer.releaseLock();
+    }
+
+    if (port) {
+      await port.close().catch(() => undefined);
+    }
+
+    if (options.emitDisconnected && wasLive) {
+      this.emit({ type: 'disconnected' });
+    }
+  }
+
+  /** Prefer the last live control handle, then matching USB ids, then remaining granted ports. Always handshake. */
+  private orderGrantedPorts(ports: SerialPort[]): SerialPort[] {
+    const seen = new Set<SerialPort>();
+    const ordered: SerialPort[] = [];
+    const push = (port: SerialPort | undefined) => {
+      if (port && !seen.has(port)) {
+        seen.add(port);
+        ordered.push(port);
+      }
+    };
 
     if (this.authorizedPort && ports.includes(this.authorizedPort)) {
-      this.logInfo('pick: matched previous port handle');
-      return this.authorizedPort;
+      push(this.authorizedPort);
     }
-
     if (this.authorizedPortInfo) {
-      const byInfo = ports.find((port) => this.matchesAuthorizedInfo(port));
-      if (byInfo) {
-        this.logInfo(`pick: matched saved USB id ${this.formatPortInfo(this.authorizedPortInfo)}`);
-        return byInfo;
+      for (const port of ports) {
+        if (this.matchesAuthorizedInfo(port)) {
+          push(port);
+        }
       }
     }
-
-    if (ports.length === 1) {
-      this.logInfo(`pick: single granted port (${this.describePort(ports[0]!)})`);
-      return ports[0]!;
-    }
-
     for (const port of ports) {
-      const label = this.describePort(port);
-      if (await probeControlSerialPort(port)) {
-        this.logInfo(`pick: probe OK on ${label}`);
-        return port;
-      }
-      this.logInfo(`pick: probe failed on ${label}`);
+      push(port);
     }
-
-    return null;
+    return ordered;
   }
 
   private logInfo(message: string): void {
@@ -192,131 +395,6 @@ export class SerialService {
     );
   }
 
-  /**
-   * Reconnect after reboot — retry until a granted control port opens.
-   * USB re-enumeration replaces SerialPort handles; never spin only on a stale ref.
-   */
-  async reconnectKnownPort(maxAttempts = 12, delayMs = 1000): Promise<boolean> {
-    if (!navigator.serial) {
-      return false;
-    }
-    if (this.isConnected) {
-      return true;
-    }
-
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      const ports = await navigator.serial.getPorts();
-      this.logInfo(`reconnect attempt ${attempt + 1}/${maxAttempts}: ${ports.length} granted — ${this.describeGrantedPorts(ports)}`);
-      const candidate = await this.pickControlPortFromGranted(ports);
-      if (candidate) {
-        try {
-          this.logInfo(`reconnect: trying ${this.describePort(candidate)}`);
-          await this.connect(candidate);
-          this.logInfo('reconnect: success');
-          return true;
-        } catch (error) {
-          const msg = error instanceof Error ? error.message : String(error);
-          this.logInfo(`reconnect: open failed — ${msg}`);
-        }
-      } else {
-        this.logInfo('reconnect: no control candidate in granted ports');
-      }
-      await sleep(delayMs);
-    }
-
-    this.logInfo(`reconnect: failed after ${maxAttempts} attempts`);
-    return false;
-  }
-
-  async disconnect(): Promise<void> {
-    this.closing = true;
-    this.rejectPending(new Error('Serial disconnected'));
-
-    if (this.reader) {
-      await this.reader.cancel().catch(() => undefined);
-      this.reader.releaseLock();
-      this.reader = null;
-    }
-
-    if (this.writer) {
-      this.writer.releaseLock();
-      this.writer = null;
-    }
-
-    if (this.port) {
-      await this.port.close().catch(() => undefined);
-      this.port = null;
-    }
-
-    this.emit({ type: 'disconnected' });
-  }
-
-  async sendCommand(command: string, expectReply = true, timeoutMs = 2000, log = true): Promise<string> {
-    return this.enqueue(() => this.sendCommandNow(command, expectReply, timeoutMs, log));
-  }
-
-  /** Runs as one queue item — use commandNow() inside to avoid interleaved polling. */
-  runAtomic<T>(operation: () => Promise<T>): Promise<T> {
-    return this.enqueue(operation);
-  }
-
-  commandNow(command: string, expectReply = true, timeoutMs = 2000, log = true): Promise<string> {
-    return this.sendCommandNow(command, expectReply, timeoutMs, log);
-  }
-
-  /**
-   * ODrive `w` commands are silent on success; rejections arrive within ~80 ms.
-   * Returns the error line when rejected, undefined when no error (HTML writeProp).
-   */
-  writeOdrive(command: string, log = true): Promise<string | undefined> {
-    return this.enqueue(() => this.writeOdriveNow(command, log));
-  }
-
-  async writeOdriveNow(command: string, log = true): Promise<string | undefined> {
-    if (!this.writer) {
-      throw new Error('Serial is not connected');
-    }
-
-    const cleanCommand = command.trim();
-    if (!cleanCommand) {
-      return undefined;
-    }
-
-    if (log) {
-      this.emit({ type: 'tx', line: cleanCommand });
-    }
-    await this.writer.write(this.encoder.encode(`${cleanCommand}\n`));
-
-    return new Promise<string | undefined>((resolve, reject) => {
-      const entry: PendingCommand = {
-        command: cleanCommand,
-        expectReply: true,
-        log: false,
-        resolve: (line: string) => {
-          window.clearTimeout(entry.timeoutId);
-          this.pending = this.pending.filter((item) => item !== entry);
-          if (log) {
-            this.emit({ type: 'rx', line, command: cleanCommand });
-          }
-          if (isOdriveErrorReply(line)) {
-            reject(new Error(line.trim()));
-            return;
-          }
-          resolve(undefined);
-        },
-        reject,
-        timeoutId: 0,
-      };
-
-      entry.timeoutId = window.setTimeout(() => {
-        this.pending = this.pending.filter((item) => item !== entry);
-        resolve(undefined);
-      }, 80);
-
-      this.pending.push(entry);
-    });
-  }
-
   private enqueue<T>(operation: () => Promise<T>): Promise<T> {
     const next = this.queue.then(operation, operation);
     this.queue = next.catch(() => undefined);
@@ -333,28 +411,35 @@ export class SerialService {
       return '';
     }
 
-    if (log) {
-      this.emit({ type: 'tx', line: cleanCommand });
-    }
-    await this.writer.write(this.encoder.encode(`${cleanCommand}\n`));
-
     if (!expectReply) {
+      if (log) {
+        this.emit({ type: 'tx', line: cleanCommand });
+      }
+      await this.writer.write(this.encoder.encode(`${cleanCommand}\n`));
       return '';
     }
 
     return new Promise<string>((resolve, reject) => {
-      const timeoutId = window.setTimeout(() => {
-        this.flushPendingQueue(`Timeout waiting for reply to: ${cleanCommand}`);
-        reject(new Error(`Timeout waiting for reply to: ${cleanCommand}`));
-      }, timeoutMs);
-
-      this.pending.push({
+      const entry: PendingCommand = {
         command: cleanCommand,
+        kind: 'reply',
         expectReply,
         log,
         resolve,
         reject,
-        timeoutId,
+        timeoutId: 0,
+      };
+
+      entry.timeoutId = window.setTimeout(() => {
+        this.rejectOnePending(entry, `Timeout waiting for reply to: ${cleanCommand}`);
+      }, timeoutMs);
+      this.pending.push(entry);
+
+      if (log) {
+        this.emit({ type: 'tx', line: cleanCommand });
+      }
+      void this.writer!.write(this.encoder.encode(`${cleanCommand}\n`)).catch((error: unknown) => {
+        this.rejectOnePending(entry, error instanceof Error ? error.message : String(error));
       });
     });
   }
@@ -378,7 +463,7 @@ export class SerialService {
     }
 
     if (!this.closing) {
-      await this.disconnect();
+      await this.teardown({ emitDisconnected: true });
     }
   }
 
@@ -397,12 +482,29 @@ export class SerialService {
   }
 
   private resolveNext(line: string): void {
-    const next = this.pending.shift();
+    const next = this.pending[0];
     if (!next) {
       this.emit({ type: 'rx', line });
       return;
     }
+
+    if (next.kind === 'silent-write') {
+      if (isOdriveErrorReply(line)) {
+        this.pending.shift();
+        window.clearTimeout(next.timeoutId);
+        if (next.log) {
+          this.emit({ type: 'rx', line, command: next.command });
+        }
+        next.reject(new Error(line.trim()));
+        return;
+      }
+      this.emit({ type: 'rx', line });
+      return;
+    }
+
+    this.pending.shift();
     window.clearTimeout(next.timeoutId);
+    this.consecutiveTimeouts = 0;
     if (next.log) {
       this.emit({ type: 'rx', line, command: next.command });
     }
@@ -413,7 +515,32 @@ export class SerialService {
     this.flushPendingQueue(error.message);
   }
 
-  /** Drop stale UART lines after timeout — prevents permanent TX/RX desync (odrive-wheel.html). */
+  /** Reject a single timed-out command without aborting the rest of the queue. */
+  private rejectOnePending(entry: PendingCommand, reason: string): void {
+    const index = this.pending.indexOf(entry);
+    if (index < 0) {
+      return;
+    }
+    this.pending.splice(index, 1);
+    window.clearTimeout(entry.timeoutId);
+    this.readBuffer = '';
+    this.emit({ type: 'desync', message: reason });
+    entry.reject(new Error(reason));
+    this.noteTimeout();
+  }
+
+  private noteTimeout(): void {
+    if (!this.live) {
+      return;
+    }
+    this.consecutiveTimeouts += 1;
+    if (this.consecutiveTimeouts >= WATCHDOG_FAILURES) {
+      this.consecutiveTimeouts = 0;
+      this.emit({ type: 'link-dead', message: 'Watchdog: board stopped answering' });
+      void this.teardown({ emitDisconnected: true });
+    }
+  }
+
   private flushPendingQueue(reason: string): void {
     for (const pending of this.pending) {
       window.clearTimeout(pending.timeoutId);

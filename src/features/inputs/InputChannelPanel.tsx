@@ -64,8 +64,8 @@ export function InputChannelPanel({
       mode: localizeField(channel.fields.mode, locale),
       idx: localizeField(channel.fields.idx, locale),
       invert: localizeField(channel.fields.invert, locale),
-      amin: localizeField(channel.fields.amin, locale),
-      amax: localizeField(channel.fields.amax, locale),
+      amin: channel.fields.amin ? localizeField(channel.fields.amin, locale) : undefined,
+      amax: channel.fields.amax ? localizeField(channel.fields.amax, locale) : undefined,
       cur: localizeField(channel.fields.cur, locale),
     }),
     [channel, locale],
@@ -73,13 +73,14 @@ export function InputChannelPanel({
 
   const mode = channelValue(channel, 'mode', values);
   const raw = parseChannelNumber(channelValue(channel, 'cur', values));
-  const isAnalog = mode === '2';
+  const analogCapable = Boolean(channel.fields.amin && channel.fields.amax);
+  const isAnalog = analogCapable && mode === '2';
   const filteredRaw = parseChannelNumber(channelValue(channel, 'filt', values));
   const filtered = filteredRaw === 65535 ? null : filteredRaw;
   const filterBypassed = isAnalog && filteredRaw === 65535;
   const min = parseChannelNumber(channelValue(channel, 'amin', values)) ?? 0;
   const max = parseChannelNumber(channelValue(channel, 'amax', values)) ?? 4095;
-  const dirty = Object.values(channel.fields).some((field) => dirtyPaths.includes(field.path));
+  const dirty = Object.values(channel.fields).some((field) => field && dirtyPaths.includes(field.path));
   const emptyLabel = translate(locale, 'metricEmpty');
 
   return (
@@ -130,6 +131,7 @@ export function InputChannelPanel({
               disabled={disabled || mode === '0'}
               onChange={(value) => onChange(channel.fields.invert, value)}
             />
+            {fields.amin && channel.fields.amin ? (
             <GpioConfigField
               locale={locale}
               field={fields.amin}
@@ -137,8 +139,10 @@ export function InputChannelPanel({
               dirty={dirtyPaths.includes(fields.amin.path)}
               disabled={disabled || !isAnalog}
               inactive={!isAnalog}
-              onChange={(value) => onChange(channel.fields.amin, value)}
+              onChange={(value) => onChange(channel.fields.amin!, value)}
             />
+            ) : null}
+            {fields.amax && channel.fields.amax ? (
             <GpioConfigField
               locale={locale}
               field={fields.amax}
@@ -146,8 +150,9 @@ export function InputChannelPanel({
               dirty={dirtyPaths.includes(fields.amax.path)}
               disabled={disabled || !isAnalog}
               inactive={!isAnalog}
-              onChange={(value) => onChange(channel.fields.amax, value)}
+              onChange={(value) => onChange(channel.fields.amax!, value)}
             />
+            ) : null}
           </div>
 
           {isAnalog && analogProcessor ? (
@@ -168,7 +173,9 @@ export function InputChannelPanel({
           <details className="input-channel-help">
             <summary>{translate(locale, 'inputsChannelHelp')}</summary>
             <div className="input-channel-help-body">
-              {[fields.mode, fields.idx, fields.invert, fields.amin, fields.amax, fields.cur].map((field) => {
+              {[fields.mode, fields.idx, fields.invert, fields.amin, fields.amax, fields.cur]
+                .filter((field): field is NonNullable<typeof field> => Boolean(field))
+                .map((field) => {
                 const help = getFieldHelp(field, locale);
                 return (
                   <div key={field.path} className="input-channel-help-item">

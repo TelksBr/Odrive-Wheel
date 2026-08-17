@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { readField } from '../board/BoardProtocol';
-import { flatFields } from '../config/fieldCatalog';
+import { getFieldByPath } from '../config/fieldCatalog';
 import { parseReplyNumber } from '../inputs/analogAxisMath';
 import {
+  emptyGpioConfigCache,
+  emptyGpioRaw,
   mergeFieldConfig,
   readInputConfigCache,
   type GpioConfigCache,
   type GpioInputMode,
 } from '../inputs/inputConfigCache';
+import { GPIO_CHANNELS } from '../../domain/gpioPinout';
 import { parseTorqueReply } from '../inputs/parseTorque';
 import { serialService } from '../serial/SerialService';
+import { publishWheelPosition } from '../wheel/sharedWheelPosition';
 import {
   buildGpioQueue,
   emptyDashboardMetrics,
@@ -20,7 +24,7 @@ import {
 } from './dashboardPollCore';
 
 const CONFIG_POLL_MS = 2000;
-const GPIO_LIST = [1, 2, 3, 4] as const;
+const GPIO_LIST = GPIO_CHANNELS;
 
 /** One serial command per tick — position-heavy, analog GPIO prioritized. */
 const SLOT_ORDER = ['pos', 'gpio', 'pos', 'torque', 'pos', 'gpio', 'metric'] as const;
@@ -45,7 +49,7 @@ export interface DashboardLivePollState {
 }
 
 function fieldFor(path: string) {
-  const field = flatFields.find((item) => item.path === path);
+  const field = getFieldByPath(path);
   if (!field) {
     throw new Error(`Missing field: ${path}`);
   }
@@ -56,14 +60,22 @@ function gpioInputsFromConfig(
   config: GpioConfigCache,
   raw: Record<number, number | null>,
 ): GpioInputState[] {
-  return GPIO_LIST.map((gpio) => ({
-    gpio,
-    mode: config.gpios[gpio].mode,
-    idx: config.gpios[gpio].idx,
-    raw: raw[gpio],
-    min: config.gpios[gpio].min,
-    max: config.gpios[gpio].max,
-  })).filter((item) => item.mode !== '0');
+  return GPIO_LIST.flatMap((gpio) => {
+    const entry = config.gpios[gpio];
+    if (!entry || entry.mode === '0') {
+      return [];
+    }
+    return [
+      {
+        gpio,
+        mode: entry.mode,
+        idx: entry.idx,
+        raw: raw[gpio] ?? null,
+        min: entry.min,
+        max: entry.max,
+      },
+    ];
+  });
 }
 
 /**
@@ -82,43 +94,48 @@ export function useDashboardLivePoll(
 
   const positionDegRef = useRef<number | null>(null);
   const configRef = useRef<GpioConfigCache | null>(null);
-  const gpioRawRef = useRef<Record<number, number | null>>({ 1: null, 2: null, 3: null, 4: null });
-  const activeRef = useRef(false);
+  const gpioRawRef = useRef<Record<number, number | null>>(emptyGpioRaw());
+  const generationRef = useRef(0);
   const rafRef = useRef(0);
   const slotRef = useRef(0);
   const gpioQueueRef = useRef<number[]>([]);
   const gpioQueueIndexRef = useRef(0);
   const metricIndexRef = useRef(0);
+  const fieldValuesRef = useRef(fieldValues);
+  fieldValuesRef.current = fieldValues;
 
-  const refreshConfig = useCallback(async () => {
-    const base = configRef.current ?? mergeFieldConfig(
-      {
-        maxTorqueNm: null,
-        gpios: {
-          1: { mode: '0', idx: null, min: 0, max: 4095 },
-          2: { mode: '0', idx: null, min: 0, max: 4095 },
-          3: { mode: '0', idx: null, min: 0, max: 4095 },
-          4: { mode: '0', idx: null, min: 0, max: 4095 },
-        },
-      },
-      fieldValues,
-    );
-    const config = mergeFieldConfig(await readInputConfigCache(base), fieldValues);
-    configRef.current = config;
-    gpioQueueRef.current = buildGpioQueue(config.gpios, GPIO_LIST);
-    gpioQueueIndexRef.current = 0;
-    setMaxTorqueNm(config.maxTorqueNm);
-    setGpioInputs(gpioInputsFromConfig(config, gpioRawRef.current));
-    return config;
-  }, [fieldValues]);
+  const refreshConfig = useCallback(async (generation: number) => {
+    if (generation !== generationRef.current) {
+      return;
+    }
+    try {
+      const values = fieldValuesRef.current;
+      const base = configRef.current ?? mergeFieldConfig(emptyGpioConfigCache(), values);
+      const config = mergeFieldConfig(await readInputConfigCache(base), values);
+      if (generation !== generationRef.current) {
+        return;
+      }
+      configRef.current = config;
+      gpioQueueRef.current = buildGpioQueue(config.gpios, GPIO_LIST);
+      gpioQueueIndexRef.current = 0;
+      setMaxTorqueNm(config.maxTorqueNm);
+      setGpioInputs(gpioInputsFromConfig(config, gpioRawRef.current));
+    } catch {
+      // keep previous GPIO snapshot — do not wipe the dashboard
+    }
+  }, []);
 
-  const runSlot = useCallback(async (slot: Slot) => {
+  const runSlot = useCallback(async (slot: Slot, generation: number) => {
+    if (generation !== generationRef.current) {
+      return;
+    }
     if (slot === 'pos') {
       try {
         const raw = await serialService.sendCommand('axis.curpos?', true, 500, false);
         const value = parsePosition(raw);
-        if (value !== null) {
+        if (value !== null && generation === generationRef.current) {
           positionDegRef.current = value;
+          publishWheelPosition(value);
         }
       } catch {
         // keep previous sample
@@ -131,7 +148,7 @@ export function useDashboardLivePoll(
         const raw = await serialService.sendCommand('T', true, 500, false);
         const scale = configRef.current?.maxTorqueNm ?? undefined;
         const value = parseTorqueReply(raw, scale);
-        if (value !== null) {
+        if (value !== null && generation === generationRef.current) {
           setTorqueNm(value);
         }
       } catch {
@@ -145,7 +162,9 @@ export function useDashboardLivePoll(
       metricIndexRef.current += 1;
       try {
         const patch = await pollDashboardMetric(key);
-        setMetrics((prev) => ({ ...prev, ...patch }));
+        if (generation === generationRef.current) {
+          setMetrics((prev) => ({ ...prev, ...patch }));
+        }
       } catch {
         // keep previous metrics
       }
@@ -167,26 +186,15 @@ export function useDashboardLivePoll(
 
     try {
       const rawStr = await readField(fieldFor(`gpio.${gpio}.cur`));
+      if (generation !== generationRef.current) {
+        return;
+      }
       gpioRawRef.current[gpio] = parseReplyNumber(rawStr);
       setGpioInputs(gpioInputsFromConfig(config, gpioRawRef.current));
     } catch {
       // keep previous raw sample
     }
   }, []);
-
-  const runLoop = useCallback(async () => {
-    if (!activeRef.current) {
-      return;
-    }
-
-    const slot = SLOT_ORDER[slotRef.current % SLOT_ORDER.length];
-    slotRef.current += 1;
-    await runSlot(slot);
-
-    if (activeRef.current) {
-      rafRef.current = requestAnimationFrame(() => void runLoop());
-    }
-  }, [runSlot]);
 
   useEffect(() => {
     if (configRef.current) {
@@ -200,7 +208,7 @@ export function useDashboardLivePoll(
 
   useEffect(() => {
     if (!connected || paused) {
-      activeRef.current = false;
+      generationRef.current += 1;
       setPolling(false);
       setTorqueNm(null);
       setGpioInputs([]);
@@ -208,29 +216,41 @@ export function useDashboardLivePoll(
       setMetrics(emptyDashboardMetrics());
       positionDegRef.current = null;
       configRef.current = null;
-      gpioRawRef.current = { 1: null, 2: null, 3: null, 4: null };
+      gpioRawRef.current = emptyGpioRaw();
       slotRef.current = 0;
       gpioQueueRef.current = [];
       gpioQueueIndexRef.current = 0;
       metricIndexRef.current = 0;
-      return;
+      return undefined;
     }
 
+    const generation = generationRef.current + 1;
+    generationRef.current = generation;
     setPolling(true);
-    void refreshConfig();
+    void refreshConfig(generation);
 
-    activeRef.current = true;
+    const runLoop = async () => {
+      if (generation !== generationRef.current) {
+        return;
+      }
+      const slot = SLOT_ORDER[slotRef.current % SLOT_ORDER.length];
+      slotRef.current += 1;
+      await runSlot(slot, generation);
+      if (generation === generationRef.current) {
+        rafRef.current = requestAnimationFrame(() => void runLoop());
+      }
+    };
+
     rafRef.current = requestAnimationFrame(() => void runLoop());
-
-    const configId = window.setInterval(() => void refreshConfig(), CONFIG_POLL_MS);
+    const configId = window.setInterval(() => void refreshConfig(generation), CONFIG_POLL_MS);
 
     return () => {
-      activeRef.current = false;
+      generationRef.current += 1;
       cancelAnimationFrame(rafRef.current);
       window.clearInterval(configId);
       setPolling(false);
     };
-  }, [connected, paused, refreshConfig, runLoop]);
+  }, [connected, paused, refreshConfig, runSlot]);
 
   return {
     positionDegRef,

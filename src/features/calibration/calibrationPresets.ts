@@ -1,6 +1,6 @@
 import type { Dispatch } from 'react';
 import type { AppAction } from '../../app/types';
-import { flatFields, type ConfigField } from '../config/fieldCatalog';
+import { getFieldByPath, type ConfigField } from '../config/fieldCatalog';
 import { readField, applyField, applyFieldNow } from '../board/BoardProtocol';
 import { persistFfbEeprom } from '../board/fieldApply';
 import { markOdriveRamPending } from '../board/persistPending';
@@ -8,10 +8,10 @@ import { serialService } from '../serial/SerialService';
 import { readAllFields } from '../board/unifiedSave';
 import { as5047EncoderTargets } from './calibrationTargets';
 import { applyBootPreset } from './calibrationBootPresets';
-const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+import { sleep } from '../../shared/sleep';
 
 export function fieldByPath(path: string): ConfigField | undefined {
-  return flatFields.find((field) => field.path === path);
+  return getFieldByPath(path);
 }
 
 export async function writePath(

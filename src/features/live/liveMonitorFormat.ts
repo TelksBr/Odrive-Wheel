@@ -78,6 +78,10 @@ export function formatLiveValue(locale: Locale, raw: string | undefined, format:
       const n = parseNumber(raw);
       return n !== null ? `${n.toFixed(2)}°/s` : v;
     }
+    case 'degPerSec2': {
+      const n = parseNumber(raw);
+      return n !== null ? `${n.toFixed(2)}°/s²` : v;
+    }
     default:
       if (cmd === 'r axis0.current_state' || cmd === 'r axis0.requested_state') {
         const label = axisStateLabel(locale, v);

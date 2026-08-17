@@ -114,6 +114,7 @@ function phongToStandard(
     transparent: src.transparent,
     opacity: src.opacity,
     side: src.side,
+    flatShading: false,
     metalness: preset.metalness,
     roughness: preset.roughness,
     envMapIntensity: preset.envMapIntensity,
@@ -179,6 +180,7 @@ function fallbackMaterial(name: string): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     name,
     color: preset.color,
+    flatShading: false,
     metalness: preset.metalness,
     roughness: preset.roughness,
     envMapIntensity: preset.envMapIntensity,
@@ -199,6 +201,7 @@ function upgradeMaterial(
 
   if (mat instanceof THREE.MeshStandardMaterial) {
     const preset = presetFor(mat.name);
+    mat.flatShading = false;
     if (mat.map) {
       mat.color.set(0xffffff);
     } else {

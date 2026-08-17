@@ -127,19 +127,19 @@ export const guidanceEn: Record<string, string> = {
 
   // GPIO fallbacks
   'gpio.mode':
-    'Set Disabled (0) to ignore this pin. Button (1) maps the pin to a HID button. Analog axis (2) uses the ADC for a joystick axis — calibrate with amin/amax. Zero wheel (3) resets the encoder position when pressed.',
+    'GPIO 1–4 = PA0–PA3 (ADC): 0 off, 1 HID button 0–63, 2 HID axis Rx/Ry/Rz/Slider, 3 zero-wheel (axis.zeroenc in RAM until sys.save!). GPIO 6 = PB2 digital-only — no analog mode, no amin/amax/filt.',
   'gpio.idx':
-    'HID report index assigned to this pin. Button index 0–63. Analog axis index 0–3 (Rx/Ry/Rz/Slider). Avoid duplicating the same index for two GPIOs with the same mode.',
+    'HID report index. Button 0–63. Analog axis 0–3 (Rx/Ry/Rz/Slider) on GPIO 1–4 mode 2 only. GPIO 6 is button bits only.',
   'gpio.invert':
-    'Mirrors the input direction. For buttons: pressed = 0 instead of 1. For analog axes: the mapped range is reversed (max ↔ min).',
+    'Mirrors the input. Buttons: pressed = 0 instead of 1. Analog: mapped range reversed. Persists with sys.save! (FFB EEPROM S1+S2).',
   'gpio.amin':
-    'Raw ADC count at mechanical minimum. Read gpio.N.cur while pedal/stick is at minimum and enter that value.',
+    'Raw ADC at mechanical minimum (GPIO 1–4 analog mode). Read gpio.N.cur at the stop and enter that value. Not present on GPIO 6.',
   'gpio.amax':
-    'Raw ADC count at mechanical maximum. Read gpio.N.cur while pedal/stick is at maximum. amax must be greater than amin.',
+    'Raw ADC at mechanical maximum (GPIO 1–4 analog mode). amax must be greater than amin. Not present on GPIO 6.',
   'fx.filterFreq':
-    'Low-pass cutoff frequency for this effect type. 0 = filter bypassed. 50–150 Hz is typical for sim racing.',
+    'Low-pass cutoff in Hz (1–500). Firmware CF default 200 Hz. 0 is not used on this firmware — use the type’s default.',
   'fx.filterQ':
-    'Biquad Q factor. Q = 0.707 = Butterworth (recommended starting point).',
+    'Biquad Q stored as integer ×0.01. 70 = Q 0.70 (Butterworth). Do not type 0.707 — type 70. Range 1–500.',
   'field.guidance.fallback':
     'FFB: Apply persists to EEPROM (sys.save!). ODrive: Apply writes RAM only — toolbar Save persists NVM and reboots.',
 
@@ -277,19 +277,19 @@ export const guidancePt: Record<string, string> = {
 
   // GPIO fallbacks
   'gpio.mode':
-    'Defina Desativado (0) para ignorar o pino. Botão (1) mapeia para um botão HID. Eixo analógico (2) usa o ADC — calibre com amin/amax. Zerar volante (3) captura o centro ao pressionar.',
+    'GPIO 1–4 = PA0–PA3 (ADC): 0 off, 1 botão HID 0–63, 2 eixo HID Rx/Ry/Rz/Slider, 3 zerar volante (axis.zeroenc na RAM até sys.save!). GPIO 6 = PB2 só digital — sem modo analógico, sem amin/amax/filt.',
   'gpio.idx':
-    'Índice HID deste pino. Botão 0–63. Eixo analógico 0–3 (Rx/Ry/Rz/Slider). Evite duplicar o mesmo índice em dois GPIOs no mesmo modo.',
+    'Índice HID. Botão 0–63. Eixo analógico 0–3 (Rx/Ry/Rz/Slider) só em GPIO 1–4 modo 2. GPIO 6 é só bits de botão.',
   'gpio.invert':
-    'Inverte a direção. Em botões: pressionado = 0 em vez de 1. Em analógicos: inverte o intervalo mapeado.',
+    'Inverte a entrada. Botões: pressionado = 0. Analógico: inverte o intervalo. Persiste com sys.save! (EEPROM FFB S1+S2).',
   'gpio.amin':
-    'Contagem ADC no mínimo mecânico. Leia gpio.N.cur com pedal/botão no mínimo e insira o valor.',
+    'ADC no mínimo mecânico (GPIO 1–4 modo analógico). Leia gpio.N.cur no batente. Não existe em GPIO 6.',
   'gpio.amax':
-    'Contagem ADC no máximo mecânico. Leia gpio.N.cur no máximo. amax deve ser maior que amin.',
+    'ADC no máximo mecânico (GPIO 1–4 modo analógico). amax deve ser maior que amin. Não existe em GPIO 6.',
   'fx.filterFreq':
-    'Frequência de corte do filtro passa-baixa. 0 = filtro desligado. 50–150 Hz é típico em sim racing.',
+    'Corte passa-baixa em Hz (1–500). Padrão CF do firmware: 200 Hz.',
   'fx.filterQ':
-    'Fator Q do biquad. Q = 0,707 = Butterworth (ponto de partida recomendado).',
+    'Q do biquad como inteiro ×0,01. 70 = Q 0,70 (Butterworth). Não escreva 0,707 — escreva 70. Faixa 1–500.',
   'field.guidance.fallback':
     'FFB: Aplicar persiste na EEPROM (sys.save!). ODrive: Aplicar grava só na RAM — use Salvar na barra para NVM e reboot.',
 

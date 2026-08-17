@@ -1,3 +1,5 @@
+import { GPIO_CHANNELS, gpioIsAnalog, gpioMcuPin } from '../../domain/gpioPinout';
+
 export type FieldType = 'float' | 'int' | 'bool' | 'enum' | 'command' | 'readonly';
 export type FieldProtocol = 'odrive' | 'openffboard';
 
@@ -55,18 +57,18 @@ const inputModeOptions: FieldOption[] = [
 ];
 
 const encoderModeOptions: FieldOption[] = [
-  { value: '0', label: 'Incremental' },
-  { value: '1', label: 'Hall' },
-  { value: '257', label: 'SPI ABS AMS' },
-  { value: '258', label: 'SPI ABS CUI' },
-  { value: '259', label: 'SPI ABS AEAT' },
-  { value: '260', label: 'SPI ABS RLS' },
+  { value: '0', label: 'Incremental (ABZ)' },
+  { value: '1', label: 'Hall (ODrive stock)' },
+  { value: '257', label: 'SPI ABS AMS (AS5047 / MKS)' },
+  { value: '258', label: 'SPI ABS CUI (ODrive stock)' },
+  { value: '259', label: 'SPI ABS AEAT (ODrive stock)' },
+  { value: '260', label: 'SPI ABS RLS (ODrive stock)' },
 ];
 
 const motorTypeOptions: FieldOption[] = [
   { value: '0', label: 'High current BLDC' },
   { value: '2', label: 'Gimbal' },
-  { value: '3', label: 'ACIM' },
+  { value: '3', label: 'ACIM (not used on FFB wheel)' },
 ];
 
 /** ODrive axis state codes (requested_state command / current_state live). */
@@ -91,6 +93,92 @@ const gpioModeOptions: FieldOption[] = [
   { value: '2', label: 'Analog axis' },
   { value: '3', label: 'Zero wheel' },
 ];
+
+const gpioDigitalModeOptions: FieldOption[] = [
+  { value: '0', label: 'Disabled' },
+  { value: '1', label: 'Button' },
+  { value: '3', label: 'Zero wheel' },
+];
+
+function gpioChannelFields(gpio: number): ConfigField[] {
+  const pin = gpioMcuPin(gpio);
+  const analog = gpioIsAnalog(gpio);
+  const fields: ConfigField[] = [
+    {
+      path: `gpio.${gpio}.mode`,
+      label: `GPIO ${gpio} mode (${pin})`,
+      type: 'enum',
+      protocol: 'openffboard',
+      options: analog ? gpioModeOptions : gpioDigitalModeOptions,
+      description: analog
+        ? `MKS ${pin} (ADC). 0=off, 1=HID button 0–63, 2=HID axis Rx/Ry/Rz/Slider, 3=zero-wheel (axis.zeroenc in RAM until sys.save!).`
+        : `MKS ${pin} digital-only (no ADC). 0=off, 1=HID button, 3=zero-wheel. Analog mode is rejected by firmware.`,
+    },
+    {
+      path: `gpio.${gpio}.idx`,
+      label: `GPIO ${gpio} index`,
+      type: 'int',
+      protocol: 'openffboard',
+      min: 0,
+      max: 63,
+      step: 1,
+      description: analog
+        ? 'Button bit 0–63, or analog HID axis 0–3 (Rx/Ry/Rz/Slider) when mode=2.'
+        : 'HID button bit 0–63 (digital pin — no analog axis).',
+    },
+    {
+      path: `gpio.${gpio}.invert`,
+      label: `GPIO ${gpio} invert`,
+      type: 'bool',
+      protocol: 'openffboard',
+      options: boolOptions,
+      description: 'Inverts button polarity or analog direction.',
+    },
+    {
+      path: `gpio.${gpio}.cur`,
+      label: `GPIO ${gpio} raw`,
+      type: 'readonly',
+      protocol: 'openffboard',
+      readonly: true,
+      description: analog
+        ? 'Live raw ADC (0–4095) or digital 0/1. 65535 = disabled.'
+        : 'Live digital 0/1. 65535 = disabled.',
+    },
+  ];
+  if (analog) {
+    fields.splice(3, 0,
+      {
+        path: `gpio.${gpio}.amin`,
+        label: `GPIO ${gpio} analog min`,
+        type: 'int',
+        protocol: 'openffboard',
+        min: 0,
+        max: 4095,
+        step: 1,
+        description: 'Raw ADC minimum for analog axis calibration (mode=2 only).',
+      },
+      {
+        path: `gpio.${gpio}.amax`,
+        label: `GPIO ${gpio} analog max`,
+        type: 'int',
+        protocol: 'openffboard',
+        min: 0,
+        max: 4095,
+        step: 1,
+        description: 'Raw ADC maximum for analog axis calibration (mode=2 only).',
+      },
+    );
+    fields.push({
+      path: `gpio.${gpio}.filt`,
+      label: `GPIO ${gpio} filtered`,
+      type: 'readonly',
+      protocol: 'openffboard',
+      readonly: true,
+      description: 'Last Biquad-filtered ADC value when axis.gpiofilt is on. 65535 = N/A.',
+    });
+  }
+  return fields;
+}
 
 export const configGroups: ConfigGroup[] = [
   {
@@ -304,7 +392,7 @@ export const configGroups: ConfigGroup[] = [
         type: 'enum',
         protocol: 'odrive',
         options: motorTypeOptions,
-        description: 'Motor construction type. High-current BLDC for almost all direct-drive wheel motors.',
+        description: 'Motor construction. High-current BLDC (0) for FFB wheels. Gimbal is rare. ACIM is stock ODrive and not used on this base.',
       },
       {
         path: 'axis0.motor.config.pole_pairs',
@@ -429,7 +517,7 @@ export const configGroups: ConfigGroup[] = [
         type: 'enum',
         protocol: 'odrive',
         options: encoderModeOptions,
-        description: 'Encoder feedback type. Incremental for standard A/B quadrature; SPI variants for absolute encoders.',
+        description: 'Encoder type. MKS onboard is SPI ABS AMS (257) / CPR 16384. Incremental (0) is ABZ. Hall and other SPI IDs are stock ODrive — not the MKS path.',
       },
       {
         path: 'axis0.encoder.config.cpr',
@@ -874,7 +962,7 @@ export const configGroups: ConfigGroup[] = [
         min: 1,
         max: 500,
         step: 1,
-        description: 'Low-pass cutoff for constant force (main FFB channel). Default 500 Hz (near bypass). 50–150 Hz = smoother road detail.',
+        description: 'Low-pass cutoff for constant force (main FFB channel). Firmware default 200 Hz. Range 1–500 Hz.',
       },
       {
         path: 'fx.filterCfQ',
@@ -884,7 +972,7 @@ export const configGroups: ConfigGroup[] = [
         min: 1,
         max: 500,
         step: 1,
-        description: 'Q ×0.01 (70 ≈ Butterworth). Stored as integer — 70 means Q=0.70 in the biquad.',
+        description: 'Q stored as integer ×0.01 (70 = Q 0.70 Butterworth). Not 0.707 in this field — enter 70.',
       },
       {
         path: 'fx.filterDaFreq',
@@ -904,7 +992,7 @@ export const configGroups: ConfigGroup[] = [
         min: 1,
         max: 500,
         step: 1,
-        description: 'Q ×0.01 for damper filter. Default 20.',
+        description: 'Q stored as integer ×0.01 (70 = Q 0.70 Butterworth). Default 20.',
       },
       {
         path: 'fx.filterFrFreq',
@@ -924,7 +1012,7 @@ export const configGroups: ConfigGroup[] = [
         min: 1,
         max: 500,
         step: 1,
-        description: 'Q ×0.01 for friction filter. Default 20.',
+        description: 'Q stored as integer ×0.01 (70 = Q 0.70 Butterworth). Default 20.',
       },
       {
         path: 'fx.filterInFreq',
@@ -944,7 +1032,7 @@ export const configGroups: ConfigGroup[] = [
         min: 1,
         max: 500,
         step: 1,
-        description: 'Q ×0.01 for inertia filter. Default 20.',
+        description: 'Q stored as integer ×0.01 (70 = Q 0.70 Butterworth). Default 20.',
       },
     ],
   },
@@ -1095,70 +1183,7 @@ export const configGroups: ConfigGroup[] = [
         defaultValue: 'false',
         description: 'Tracks live min/max on analog GPIOs and updates gpio.N.amin/amax automatically.',
       },
-      ...([1, 2, 3, 4].flatMap((gpio) => [
-      {
-        path: `gpio.${gpio}.mode`,
-        label: `GPIO ${gpio} mode`,
-        type: 'enum',
-        protocol: 'openffboard',
-        options: gpioModeOptions,
-        description: 'Input mode for this GPIO.',
-      },
-      {
-        path: `gpio.${gpio}.idx`,
-        label: `GPIO ${gpio} index`,
-        type: 'int',
-        protocol: 'openffboard',
-        min: 0,
-        max: 63,
-        step: 1,
-        description: 'Button index or analog axis index, depending on mode.',
-      },
-      {
-        path: `gpio.${gpio}.invert`,
-        label: `GPIO ${gpio} invert`,
-        type: 'bool',
-        protocol: 'openffboard',
-        options: boolOptions,
-        description: 'Inverts button or analog direction.',
-      },
-      {
-        path: `gpio.${gpio}.amin`,
-        label: `GPIO ${gpio} analog min`,
-        type: 'int',
-        protocol: 'openffboard',
-        min: 0,
-        max: 4095,
-        step: 1,
-        description: 'Raw ADC minimum used for analog axis calibration.',
-      },
-      {
-        path: `gpio.${gpio}.amax`,
-        label: `GPIO ${gpio} analog max`,
-        type: 'int',
-        protocol: 'openffboard',
-        min: 0,
-        max: 4095,
-        step: 1,
-        description: 'Raw ADC maximum used for analog axis calibration.',
-      },
-      {
-        path: `gpio.${gpio}.cur`,
-        label: `GPIO ${gpio} raw`,
-        type: 'readonly',
-        protocol: 'openffboard',
-        readonly: true,
-        description: 'Live raw value for diagnostics and calibration.',
-      },
-      {
-        path: `gpio.${gpio}.filt`,
-        label: `GPIO ${gpio} filtered`,
-        type: 'readonly',
-        protocol: 'openffboard',
-        readonly: true,
-        description: 'Live filtered ADC value when analog filter is enabled.',
-      },
-    ] satisfies ConfigField[])),
+      ...GPIO_CHANNELS.flatMap((gpio) => gpioChannelFields(gpio)),
     ],
   },
   {
@@ -1199,7 +1224,7 @@ export const configGroups: ConfigGroup[] = [
         protocol: 'openffboard',
         readonly: true,
         unit: 'deg/s²',
-        description: 'Current wheel angular acceleration from the FFB layer.',
+        description: 'Current wheel angular acceleration in deg/s² (not deg/s).',
       },
       {
         path: 'main.ffbactive',
@@ -1215,7 +1240,7 @@ export const configGroups: ConfigGroup[] = [
         type: 'readonly',
         protocol: 'openffboard',
         readonly: true,
-        description: 'Count of accepted encoder Z index pulses. Write 0 to reset.',
+        description: 'Accepted encoder Z-index pulses. Meaningful with incremental+Z; N/A on AS5047. SET 0 resets.',
       },
       {
         path: 'axis.zglitch',
@@ -1223,25 +1248,16 @@ export const configGroups: ConfigGroup[] = [
         type: 'readonly',
         protocol: 'openffboard',
         readonly: true,
-        description: 'Count of rejected Z index pulses (noise). Write 0 to reset.',
+        description: 'Rejected Z IRQs (glitches). Meaningful with incremental+Z; N/A on AS5047. SET 0 resets.',
       },
       {
         path: 'odrv.vbus',
-        label: 'VBUS (OpenFFBoard)',
+        label: 'VBUS (FFB ADC)',
         type: 'readonly',
         protocol: 'openffboard',
         readonly: true,
-        unit: 'V',
-        description: 'Alias OpenFFBoard de vbus_voltage (mesma leitura ADC, em mV). Use vbus_voltage no monitor.',
-      },
-      {
-        path: 'odrv.maxtorque',
-        label: 'ODrive max torque',
-        type: 'readonly',
-        protocol: 'openffboard',
-        readonly: true,
-        unit: 'Nm',
-        description: 'Effective torque ceiling reported by the FFB bridge.',
+        unit: 'mV',
+        description: 'Same VBUS ADC as r vbus_voltage, reported in millivolts. Divide by 1000 for volts. Not a second sensor.',
       },
     ],
   },
@@ -1252,11 +1268,11 @@ export const configGroups: ConfigGroup[] = [
     fields: [
       {
         path: 'sys.swver',
-        label: 'Firmware version',
+        label: 'OpenFFBoard compat version',
         type: 'readonly',
         protocol: 'openffboard',
         readonly: true,
-        description: 'Firmware version string reported by the board.',
+        description: 'OpenFFBoard compatibility string (hardcoded 1.17.0 on this firmware). Distinct from ODrive fw_version_* on Observe.',
       },
       {
         path: 'sys.hwtype',
@@ -1265,6 +1281,31 @@ export const configGroups: ConfigGroup[] = [
         protocol: 'openffboard',
         readonly: true,
         description: 'Hardware variant string (e.g. ODrive-Wheel).',
+      },
+      {
+        path: 'sys.uid',
+        label: 'STM32 UID',
+        type: 'readonly',
+        protocol: 'openffboard',
+        readonly: true,
+        description: '96-bit STM32 unique ID (hex).',
+      },
+      {
+        path: 'sys.devid',
+        label: 'STM32 device ID',
+        type: 'readonly',
+        protocol: 'openffboard',
+        readonly: true,
+        description: 'STM32 device ID and silicon revision.',
+      },
+      {
+        path: 'sys.uptime',
+        label: 'Uptime',
+        type: 'readonly',
+        protocol: 'openffboard',
+        readonly: true,
+        unit: 'ms',
+        description: 'Milliseconds since boot (HAL_GetTick).',
       },
       {
         path: 'sys.heap',
@@ -1279,3 +1320,9 @@ export const configGroups: ConfigGroup[] = [
 ];
 
 export const flatFields = configGroups.flatMap((group) => group.fields.map((field) => ({ ...field, groupId: group.id })));
+
+export const fieldsByPath = new Map(flatFields.map((field) => [field.path, field]));
+
+export function getFieldByPath(path: string): ConfigField | undefined {
+  return fieldsByPath.get(path);
+}

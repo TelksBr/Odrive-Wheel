@@ -40,15 +40,15 @@ export function useBoardSave() {
   const { state, dispatch } = useAppState();
   const [saveProgress, setSaveProgress] = useState<SaveProgress | null>(null);
 
-  const saveAll = useCallback(async () => {
+  const saveAll = useCallback(async (): Promise<boolean> => {
     if (!state.connected) {
       const msg = translate(state.locale, 'saveSerialRequired');
       dispatch({ type: 'append-log', direction: 'error', message: msg });
       toast(dispatch, msg, 'error');
-      return;
+      return false;
     }
     if (state.busy) {
-      return;
+      return false;
     }
     const integrity = assessCalibrationIntegrity(state.fieldValues, state.dirtyPaths, state.nvmPendingPaths);
     if (shouldBlockSave(integrity)) {
@@ -61,7 +61,7 @@ export function useBoardSave() {
         });
         toast(dispatch, msg, 'error');
       }
-      return;
+      return false;
     }
     dispatch({ type: 'set-busy', busy: true });
     try {
@@ -78,7 +78,8 @@ export function useBoardSave() {
         },
       });
       toastStickyClose(dispatch, SAVE_STICKY_ID);
-      if (result.reconnected && result.values) {
+      const savedOk = Boolean(result.values) && (result.outcome === 'ffb_only' || result.reconnected);
+      if (savedOk && result.values) {
         for (const [path, value] of Object.entries(result.values)) {
           dispatch({ type: 'set-field', path, value, dirty: false });
         }
@@ -99,7 +100,10 @@ export function useBoardSave() {
             }),
           });
         } else {
-          const msg = translate(state.locale, 'toastSaveComplete');
+          const msg = translate(
+            state.locale,
+            result.outcome === 'ffb_only' ? 'toastSaveFfbOnly' : 'toastSaveComplete',
+          );
           dispatch({
             type: 'append-log',
             direction: 'info',
@@ -107,20 +111,14 @@ export function useBoardSave() {
           });
           toast(dispatch, msg, 'ok');
         }
-        if (!result.ffbSaved) {
-          const msg = translate(state.locale, 'saveFfbWarn');
-          dispatch({
-            type: 'append-log',
-            direction: 'error',
-            message: msg,
-          });
-          toast(dispatch, msg, 'warn');
-        }
-      } else if (!result.reconnected) {
+        return true;
+      }
+      if (!result.reconnected) {
         const msg = translate(state.locale, 'saveReconnectFailed');
         dispatch({ type: 'append-log', direction: 'error', message: msg });
         toast(dispatch, msg, 'error');
       }
+      return false;
     } catch (error) {
       toastStickyClose(dispatch, SAVE_STICKY_ID);
       const message = error instanceof Error ? error.message : String(error);
@@ -130,6 +128,7 @@ export function useBoardSave() {
         message,
       });
       toast(dispatch, message, 'error');
+      return false;
     } finally {
       setSaveProgress(null);
       dispatch({ type: 'set-busy', busy: false });

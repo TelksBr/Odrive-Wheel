@@ -383,34 +383,6 @@ export class HidFfbService {
     return () => target.removeEventListener('inputreport', handler);
   }
 
-  /* ── Legacy convenience methods (kept for backwards compat) ───────────── */
-  async playConstantForce(magnitude = 80, durationMs = 1200): Promise<void> {
-    const signedMagnitude = Math.max(-127, Math.min(127, magnitude));
-    await this.sendReport(0x01, buildSetEffect(BLOCK.cf, TYPE.cf, durationMs, 255));
-    const mag = Math.round((signedMagnitude / 127) * 0x7fff);
-    await this.sendReport(0x05, buildConstantForce(BLOCK.cf, mag));
-    await this.sendReport(0x0a, buildOp(BLOCK.cf, 1, 1));
-    this.running.cf = true;
-    if (durationMs > 0) {
-      window.setTimeout(() => { this.running.cf = false; }, durationMs);
-    }
-  }
-
-  async playSpring(strength = 80, durationMs = 1500): Promise<void> {
-    const pct = Math.round((Math.max(0, Math.min(255, strength)) / 255) * 100);
-    await this.sendReport(0x01, buildSetEffect(BLOCK.sp, TYPE.sp, durationMs, 255));
-    await this.sendReport(0x03, buildCondition(BLOCK.sp, pctToCoef(pct)));
-    await this.sendReport(0x0a, buildOp(BLOCK.sp, 1, 1));
-    this.running.sp = true;
-    if (durationMs > 0) {
-      window.setTimeout(() => { this.running.sp = false; }, durationMs);
-    }
-  }
-
-  async playPulse(magnitude = 80, durationMs = 250): Promise<void> {
-    await this.playConstantForce(magnitude, durationMs);
-  }
-
   /** Low-level HID output — used by Performance Test runner. */
   async sendRawReport(reportId: number, data: Uint8Array | number[]): Promise<void> {
     const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);

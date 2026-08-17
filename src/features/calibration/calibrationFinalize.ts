@@ -3,11 +3,17 @@ import type { AppAction } from '../../app/types';
 import { unifiedSave, type SaveProgress } from '../board/unifiedSave';
 import { readField, readFieldNow } from '../board/BoardProtocol';
 import { parseAxisError } from './calibrationIntegrity';
-import { applyBootPersistNow, getPostCalibrationPreset, isPresetSynced, parseBoolField, type BootPersistEntry } from './calibrationBootPresets';
-import { fieldByPath } from './calibrationPresets';
+import {
+  applyBootPersistNow,
+  FFB_CONTROLLER_MODE_WRITES,
+  getPostCalibrationPreset,
+  isPresetSynced,
+  parseBoolField,
+  type BootPersistEntry,
+} from './calibrationBootPresets';
+import { fieldByPath, writePathsNow } from './calibrationPresets';
 import { serialService } from '../serial/SerialService';
-
-const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+import { sleep } from '../../shared/sleep';
 
 /** ODrive NVM must contain these after a successful cal + finalize (readonly — ss saves from RAM). */
 export const CALIBRATION_NVM_SNAPSHOT_PATHS = [
@@ -158,15 +164,25 @@ export async function applyPostCalibrationPresetAndSave(
     if (presetResult.fail > 0 || presetResult.ok === 0) {
       throw new Error(`calFinalizePresetFailed|${presetResult.errors.join('; ')}`);
     }
+
+    const torqueResult = await writePathsNow(FFB_CONTROLLER_MODE_WRITES, dispatch, { retries: 1 });
+    if (torqueResult.fail > 0) {
+      throw new Error(`calFinalizePresetFailed|${torqueResult.errors.join('; ')}`);
+    }
   });
 
   syncFieldValues(dispatch, preset, snapshot, status);
+  const nvmPendingPaths = [
+    ...preset.map((entry) => entry.path),
+    ...FFB_CONTROLLER_MODE_WRITES.map((entry) => entry.path),
+  ];
   const result = await unifiedSave({
     dirtyPaths: [],
-    nvmPendingPaths: [],
+    nvmPendingPaths,
     fieldValues: {
       ...snapshotToFieldValues(snapshot),
       ...Object.fromEntries(preset.map((e) => [e.path, entryToFieldValue(e)])),
+      ...Object.fromEntries(FFB_CONTROLLER_MODE_WRITES.map((entry) => [entry.path, entry.value])),
     },
     onProgress,
   });

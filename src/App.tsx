@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppStateProvider, useAppState } from './app/AppState';
 import { tabs } from './app/tabs';
 import { translate } from './i18n/messages';
-import { serialService, type SerialEvent } from './features/serial/SerialService';
-import { formatSerialRxLine } from './features/serial/serialLogFormat';
+import { useSerialSession } from './features/serial/useSerialSession';
+import { connectionStatusMessageKey, connectionStatusTone } from './features/serial/connectionStatus';
 import { readField } from './features/board/BoardProtocol';
 import { useBoardSave } from './features/board/useBoardSave';
 import { initialFieldsForTab, refreshFieldsForTab } from './app/refreshPolicy';
-import { toast, toastKey } from './shared/toastActions';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { CalibrationPage } from './features/calibration/CalibrationPage';
 import { ConfigPage } from './features/config/ConfigPage';
@@ -15,7 +14,7 @@ import { ConsolePage } from './features/console/ConsolePage';
 import { QuickStartPage } from './features/setup/QuickStartPage';
 import { TuneWorkspace } from './features/workspaces/TuneWorkspace';
 import { MaintainWorkspace } from './features/workspaces/MaintainWorkspace';
-import { ObserveTelemetryProvider } from './features/observe/ObserveTelemetryContext';
+import { ObserveTelemetryProvider, useObserveTelemetry } from './features/observe/ObserveTelemetryContext';
 import { ObserveWorkspace } from './features/workspaces/ObserveWorkspace';
 import { InputsWorkspace } from './features/workspaces/InputsWorkspace';
 import { CommandCenterPage } from './features/commands/CommandCenterPage';
@@ -33,88 +32,15 @@ import { ToastHost } from './shared/ToastHost';
 
 function AppShell() {
   const { state, dispatch } = useAppState();
+  const { pollingActive } = useObserveTelemetry();
   const [navQuery, setNavQuery] = useState('');
-  const [serialConnecting, setSerialConnecting] = useState(false);
-  const reconnectInFlightRef = useRef(false);
-  const reconnectCooldownUntilRef = useRef(0);
-  const manualDisconnectRequestedRef = useRef(false);
-  const autoReconnectBlockedRef = useRef(false);
+  const { toggleConnection, phase } = useSerialSession();
   const { saveAll, saveButtonLabel, saveBadge } = useBoardSave();
   const skipReadPaths = [...new Set([...state.dirtyPaths, ...state.nvmPendingPaths])];
   const skipReadKey = skipReadPaths.join('\0');
   const wheelPollActive = state.connected && !state.busy && state.activeTab !== 'calibration';
-  const wheelPositionDegRef = useWheelPositionPoll(state.connected, wheelPollActive);
-
-  useEffect(() => {
-    function onSerialEvent(event: SerialEvent) {
-      if (event.type === 'connected') {
-        autoReconnectBlockedRef.current = false;
-        dispatch({ type: 'set-connected', connected: true });
-        dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'serialConnectedLog') });
-      } else if (event.type === 'disconnected') {
-        if (manualDisconnectRequestedRef.current) {
-          autoReconnectBlockedRef.current = true;
-          manualDisconnectRequestedRef.current = false;
-        }
-        dispatch({ type: 'set-connected', connected: false });
-        dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'serialDisconnectedLog') });
-      } else if (event.type === 'rx') {
-        dispatch({
-          type: 'append-log',
-          direction: 'rx',
-          message: formatSerialRxLine(event.line, event.command),
-        });
-      } else if (event.type === 'tx') {
-        dispatch({ type: 'append-log', direction: 'tx', message: event.line });
-      } else if (event.type === 'info') {
-        dispatch({ type: 'append-log', direction: 'info', message: event.message });
-      } else {
-        dispatch({ type: 'append-log', direction: 'error', message: event.message });
-      }
-    }
-
-    return serialService.subscribe(onSerialEvent);
-  }, [dispatch, state.locale]);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function reconnect() {
-      if (!state.serialSupported || !state.autoReconnect || state.connected || state.busy || autoReconnectBlockedRef.current) {
-        return;
-      }
-      if (reconnectInFlightRef.current) {
-        return;
-      }
-      if (Date.now() < reconnectCooldownUntilRef.current) {
-        return;
-      }
-      reconnectInFlightRef.current = true;
-      dispatch({ type: 'set-reconnecting', reconnecting: true });
-      try {
-        const ok = await serialService.reconnectKnownPort();
-        if (!ok && !cancelled) {
-          dispatch({ type: 'append-log', direction: 'info', message: translate(state.locale, 'noKnownPortLog') });
-          reconnectCooldownUntilRef.current = Date.now() + 5000;
-        } else if (ok) {
-          reconnectCooldownUntilRef.current = 0;
-        }
-      } catch (error) {
-        if (!cancelled) {
-          dispatch({ type: 'append-log', direction: 'error', message: error instanceof Error ? error.message : String(error) });
-        }
-        reconnectCooldownUntilRef.current = Date.now() + 5000;
-      } finally {
-        reconnectInFlightRef.current = false;
-        if (!cancelled) {
-          dispatch({ type: 'set-reconnecting', reconnecting: false });
-        }
-      }
-    }
-    void reconnect();
-    return () => {
-      cancelled = true;
-    };
-  }, [dispatch, state.autoReconnect, state.busy, state.connected, state.locale, state.serialSupported]);
+  const serialPollLogo = wheelPollActive && state.activeTab !== 'dashboard' && !pollingActive;
+  const wheelPositionDegRef = useWheelPositionPoll(state.connected, wheelPollActive, serialPollLogo);
 
   useEffect(() => {
     if (!state.connected || state.busy) {
@@ -151,38 +77,6 @@ function AppShell() {
       cancelled = true;
     };
   }, [skipReadKey, dispatch, state.activeTab, state.busy, state.connected]);
-
-  async function toggleConnection() {
-    if (serialConnecting) {
-      return;
-    }
-    setSerialConnecting(true);
-    try {
-      if (state.connected) {
-        manualDisconnectRequestedRef.current = true;
-        await serialService.disconnect();
-      } else {
-        autoReconnectBlockedRef.current = false;
-        toastKey(dispatch, state.locale, 'serialConnecting', 'info');
-        await serialService.connect();
-        toastKey(dispatch, state.locale, 'serialConnectedLog', 'ok');
-      }
-    } catch (error) {
-      const raw = error instanceof Error ? error.message : String(error);
-      let msg = raw;
-      if (raw === 'serialWrongPort') {
-        msg = translate(state.locale, 'serialWrongPort');
-      } else if (raw === 'serialConnectCancelled') {
-        msg = translate(state.locale, 'serialConnectCancelled');
-      } else if (raw === 'Web Serial is not available') {
-        msg = translate(state.locale, 'serialUnsupported');
-      }
-      dispatch({ type: 'append-log', direction: 'error', message: msg });
-      toast(dispatch, msg, 'error');
-    } finally {
-      setSerialConnecting(false);
-    }
-  }
 
   async function manualRefreshAll() {
     if (!state.connected || state.busy) return;
@@ -268,11 +162,10 @@ function AppShell() {
               <h1>{activeTab ? translate(state.locale, activeTab.labelKey) : translate(state.locale, 'appTitle')}</h1>
             </div>
             <div className="topbar-pills">
-              <Pill tone={state.connected ? 'ok' : 'neutral'}>
-                {translate(state.locale, state.connected ? 'connected' : 'disconnected')}
+              <Pill tone={connectionStatusTone(phase)}>
+                {translate(state.locale, connectionStatusMessageKey(phase))}
               </Pill>
               {state.busy && <Pill tone="warn">{translate(state.locale, 'busy')}</Pill>}
-              {state.reconnecting && <Pill tone="warn">{translate(state.locale, 'reconnecting')}</Pill>}
               {state.lastRefreshAt && (
                 <Pill tone="neutral">{translate(state.locale, 'refreshed')} {state.lastRefreshAt}</Pill>
               )}
@@ -333,14 +226,14 @@ function AppShell() {
             {/* Connect / Disconnect */}
             <button
               type="button"
-              disabled={!state.serialSupported || serialConnecting}
-              className={state.connected ? 'danger' : ''}
-              title={state.connected ? undefined : translate(state.locale, 'connectSerialTitle')}
+              disabled={!state.serialSupported || phase === 'connecting'}
+              className={phase === 'live' ? 'danger' : ''}
+              title={phase === 'live' ? undefined : translate(state.locale, 'connectSerialTitle')}
               onClick={() => void toggleConnection()}
             >
-              {serialConnecting
+              {phase === 'connecting'
                 ? translate(state.locale, 'serialConnecting')
-                : translate(state.locale, state.connected ? 'disconnect' : 'connect')}
+                : translate(state.locale, phase === 'live' ? 'disconnect' : 'connect')}
             </button>
           </div>
         </header>

@@ -5,6 +5,7 @@ import { applyConfigFields, applyOpenffboardRam } from '../board/fieldApply';
 import type { ConfigField } from '../config/fieldCatalog';
 import {
   channelValue,
+  channelFields,
   createGpioChannel,
   GPIO_CHANNELS,
   writableChannelFields,
@@ -43,7 +44,7 @@ export function InputsWorkspace() {
   const analogCount = channels.filter((ch) => channelValue(ch, 'mode', mergedValues) === '2').length;
   const liveCount = channels.filter((ch) => channelValue(ch, 'cur', mergedValues) !== '').length;
   const dirtyCount = channels.filter((ch) =>
-    Object.values(ch.fields).some((field) => state.dirtyPaths.includes(field.path)),
+    channelFields(ch).some((field) => state.dirtyPaths.includes(field.path)),
   ).length;
 
   const disabled = !state.connected || state.busy;
@@ -51,7 +52,7 @@ export function InputsWorkspace() {
   async function readChannel(channel: GpioChannel) {
     dispatch({ type: 'set-busy', busy: true });
     try {
-      for (const field of Object.values(channel.fields)) {
+      for (const field of channelFields(channel)) {
         const value = await readField(field);
         dispatch({ type: 'set-field', path: field.path, value, dirty: false });
       }
@@ -66,7 +67,7 @@ export function InputsWorkspace() {
     dispatch({ type: 'set-busy', busy: true });
     try {
       for (const channel of channels) {
-        for (const field of Object.values(channel.fields)) {
+        for (const field of channelFields(channel)) {
           const value = await readField(field);
           dispatch({ type: 'set-field', path: field.path, value, dirty: false });
         }
@@ -112,14 +113,20 @@ export function InputsWorkspace() {
   }
 
   function capture(channel: GpioChannel, target: 'amin' | 'amax') {
+    const field = channel.fields[target];
     const current = channelValue(channel, 'cur', mergedValues);
-    if (!current) {
+    if (!field || !current) {
       return;
     }
-    setValue(channel.fields[target], current);
+    setValue(field, current);
   }
 
   async function resetMinMax(channel: GpioChannel) {
+    const amin = channel.fields.amin;
+    const amax = channel.fields.amax;
+    if (!amin || !amax) {
+      return;
+    }
     if (
       !window.confirm(translate(state.locale, 'inputsResetMinMaxConfirm', { n: channel.gpio }))
     ) {
@@ -128,8 +135,8 @@ export function InputsWorkspace() {
     dispatch({ type: 'set-busy', busy: true });
     try {
       const applied = await applyOpenffboardRam([
-        { field: channel.fields.amin, value: '4095' },
-        { field: channel.fields.amax, value: '0' },
+        { field: amin, value: '4095' },
+        { field: amax, value: '0' },
       ]);
       for (const [path, value] of Object.entries(applied)) {
         dispatch({ type: 'set-field', path, value, dirty: false });

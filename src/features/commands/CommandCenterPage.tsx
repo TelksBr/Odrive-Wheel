@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react';
 import { useAppState } from '../../app/AppState';
 import { localizeCommand } from '../../i18n/commandMeta';
 import { translate } from '../../i18n/messages';
-import { boardCommands } from '../../domain/commands/commandRegistry';
+import { boardCommands, type BoardCommand } from '../../domain/commands/commandRegistry';
 import { serialService } from '../serial/SerialService';
+import { assessCalibrationIntegrity, shouldBlockSave } from '../calibration/calibrationIntegrity';
 import { Card } from '../../shared/ui';
 
 const categoryKeys = {
@@ -14,11 +15,24 @@ const categoryKeys = {
   diagnostics: 'commandCategoryDiagnostics',
 } as const;
 
+function isIntegritySensitive(command: BoardCommand): boolean {
+  const cmd = command.command.trim();
+  return (
+    cmd === 'ss' ||
+    cmd === 'se' ||
+    cmd === 'sys.eeformat!' ||
+    /requested_state\s+8\b/.test(cmd)
+  );
+}
+
 export function CommandCenterPage() {
   const { state, dispatch } = useAppState();
   const locale = state.locale;
   const [query, setQuery] = useState('');
   const normalizedQuery = query.trim().toLowerCase();
+  const integrityBlocked = shouldBlockSave(
+    assessCalibrationIntegrity(state.fieldValues, state.dirtyPaths, state.nvmPendingPaths),
+  );
 
   const commands = useMemo(
     () =>
@@ -32,7 +46,13 @@ export function CommandCenterPage() {
     [locale, normalizedQuery],
   );
 
-  async function run(command: (typeof boardCommands)[number]) {
+  async function run(command: BoardCommand) {
+    if (isIntegritySensitive(command) && integrityBlocked) {
+      const ok = window.confirm(translate(locale, 'commandIntegrityConfirm', { command: command.command }));
+      if (!ok) {
+        return;
+      }
+    }
     dispatch({ type: 'set-busy', busy: true });
     try {
       await serialService.sendCommand(command.command, command.expectReply ?? true, command.timeoutMs ?? 2500);

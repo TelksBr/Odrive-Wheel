@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { readField } from '../board/BoardProtocol';
-import { flatFields } from '../config/fieldCatalog';
+import { getFieldByPath } from '../config/fieldCatalog';
 import { useAppLocale } from '../../app/AppState';
 import {
   DEVICE_INFO_EVERY,
@@ -30,11 +30,10 @@ import { computeStats } from '../telemetry/types';
 import { allSeriesKeys } from '../telemetry/series';
 import type { BrakePowerState, TelemetrySample } from '../telemetry/types';
 import type { TelemetryHandle } from '../telemetry/useTelemetry';
-
-const fieldByPath = new Map(flatFields.map((field) => [field.path, field]));
+import { publishWheelPosition } from '../wheel/sharedWheelPosition';
 
 function brakeField() {
-  const field = fieldByPath.get('config.brake_resistance');
+  const field = getFieldByPath('config.brake_resistance');
   if (!field) throw new Error('config.brake_resistance missing from catalog');
   return field;
 }
@@ -103,6 +102,7 @@ export function useObservePolling({
   const hidActiveRef = useRef(false);
   const chartHzRef = useRef(chartHz);
   const windowMsRef = useRef(windowMs);
+  const generationRef = useRef(0);
 
   useEffect(() => {
     chartHzRef.current = chartHz;
@@ -115,9 +115,9 @@ export function useObservePolling({
   useEffect(() => {
     pausedRef.current = paused;
     if (paused) {
-      setFrozenSamples(samples.filter((s) => s.t >= (samples.at(-1)?.t ?? 0) - windowMs));
+      const latest = samplesRef.current;
+      setFrozenSamples(latest.filter((s) => s.t >= (latest.at(-1)?.t ?? 0) - windowMsRef.current));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused]);
 
   const readBrakeResistance = useCallback(async () => {
@@ -143,6 +143,9 @@ export function useObservePolling({
     pushTelemetrySample(samplesRef.current, sample, MAX_TELEMETRY_WINDOW_MS, MAX_TELEMETRY_SAMPLES);
     syncVersionRef.current += 1;
     updateBrakePowerRef(sample, brakeSamplesRef.current, resistanceRef.current, brakePowerRef, brakePowerDirtyRef);
+    if (sample.positionDeg !== undefined) {
+      publishWheelPosition(sample.positionDeg);
+    }
   }, []);
 
   const hidRange = halfRangeDeg && halfRangeDeg > 0 ? halfRangeDeg : 0;
@@ -156,7 +159,8 @@ export function useObservePolling({
     hidActiveRef.current = hidTelemetryActive;
   }, [hidTelemetryActive]);
 
-  const pollChartOnce = useCallback(async () => {
+  const pollChartOnce = useCallback(async (generation?: number) => {
+    const gen = generation ?? generationRef.current;
     if (!connected || chartInFlight.current || holdPolling) return;
     if (hidFfbService.connected && hidRange > 0) {
       return;
@@ -167,22 +171,31 @@ export function useObservePolling({
         await readBrakeResistance().catch(() => undefined);
       }
       const sample = await pollChartSample(maxTorqueNm);
+      if (gen !== generationRef.current) {
+        return;
+      }
       applySample(sample, true);
       setLastError(null);
     } catch (error) {
-      setLastError(error instanceof Error ? error.message : String(error));
+      if (gen === generationRef.current) {
+        setLastError(error instanceof Error ? error.message : String(error));
+      }
     } finally {
       chartInFlight.current = false;
     }
   }, [applySample, connected, hidRange, holdPolling, maxTorqueNm, readBrakeResistance]);
 
-  const pollMonitorOnce = useCallback(async () => {
+  const pollMonitorOnce = useCallback(async (generation?: number) => {
+    const gen = generation ?? generationRef.current;
     if (!connected || monitorInFlight.current || holdPolling) return;
     monitorInFlight.current = true;
     try {
       monitorCycleRef.current += 1;
       const includeDevice = monitorCycleRef.current === 1 || monitorCycleRef.current % DEVICE_INFO_EVERY === 0;
       const result = await runObservePollCycle(locale, { includeDevice });
+      if (gen !== generationRef.current) {
+        return;
+      }
       setLive(result.live);
       setErrors(result.errors);
       if (result.device) {
@@ -191,11 +204,13 @@ export function useObservePolling({
       setLastPoll(new Date());
       setLastError(null);
     } catch (error) {
-      setLastError(error instanceof Error ? error.message : String(error));
+      if (gen === generationRef.current) {
+        setLastError(error instanceof Error ? error.message : String(error));
+      }
     } finally {
       monitorInFlight.current = false;
     }
-  }, [connected, holdPolling, locale]);
+    }, [connected, holdPolling, locale]);
 
   const pollOnce = useCallback(async () => {
     await pollChartOnce();
@@ -236,17 +251,19 @@ export function useObservePolling({
       return undefined;
     }
 
+    const generation = generationRef.current + 1;
+    generationRef.current = generation;
     const timerHost = timerWindow && !timerWindow.closed ? timerWindow : window;
 
-    void pollMonitorOnce();
+    void pollMonitorOnce(generation);
     if (!hidTelemetryActive) {
-      void pollChartOnce();
+      void pollChartOnce(generation);
     }
 
     const chartPollId = hidTelemetryActive
       ? undefined
-      : timerHost.setInterval(() => void pollChartOnce(), serialChartIntervalMs);
-    const monitorPollId = timerHost.setInterval(() => void pollMonitorOnce(), MONITOR_POLL_INTERVAL_MS);
+      : timerHost.setInterval(() => void pollChartOnce(generation), serialChartIntervalMs);
+    const monitorPollId = timerHost.setInterval(() => void pollMonitorOnce(generation), MONITOR_POLL_INTERVAL_MS);
     const syncId = timerHost.setInterval(() => {
       if (!pausedRef.current && syncVersionRef.current > 0) {
         flushToUi();
@@ -254,10 +271,13 @@ export function useObservePolling({
     }, uiSyncMs);
 
     return () => {
+      generationRef.current += 1;
       if (chartPollId !== undefined) {
         timerHost.clearInterval(chartPollId);
       }
-      timerHost.clearInterval(monitorPollId);
+      if (monitorPollId !== undefined) {
+        timerHost.clearInterval(monitorPollId);
+      }
       timerHost.clearInterval(syncId);
     };
   }, [

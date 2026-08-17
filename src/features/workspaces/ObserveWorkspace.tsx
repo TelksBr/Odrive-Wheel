@@ -48,7 +48,7 @@ export function ObserveWorkspace() {
       >
         <div className="observe-panel-body">
           <ObserveQuickBar />
-          <HubLanCard locale={locale} />
+          <HubLanCard locale={locale} serialConnected={state.connected} />
 
           <section className="observe-section">
             <h3 className="observe-section-title">{translate(locale, 'observeSectionTelemetry')}</h3>

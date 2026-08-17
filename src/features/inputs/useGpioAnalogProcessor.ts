@@ -2,8 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppState } from '../../app/AppState';
 import { applyOpenffboardRam } from '../board/fieldApply';
 import { readField } from '../board/BoardProtocol';
-import type { ConfigField } from '../config/fieldCatalog';
-import { flatFields } from '../config/fieldCatalog';
+import { getFieldByPath, type ConfigField } from '../config/fieldCatalog';
 
 export const ANALOG_FILTER_PRESETS_HZ = [20, 30, 40, 60] as const;
 
@@ -13,7 +12,7 @@ const processorFields = {
 };
 
 function field(path: string): ConfigField {
-  const found = flatFields.find((item) => item.path === path);
+  const found = getFieldByPath(path);
   if (!found) {
     throw new Error(`Missing processor field: ${path}`);
   }

@@ -128,6 +128,7 @@ function inferUnit(field: ConfigField): string | undefined {
   const label = field.label.toLowerCase();
   const text = `${path} ${label}`;
 
+  if (path.includes('odrv.vbus') || path.includes('sys.vint')) return 'mV';
   if (text.includes('voltage') || text.includes('vbus')) return 'V';
   if (text.includes('current') || text.includes('ibus')) return 'A';
   if (text.includes('torque')) return 'Nm';

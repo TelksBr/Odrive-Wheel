@@ -82,7 +82,7 @@ export function CalibrationWorkflowCard({
       );
       const msg = result.ok
         ? translate(locale, 'setupToastStateDone')
-        : `${translate(locale, 'setupToastStateFail')} (${result.reason ?? 'unknown'}${result.finalState !== undefined ? `, state=${result.finalState}` : ''})`;
+        : `${translate(locale, 'setupToastStateFail')} (${result.reason ?? 'unknown'}${result.detail ? `: ${result.detail}` : ''}${result.finalState !== undefined ? `, state=${result.finalState}` : ''})`;
       dispatch({ type: 'append-log', direction: result.ok ? 'info' : 'error', message: msg });
       setPhaseKey(result.ok ? (workflow.action.successState === 8 ? 'calProgressClosedLoopOk' : 'calProgressDone') : 'calProgressFail');
       setShowErrors(true);

@@ -89,6 +89,8 @@ Push to `main` triggers `.github/workflows/pages.yml` (Bun install → Vite buil
 | `bun run dev` | Vite dev server + PWA dev SW |
 | `bun run build` | Typecheck + production bundle |
 | `bun run typecheck` | `tsc --noEmit` only |
+| `bun test` | Unit tests (protocol, torque, DFU plan) |
+| `bun run i18n:check` | PT/EN key parity + catalog PT labels |
 | `bun run preview` | Serve `dist/` locally |
 | `scripts/Build-TelemetryHub.ps1` | Build `dist/wheelforge-hub.exe` (Go) |
 | `scripts/Start-TelemetryHub.ps1` | Run hub (`-GameMode` for AC + COM6) |

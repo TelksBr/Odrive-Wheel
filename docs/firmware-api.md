@@ -126,7 +126,9 @@ gpio.2.mode=2;gpio.2.idx=0
 | `ERR` | Handler falhou |
 | `NOT_FOUND` | Comando não registado |
 
-**Parsing na web:** `BoardProtocol.normalizeReply()` remove `[…|value]` → valor interno.
+**Parsing na web:** `normalizeReply()` remove `[…|value]` e mapeia `True`/`False`. **`0`/`1` só viram bool quando `field.type === 'bool'`** — enums/ints (ex.: `gpio.N.mode`) conservam `0`/`1`. Sem o campo, `0`/`1` ficam dígitos.
+
+**FIFO:** cada linha RX casa com o comando pendente mais antigo. Timeout rejeita **só** esse comando e emite `desync` — não aborta a fila inteira. Writes ODrive (`w`) esperam ~80 ms por uma linha `error`; linhas não-erro nesse intervalo são unsolicited (log), não ACK.
 
 ### 3.4 ODrive ASCII
 
@@ -164,9 +166,9 @@ Registo estático em `cmdtable[]` — **sem** registo dinâmico. Meta-comandos (
 | `odrv` | 133 | 0 | ODrive (M0) |
 | `axis` | 2561 | 0 | Axis 0 |
 | `fx` / `effects` | 2562 | 0 | Effects |
-| `gpio` | — | 1–4 | GPIO N |
+| `gpio` | — | 1–4, **6** | GPIO N |
 
-**GPIO:** sintaxe `gpio.N.campo` onde **N = 1, 2, 3 ou 4** (GPIO 5 não existe na MKS XDrive Mini).
+**GPIO:** sintaxe `gpio.N.campo` onde **N = 1, 2, 3, 4 ou 6** (GPIO 5 não existe na MKS XDrive Mini). GPIO 6 = PB2 digital (sem ADC).
 
 ---
 
@@ -208,7 +210,7 @@ Registo estático em `cmdtable[]` — **sem** registo dinâmico. Meta-comandos (
 | `sys.eeformat` | ✓ | | ✓ | Formato forçado EE (escape hatch) |
 | `sys.errors` | ✓ | | | Sempre `0` |
 | `sys.errorsclr` | | | ✓ | `OK` |
-| `sys.reboot` | | | ✓ | Stub `OK` (não reboota) |
+| `sys.reboot` | | | ✓ | Stub `OK` (não reboota — use `sr`) |
 | `sys.uptime` | ✓ | | | `HAL_GetTick()` ms |
 | `sys.ping` | ✓ | | | `pong` |
 | `sys.fxtest` | ✓ | | | Resumo FFB numa linha |
@@ -245,7 +247,9 @@ Registo estático em `cmdtable[]` — **sem** registo dinâmico. Meta-comandos (
 | `axis.curtorque` | ✓ | | | Torque raw int | — |
 | `axis.curpos` | ✓ | | | Posição ° | — |
 | `axis.curspd` | ✓ | | | Velocidade °/s | — |
-| `axis.curaccel` | ✓ | ✓ | | Aceleração | — |
+| `axis.curaccel` | ✓ | ✓ | | Aceleração **°/s²** | — |
+| `axis.zhits` | ✓ | ✓ | | Pulsos Z aceites (N/A no AS5047) | — |
+| `axis.zglitch` | ✓ | ✓ | | IRQs Z rejeitados (N/A no AS5047) | — |
 
 **Naming vs OpenFFBoard upstream:** `axis.degrees` → `axis.range`; `axis.power` → `axis.maxtorque`.
 
@@ -275,20 +279,23 @@ Registo estático em `cmdtable[]` — **sem** registo dinâmico. Meta-comandos (
 
 ---
 
-### 4.6 `gpio.N.*` — entradas MKS (N = 1..4)
+### 4.6 `gpio.N.*` — entradas MKS (N = 1, 2, 3, 4 **e 6**)
 
 | Campo | GET | SET | Valores |
 |-------|-----|-----|---------|
-| `gpio.N.mode` | ✓ | ✓ | 0=off, 1=button, 2=axis, 3=zerowheel |
+| `gpio.N.mode` | ✓ | ✓ | 0=off, 1=button, 2=axis (1–4 only), 3=zerowheel |
 | `gpio.N.idx` | ✓ | ✓ | Botão 0–63; eixo 0–3 |
 | `gpio.N.invert` | ✓ | ✓ | 0/1 |
-| `gpio.N.amin` | ✓ | ✓ | 0–4095 (só mode=axis) |
-| `gpio.N.amax` | ✓ | ✓ | 0–4095 |
-| `gpio.N.cur` | ✓ | | Raw ADC 0–4095 ou 0/1 |
+| `gpio.N.amin` | ✓ | ✓ | 0–4095 (só GPIO 1–4, mode=axis) |
+| `gpio.N.amax` | ✓ | ✓ | 0–4095 (só GPIO 1–4) |
+| `gpio.N.cur` | ✓ | | Raw ADC 0–4095, digital 0/1, ou 65535=off |
+| `gpio.N.filt` | ✓ | | ADC filtrado (só GPIO 1–4; 65535 = N/A) |
 
-**Pinout:** GPIO1–4 = PA0–PA3 (ADC); modo axis só em 1–4.
+**Pinout:** GPIO1–4 = PA0–PA3 (ADC); GPIO 6 = **PB2 digital only** (sem analog, sem amin/amax/filt). Modo axis só em 1–4.
 
-**Web:** grupo `inputs`; poll live `gpio.N.cur?` em `useDashboardLivePoll.ts`.
+**Modo 3:** borda chama `ffb_axis_zeroenc()` — RAM até `sys.save!`.
+
+**Web:** grupo `inputs`; poll live `gpio.N.cur?` em `useDashboardLivePoll.ts`. GPIO 6 não tem `amin`/`amax`/`filt` no catálogo.
 
 ---
 
@@ -396,8 +403,9 @@ Comando: `w axis0.requested_state <N>` — sem resposta; poll `r axis0.current_s
 
 | Acção | Comando | Persistência |
 |-------|---------|--------------|
-| Centrar volante lógico | `axis.zeroenc!` | RAM; NVM FFB com `sys.save!` |
-| Anticogging | `axis.anticogcal!` | Mapa em ODrive NVM (`ss`) |
+| Centro FFB (AS5047 / uso diário) | `axis.zeroenc!` + `axis.zeroofs` | RAM; EEPROM FFB com `sys.save!` |
+| Centro ODrive `index_offset` | captura mecânica (incremental + Z) | NVM ODrive (`ss`) |
+| Anticogging | `axis.anticogcal!` (alias ASCII `Y`) | Mapa em ODrive NVM (`ss`) |
 | Limpar erros | `sc` | — |
 
 ### 6.3 Presets de boot (web)
@@ -407,7 +415,7 @@ Comando: `w axis0.requested_state <N>` — sem resposta; poll `r axis0.current_s
 **`persistReady` (recomendado pós-cal + Save):**
 - `pre_calibrated` motor + encoder = true
 - `startup_*_calibration` = false
-- `startup_closed_loop_control` = false
+- `startup_closed_loop_control` = true (após cal bem-sucedida; a UI bloqueia se o encoder não estiver pronto)
 - Limites velocidade FFB = false
 
 **`autoCalEveryBoot` (legado):** re-corre calibração em cada boot.
@@ -473,7 +481,7 @@ Comandos **single-char** ODrive ASCII (patch em `ascii_protocol.cpp`). **Não** 
 | `R` | `peaks reset` | Reset picos `I` |
 | `M` | `maxtq= fxratio= range= eff=Nm` | Params eixo (alt. a `axis.*`) |
 
-**Web:** `liveMonitorCatalog.ts` usa `DIAG_CMDS = ['d','D','C','T','E','I']` no Live Debug (manual ou poll limitado).
+**Web:** `liveMonitorCatalog.ts` usa `DIAG_CMDS = ['d','D','C','T','E','I','R','M']` no Live Debug. `Y` é alias de `axis.anticogcal!` (aba Calibração). `j`/`J` lê/escreve validação do mapa anticog — sem UI neste ciclo.
 
 **Parsing torque:** `parseTorque.ts` — preferir `lt` + `axis.maxtorque` sobre `nm=` (firmware antigo).
 
@@ -502,7 +510,7 @@ Comandos **single-char** ODrive ASCII (patch em `ascii_protocol.cpp`). **Não** 
 | Efeitos sempre-activos, expo, end-stop | `ADR_AXIS1_EFFECTS2`, `POSTPROCESS1`, … |
 | `axis.invert` | `ADR_AXIS1_CONFIG` bit 0 |
 | `zeroOffset` (pós `axis.zeroenc!`) | `ADR_AXIS1_ZEROOFS_LO/HI` |
-| GPIO 1–4 config | `ADR_GPIO1_*` … `ADR_GPIO4_*` |
+| GPIO 1–4 e **6** config | `ADR_GPIO1_*` … `ADR_GPIO4_*`, `ADR_GPIO6_*` |
 | `sys.vbusdiv` | `ADR_VBUS_DIVIDER` |
 | Master gain | slot `0x04F0` |
 
@@ -529,8 +537,10 @@ Toda a config ODrive em RAM: motor, encoder, controller, PSU, flags `startup_*`,
 
 | Comando | Efeito |
 |---------|--------|
-| `se` | Apaga NVM ODrive (+ fluxo erase FFB na web) |
+| `se` | Apaga NVM ODrive + EEPROM FFB no fluxo web (erase real) |
 | `sys.eeformat!` | Só EEPROM FFB (emergência) |
+
+Não existe `sys.erase!` nesta placa — o erase autoritativo é `se`. `sys.reboot!` também não reinicia (use `sr`).
 
 ---
 
@@ -592,6 +602,8 @@ A partir do **v1.0.0-rc12**, o relatório HID **IN** (report ID `0x01`) inclui t
 ## 11. GPIO e entradas analógicas
 
 Ver `gpio_inputs.h` para pinout e modos.
+
+**Instâncias:** 1, 2, 3, 4 e **6** (5 inválido). GPIO 1–4 = PA0–PA3 ADC; **GPIO 6 = PB2 digital only** (firmware rejeita modo analog).
 
 **Modo 3 (zerowheel):** flanco high→low chama `ffb_axis_zeroenc()` — equivalente a `axis.zeroenc!`, **sem** persistir até `sys.save!`.
 
@@ -723,7 +735,8 @@ Repositório: [github.com/eagabriel/Odrive-Wheel](https://github.com/eagabriel/O
 
 - **Um comando de cada vez** — `SerialService` enfileira tudo.
 - Polling agressivo em Observação + telemetria + live debug compete pela fila — usar `holdPolling` e intervalos ≥ 500 ms–1 s.
-- Usar `log: false` em polls (`sendCommand(..., false)`) para não encher `state.logs`.
+- Timeout de um comando **não** deve `flush` de toda a fila; a UI mostra `desync`.
+- Writes ODrive: janela de ~80 ms para `error`; silêncio = sucesso. Uma linha numérica nesse intervalo **não** é ACK.
 
 ### 15.2 Writes ODrive
 
@@ -749,7 +762,8 @@ Manter `enable_vel_limit`, `enable_overspeed_error`, `enable_torque_mode_vel_lim
 3. Traduções em `i18n/bundles/fields.ts` e `guidance.ts`.
 4. Se live: `liveMonitorCatalog.ts`.
 5. Se alto sinal: `refreshPolicy.ts` → `highSignalPaths`.
-6. Testar read, write, save (FFB vs ODrive).
+6. Correr `bun run firmware:check` (compara `cmd_table.cpp` com catálogo + commandRegistry).
+7. Testar read, write, save (FFB vs ODrive).
 
 ### 15.6 Referência legado
 

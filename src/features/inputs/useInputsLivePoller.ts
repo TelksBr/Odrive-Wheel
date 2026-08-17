@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { readField } from '../board/BoardProtocol';
 import type { GpioChannel } from './gpioChannel';
 
@@ -13,59 +13,61 @@ export function useInputsLivePoller(
 ): { liveValues: Record<string, string>; polling: boolean } {
   const [liveValues, setLiveValues] = useState<Record<string, string>>({});
   const [polling, setPolling] = useState(false);
-  const activeRef = useRef(false);
+  const generationRef = useRef(0);
   const rafRef = useRef<number>(0);
-
-  const liveFields = useMemo(
-    () => channels.flatMap((ch) => [ch.fields.cur, ch.fields.filt]),
-    [channels],
-  );
-
-  const runLoop = useCallback(async () => {
-    if (!activeRef.current) {
-      return;
-    }
-
-    const updates: Record<string, string> = {};
-    for (const field of liveFields) {
-      if (!activeRef.current) {
-        break;
-      }
-      try {
-        const value = await readField(field);
-        updates[field.path] = value;
-      } catch {
-        // skip timeout/disconnect; loop stops when port closes
-      }
-    }
-
-    if (activeRef.current && Object.keys(updates).length > 0) {
-      setLiveValues((prev) => ({ ...prev, ...updates }));
-    }
-
-    if (activeRef.current) {
-      rafRef.current = requestAnimationFrame(() => void runLoop());
-    }
-  }, [liveFields]);
+  const channelsRef = useRef(channels);
+  channelsRef.current = channels;
 
   useEffect(() => {
     if (!connected || paused) {
-      activeRef.current = false;
+      generationRef.current += 1;
       setPolling(false);
       cancelAnimationFrame(rafRef.current);
-      return;
+      return undefined;
     }
 
-    activeRef.current = true;
+    const generation = generationRef.current + 1;
+    generationRef.current = generation;
     setPolling(true);
+
+    const runLoop = async () => {
+      if (generation !== generationRef.current) {
+        return;
+      }
+
+      const updates: Record<string, string> = {};
+      const liveFields = channelsRef.current.flatMap((ch) =>
+        [ch.fields.cur, ch.fields.filt].filter((field): field is NonNullable<typeof field> => Boolean(field)),
+      );
+      for (const field of liveFields) {
+        if (generation !== generationRef.current) {
+          break;
+        }
+        try {
+          const value = await readField(field);
+          updates[field.path] = value;
+        } catch {
+          // skip timeout/disconnect; loop stops when generation changes
+        }
+      }
+
+      if (generation === generationRef.current && Object.keys(updates).length > 0) {
+        setLiveValues((prev) => ({ ...prev, ...updates }));
+      }
+
+      if (generation === generationRef.current) {
+        rafRef.current = requestAnimationFrame(() => void runLoop());
+      }
+    };
+
     rafRef.current = requestAnimationFrame(() => void runLoop());
 
     return () => {
-      activeRef.current = false;
+      generationRef.current += 1;
       setPolling(false);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [connected, paused, runLoop]);
+  }, [connected, paused]);
 
   return { liveValues, polling };
 }

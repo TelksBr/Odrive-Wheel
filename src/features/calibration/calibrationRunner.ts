@@ -1,23 +1,25 @@
 import { serialService } from '../serial/SerialService';
+import { sleep } from '../../shared/sleep';
 
-const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
-
-function parseIntField(raw: string | undefined): number {
-  if (!raw) return 0;
+function parseIntField(raw: string | undefined): number | null {
+  if (!raw) {
+    return null;
+  }
   const token = raw.trim().split(/\s+/)[0];
   const value = Number(token);
-  return Number.isFinite(value) ? value : 0;
+  return Number.isFinite(value) ? value : null;
 }
 
 export interface AxisErrorSnapshot {
-  axisErr: number;
-  motorErr: number;
-  encErr: number;
+  axisErr: number | null;
+  motorErr: number | null;
+  encErr: number | null;
 }
 
 export interface CalibrationRunResult extends AxisErrorSnapshot {
   ok: boolean;
   reason?: 'not_connected' | 'timeout' | 'errors' | 'write_failed';
+  detail?: string;
   finalState?: number;
 }
 
@@ -70,7 +72,7 @@ export async function waitForAxisState(
   let finalState = 0;
   while (Date.now() - start < timeoutMs) {
     const raw = await read('r axis0.current_state');
-    finalState = parseIntField(raw);
+    finalState = parseIntField(raw) ?? finalState;
     if (finalState === targetState) {
       return { reached: true, finalState };
     }
@@ -93,7 +95,7 @@ export async function runAxisState(
   successState?: number,
 ): Promise<CalibrationRunResult> {
   if (!serialService.isConnected) {
-    return { ok: false, reason: 'not_connected', axisErr: 0, motorErr: 0, encErr: 0 };
+    return { ok: false, reason: 'not_connected', axisErr: null, motorErr: null, encErr: null };
   }
 
   return serialService.runAtomic(async () => {
@@ -109,9 +111,10 @@ export async function runAxisState(
       return {
         ok: false,
         reason: 'write_failed',
-        axisErr: 0,
-        motorErr: 0,
-        encErr: 0,
+        detail: error instanceof Error ? error.message : String(error),
+        axisErr: null,
+        motorErr: null,
+        encErr: null,
       };
     }
 
@@ -171,7 +174,7 @@ export async function readEncoderCalResults(): Promise<{
     const offsetFloat = parseFloat(offsetFloatRaw.trim().split(/\s+/)[0]);
     const ready = readyRaw.trim().toLowerCase();
     return {
-      phaseOffset: Number.isFinite(offset) ? String(offset) : null,
+      phaseOffset: offset !== null ? String(offset) : null,
       phaseOffsetFloat: Number.isFinite(offsetFloat) ? offsetFloat.toFixed(6) : null,
       isReady: ready === 'true' || ready === '1' ? 'true' : ready === 'false' || ready === '0' ? 'false' : null,
     };

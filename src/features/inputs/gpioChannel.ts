@@ -1,13 +1,23 @@
-import { flatFields, type ConfigField } from '../config/fieldCatalog';
+import { GPIO_CHANNELS, gpioIsAnalog, type GpioChannelId } from '../../domain/gpioPinout';
+import { getFieldByPath, type ConfigField } from '../config/fieldCatalog';
 import { translate, type Locale } from '../../i18n/messages';
 
-export const GPIO_CHANNELS = [1, 2, 3, 4] as const;
-export type GpioChannelId = (typeof GPIO_CHANNELS)[number];
+export { GPIO_CHANNELS, gpioIsAnalog };
+export type { GpioChannelId };
+
 export type ChannelFieldKey = 'mode' | 'idx' | 'invert' | 'amin' | 'amax' | 'cur' | 'filt';
 
 export interface GpioChannel {
   gpio: GpioChannelId;
-  fields: Record<ChannelFieldKey, ConfigField>;
+  fields: {
+    mode: ConfigField;
+    idx: ConfigField;
+    invert: ConfigField;
+    cur: ConfigField;
+    amin?: ConfigField;
+    amax?: ConfigField;
+    filt?: ConfigField;
+  };
 }
 
 export function createGpioChannel(gpio: GpioChannelId): GpioChannel {
@@ -17,26 +27,37 @@ export function createGpioChannel(gpio: GpioChannelId): GpioChannel {
       mode: findGpioField(gpio, 'mode'),
       idx: findGpioField(gpio, 'idx'),
       invert: findGpioField(gpio, 'invert'),
-      amin: findGpioField(gpio, 'amin'),
-      amax: findGpioField(gpio, 'amax'),
       cur: findGpioField(gpio, 'cur'),
-      filt: findGpioField(gpio, 'filt'),
+      amin: findOptionalGpioField(gpio, 'amin'),
+      amax: findOptionalGpioField(gpio, 'amax'),
+      filt: findOptionalGpioField(gpio, 'filt'),
     },
   };
 }
 
 export function findGpioField(gpio: GpioChannelId, name: ChannelFieldKey): ConfigField {
-  const field = flatFields.find((item) => item.path === `gpio.${gpio}.${name}`);
+  const field = getFieldByPath(`gpio.${gpio}.${name}`);
   if (!field) {
     throw new Error(`Missing GPIO field gpio.${gpio}.${name}`);
   }
   return field;
 }
 
+function findOptionalGpioField(gpio: GpioChannelId, name: ChannelFieldKey): ConfigField | undefined {
+  return getFieldByPath(`gpio.${gpio}.${name}`);
+}
+
 export const GPIO_WRITABLE_FIELDS: ChannelFieldKey[] = ['mode', 'idx', 'invert', 'amin', 'amax'];
 
 export function writableChannelFields(channel: GpioChannel): ConfigField[] {
-  return GPIO_WRITABLE_FIELDS.map((key) => channel.fields[key]);
+  return GPIO_WRITABLE_FIELDS.flatMap((key) => {
+    const field = channel.fields[key];
+    return field ? [field] : [];
+  });
+}
+
+export function channelFields(channel: GpioChannel): ConfigField[] {
+  return Object.values(channel.fields).filter((field): field is ConfigField => Boolean(field));
 }
 
 export function channelValue(
@@ -44,7 +65,11 @@ export function channelValue(
   key: ChannelFieldKey,
   values: Record<string, string>,
 ): string {
-  return values[channel.fields[key].path] ?? '';
+  const field = channel.fields[key];
+  if (!field) {
+    return '';
+  }
+  return values[field.path] ?? '';
 }
 
 export function parseChannelNumber(value: string): number | undefined {

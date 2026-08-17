@@ -57,7 +57,7 @@ export function CalibrationSection({
       const result = await runAxisState(action.state, action.timeoutMs, action.clearFirst !== false);
       const msg = result.ok
         ? translate(locale, 'setupToastStateDone')
-        : `${translate(locale, 'setupToastStateFail')} (${result.reason ?? 'unknown'})`;
+        : `${translate(locale, 'setupToastStateFail')} (${result.reason ?? 'unknown'}${result.detail ? `: ${result.detail}` : ''})`;
       dispatch({ type: 'append-log', direction: result.ok ? 'info' : 'error', message: msg });
       setShowErrors(true);
       setErrorRefreshKey((key) => key + 1);

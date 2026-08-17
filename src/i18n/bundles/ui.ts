@@ -65,7 +65,7 @@ export const uiPt = {
   observeBackgroundHint:
     'A aba do navegador está em segundo plano. O polling serial pode ficar mais lento (~1 Hz); com HID ligado ou overlay PiP aberto a taxa mantém-se melhor.',
   hubLanTitle: 'Hub LAN / Assetto Corsa',
-  hubLanDescription: 'Servidor local para overlay na rede e telemetria UDP no AC. Com o jogo aberto: serial COM6 (CDC) em paralelo — o HID fica só para o AC.',
+  hubLanDescription: 'Servidor local para overlay na rede e telemetria UDP no AC. Com o jogo aberto: o hub usa a COM de controlo (CDC); a PWA não pode partilhar a mesma porta.',
   hubLanChecking: 'A verificar hub…',
   hubLanOnline: 'Hub online ({source}, {hz} Hz)',
   hubLanOffline: 'Hub offline',
@@ -73,6 +73,11 @@ export const uiPt = {
   hubLanCopyCommand: 'Copiar comando',
   hubLanCopied: 'Copiado',
   hubLanOpenOverlay: 'Abrir overlay LAN',
+  hubLanHost: 'Host',
+  hubLanHttpPort: 'Porta HTTP',
+  hubLanSerialPort: 'COM',
+  hubLanPortOccupied:
+    'A PWA está com a serial aberta — o hub não consegue usar {port}. Desconecte aqui ou feche o hub.',
   observeStatusIdle: 'ocioso',
   observeHidTelemetryBadge: 'HID 1 kHz',
   observeKpiSamples: 'Amostras',
@@ -295,6 +300,7 @@ export const uiPt = {
   saveReadingBack: 'Re-lendo valores...',
   saveSerialRequired: 'Conecte a serial na topbar antes de salvar.',
   toastSaveComplete: 'Save completo + re-leitura OK',
+  toastSaveFfbOnly: 'FFB EEPROM gravada — sem reboot NVM',
   saveFfbWarn: 'ODrive NVM gravada e placa reiniciada, mas sys.save! (FFB EEPROM) falhou — verifique sys.savestat?',
   saveBootFlagsClamped:
     'pre_calibrated e closed loop no boot foram desativados antes de gravar — calibração incompleta. Use Finalizar após motor+encoder cal.',
@@ -319,6 +325,8 @@ export const uiPt = {
   applyLogFfbEepromOk: 'EEPROM FFB gravada (sys.save!)',
   applyLogFfbEepromFail: 'EEPROM FFB falhou (sys.save!)',
   applyLogOdriveRam: 'RAM ODrive — NVM pendente (use Salvar na barra)',
+  commandIntegrityConfirm:
+    'A integridade da calibração bloquearia o Save. Executar mesmo assim?\n\n{command}',
 };
 
 export const uiEn = {
@@ -387,7 +395,7 @@ export const uiEn = {
   observeBackgroundHint:
     'The browser tab is in the background. Serial polling may slow to ~1 Hz; with HID connected or the PiP overlay open, rate stays higher.',
   hubLanTitle: 'LAN hub / Assetto Corsa',
-  hubLanDescription: 'Local server for LAN overlay and AC UDP telemetry. With the game running: serial COM6 (CDC) in parallel — HID stays with AC only.',
+  hubLanDescription: 'Local server for LAN overlay and AC UDP telemetry. With the game running: the hub uses the control COM (CDC); the PWA cannot share the same port.',
   hubLanChecking: 'Checking hub…',
   hubLanOnline: 'Hub online ({source}, {hz} Hz)',
   hubLanOffline: 'Hub offline',
@@ -395,6 +403,11 @@ export const uiEn = {
   hubLanCopyCommand: 'Copy command',
   hubLanCopied: 'Copied',
   hubLanOpenOverlay: 'Open LAN overlay',
+  hubLanHost: 'Host',
+  hubLanHttpPort: 'HTTP port',
+  hubLanSerialPort: 'COM',
+  hubLanPortOccupied:
+    'The PWA has serial open — the hub cannot use {port}. Disconnect here or close the hub.',
   observeStatusIdle: 'idle',
   observeHidTelemetryBadge: 'HID 1 kHz',
   observeKpiSamples: 'Samples',
@@ -617,6 +630,7 @@ export const uiEn = {
   saveReadingBack: 'Reading back...',
   saveSerialRequired: 'Connect serial in the topbar before saving.',
   toastSaveComplete: 'Save complete + re-read OK',
+  toastSaveFfbOnly: 'FFB EEPROM saved — no NVM reboot',
   saveFfbWarn: 'ODrive NVM saved and board rebooted, but sys.save! (FFB EEPROM) failed — check sys.savestat?',
   saveBootFlagsClamped:
     'pre_calibrated and boot closed loop were turned off before save — cal incomplete. Use Finalize after motor+encoder cal.',
@@ -641,4 +655,6 @@ export const uiEn = {
   applyLogFfbEepromOk: 'FFB EEPROM saved (sys.save!)',
   applyLogFfbEepromFail: 'FFB EEPROM save failed (sys.save!)',
   applyLogOdriveRam: 'ODrive RAM — NVM pending (use toolbar Save)',
+  commandIntegrityConfirm:
+    'Calibration integrity would block Save. Run this command anyway?\n\n{command}',
 };

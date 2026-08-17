@@ -6,6 +6,7 @@ import { SectionHeader } from '../../shared/ui';
 import { calibrationAxisActions } from './calibrationActions';
 import { clearErrors, runAxisState } from './calibrationRunner';
 import { applyAs5047Preset, zeroWheel } from './calibrationPresets';
+import { detectEncoderProfile } from './calibrationTargets';
 import { CalibrationWorkflowCard } from './CalibrationWorkflowCard';
 import { CalibrationFinalizeCard } from './CalibrationFinalizeCard';
 import { AnticogWorkflowCard } from './AnticogWorkflowCard';
@@ -34,6 +35,8 @@ export function CalibrationPage() {
   const motorOk = mergeCalFlag(fv, 'axis0.motor.is_calibrated', liveStatus?.motorCalibrated);
   const encOk = mergeCalFlag(fv, 'axis0.encoder.is_ready', liveStatus?.encoderReady);
   const useIndex = parseBoolField(fv['axis0.encoder.config.use_index']);
+  const encoderProfile = detectEncoderProfile(fv['axis0.encoder.config.mode']);
+  const incrementalNoIndex = encoderProfile === 'incremental' && !useIndex;
   const finalized = isPresetSynced(getPostCalibrationPreset(fv), fv) && motorOk && encOk;
   const canClosedLoop = finalized || (motorOk && encOk);
 
@@ -70,7 +73,7 @@ export function CalibrationPage() {
         direction: result.ok ? 'info' : 'error',
         message: result.ok
           ? translate(locale, 'setupToastStateDone')
-          : `${translate(locale, 'setupToastStateFail')} (${result.reason ?? 'unknown'})`,
+          : `${translate(locale, 'setupToastStateFail')} (${result.reason ?? 'unknown'}${result.detail ? `: ${result.detail}` : ''})`,
       });
     } finally {
       dispatch({ type: 'set-busy', busy: false });
@@ -140,30 +143,28 @@ export function CalibrationPage() {
                 >
                   {translate(locale, 'encoderAs5047Preset')}
                 </button>
-                {!useIndex ? (
-                  <button
-                    type="button"
-                    disabled={!state.connected || state.busy}
-                    onClick={() => {
-                      void (async () => {
-                        dispatch({ type: 'set-busy', busy: true });
-                        try {
-                          await zeroWheel(dispatch);
-                        } finally {
-                          dispatch({ type: 'set-busy', busy: false });
-                        }
-                      })();
-                    }}
-                  >
-                    {translate(locale, 'encoderZeroWheel')}
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  disabled={!state.connected || state.busy}
+                  onClick={() => {
+                    void (async () => {
+                      dispatch({ type: 'set-busy', busy: true });
+                      try {
+                        await zeroWheel(dispatch);
+                      } finally {
+                        dispatch({ type: 'set-busy', busy: false });
+                      }
+                    })();
+                  }}
+                >
+                  {translate(locale, 'encoderZeroWheel')}
+                </button>
               </div>
-              {useIndex ? (
-                <MechanicalCenterPanel />
-              ) : (
+              <p className="cal-workflow-prereq muted">{translate(locale, 'calFfbCenterHint')}</p>
+              {useIndex ? <MechanicalCenterPanel /> : null}
+              {incrementalNoIndex ? (
                 <p className="cal-workflow-prereq muted">{translate(locale, 'encoderIncrementalWarn')}</p>
-              )}
+              ) : null}
             </CalibrationWorkflowCard>
           );
         }

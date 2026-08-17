@@ -1,7 +1,6 @@
 import { serialService } from '../serial/SerialService';
 import { rebootBoard, rebootToDfu } from './BoardProtocol';
-
-const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+import { sleep } from '../../shared/sleep';
 
 export async function rebootAndDisconnect(): Promise<void> {
   await rebootBoard();

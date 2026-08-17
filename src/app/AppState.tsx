@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useReducer, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
 import type { AppAction, AppState, TabId } from './types';
 import type { Locale } from '../i18n/messages';
 import { APP_STORAGE_PREFIX } from './brand';
@@ -33,6 +33,7 @@ const initialState: AppState = {
   activeTab: initialTab(),
   locale: savedLocale ?? 'pt',
   connected: false,
+  connecting: false,
   serialSupported: 'serial' in navigator,
   hidSupported: 'hid' in navigator,
   usbSupported: 'usb' in navigator,
@@ -59,20 +60,35 @@ function reduceDirty(paths: string[], path: string, dirty: boolean): string[] {
 function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'set-tab':
-      window.history.replaceState(null, '', action.tab === 'dashboard' ? window.location.pathname : `${window.location.pathname}?tab=${action.tab}`);
       return { ...state, activeTab: action.tab };
     case 'set-locale':
-      localStorage.setItem(`${APP_STORAGE_PREFIX}-locale`, action.locale);
       return { ...state, locale: action.locale };
     case 'set-connected':
-      return { ...state, connected: action.connected };
+      return action.connected
+        ? { ...state, connected: true, connecting: false, reconnecting: false }
+        : { ...state, connected: false };
+    case 'set-connecting':
+      return {
+        ...state,
+        connecting: action.connecting,
+        reconnecting: action.connecting ? false : state.reconnecting,
+      };
     case 'set-busy':
       return { ...state, busy: action.busy };
     case 'set-auto-reconnect':
-      localStorage.setItem(`${APP_STORAGE_PREFIX}-auto-reconnect`, String(action.autoReconnect));
       return { ...state, autoReconnect: action.autoReconnect };
     case 'set-reconnecting':
-      return { ...state, reconnecting: action.reconnecting };
+      return {
+        ...state,
+        reconnecting: action.reconnecting && !state.connected && !state.connecting,
+      };
+    case 'set-capabilities':
+      return {
+        ...state,
+        serialSupported: action.serialSupported ?? state.serialSupported,
+        hidSupported: action.hidSupported ?? state.hidSupported,
+        usbSupported: action.usbSupported ?? state.usbSupported,
+      };
     case 'mark-refreshed':
       return { ...state, lastRefreshAt: new Date().toLocaleTimeString() };
     case 'set-field':
@@ -145,9 +161,38 @@ function reducer(state: AppState, action: AppAction): AppState {
   }
 }
 
+function tabUrl(tab: TabId): string {
+  return tab === 'dashboard' ? window.location.pathname : `${window.location.pathname}?tab=${tab}`;
+}
+
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const value = useMemo(() => ({ state, dispatch }), [state]);
+
+  useEffect(() => {
+    window.history.replaceState(null, '', tabUrl(state.activeTab));
+  }, [state.activeTab]);
+
+  useEffect(() => {
+    localStorage.setItem(`${APP_STORAGE_PREFIX}-locale`, state.locale);
+  }, [state.locale]);
+
+  useEffect(() => {
+    localStorage.setItem(`${APP_STORAGE_PREFIX}-auto-reconnect`, String(state.autoReconnect));
+  }, [state.autoReconnect]);
+
+  useEffect(() => {
+    function refreshCaps() {
+      dispatch({
+        type: 'set-capabilities',
+        serialSupported: 'serial' in navigator,
+        hidSupported: 'hid' in navigator,
+        usbSupported: 'usb' in navigator,
+      });
+    }
+    window.addEventListener('focus', refreshCaps);
+    return () => window.removeEventListener('focus', refreshCaps);
+  }, []);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

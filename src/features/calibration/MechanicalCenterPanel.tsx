@@ -105,7 +105,7 @@ export function MechanicalCenterPanel() {
 
   return (
     <div className="cal-mechanical-center">
-      <p className="cal-workflow-prereq">{translate(locale, 'encCapHint')}</p>
+      <p className="cal-workflow-prereq">{translate(locale, 'calOdriveIndexCenterHint')}</p>
       <div className="cal-mechanical-center-readouts">
         <span>{translate(locale, 'encCapLiveLabel')}: {posDeg !== null ? `${posDeg.toFixed(2)}°` : '—'}</span>
         <span>{translate(locale, 'encCapIdxLabel')}: {idxDeg !== null ? `${idxDeg.toFixed(2)}°` : '—'}</span>

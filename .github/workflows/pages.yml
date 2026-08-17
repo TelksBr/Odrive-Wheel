@@ -10,6 +10,8 @@ on:
       - 'public/**'
       - 'index.html'
       - 'vite.config.ts'
+      - 'tsconfig.json'
+      - 'bun.lock'
       - 'package.json'
       - 'docs/**'
       - '.github/workflows/pages.yml'
@@ -37,11 +39,14 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.5
 
-      - name: Install and build
+      - name: Install, test, and build
         run: |
           bun install --frozen-lockfile
+          bun run i18n:check
+          bun run firmware:check
+          bun test src
           bun run build
 
       - name: Prepare site

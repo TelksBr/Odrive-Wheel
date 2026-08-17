@@ -36,6 +36,7 @@ export interface StepRecommendations {
   summaryParams?: Record<string, string>;
   confidence: 'high' | 'medium' | 'low';
   blockedReasonKey?: string;
+  applyLabelKey?: string;
 }
 
 function parseNum(raw: string | undefined): number | null {
@@ -284,10 +285,64 @@ function recommendFfb(ctx: SetupContext): StepRecommendations | null {
   };
 }
 
+export function suggestedVbusdiv(input: {
+  liveV: number | null;
+  expectedV: number | null;
+  currentDiv: number;
+}): number | null {
+  const { liveV, expectedV, currentDiv } = input;
+  if (liveV === null || expectedV === null || liveV <= 0.5 || expectedV <= 0) {
+    return null;
+  }
+  if (Math.abs(liveV - expectedV) < 0.15) {
+    return null;
+  }
+  const suggested = Math.max(1, Math.min(50, Math.round(currentDiv * (expectedV / liveV))));
+  if (suggested === currentDiv) {
+    return null;
+  }
+  return suggested;
+}
+
 function recommendVbusCal(ctx: SetupContext): StepRecommendations | null {
   if (ctx.nominalVbusV === null) {
     return null;
   }
+
+  const parsedDiv = parseInt(ctx.vbusdiv || '19', 10);
+  const currentDiv = Number.isFinite(parsedDiv) && parsedDiv >= 1 ? parsedDiv : 19;
+  const suggested = suggestedVbusdiv({
+    liveV: ctx.liveVbusV,
+    expectedV: ctx.multimeterVbusV,
+    currentDiv,
+  });
+
+  if (suggested !== null) {
+    const live = ctx.liveVbusV!;
+    const expected = ctx.multimeterVbusV!;
+    return {
+      step: 'vbusCal',
+      items: [
+        {
+          path: 'sys.vbusdiv',
+          value: String(suggested),
+          reasonKey: 'setupRecReasonVbusdiv',
+          reasonParams: {
+            live: live.toFixed(2),
+            expected: expected.toFixed(2),
+            from: String(currentDiv),
+            to: String(suggested),
+          },
+        },
+      ],
+      values: { 'sys.vbusdiv': String(suggested) },
+      summaryKey: 'setupRecVbusAdjustDiv',
+      summaryParams: { from: String(currentDiv), to: String(suggested) },
+      confidence: 'high',
+      applyLabelKey: 'setupRecApplyVbusdiv',
+    };
+  }
+
   return {
     step: 'vbusCal',
     items: [],

@@ -10,16 +10,23 @@ const SYSTEM_COMMAND_IDS = [
   'save-odrive',
   'reboot',
   'reboot-dfu',
+  'eeprom-format',
 ] as const;
 
 const DIAGNOSTIC_COMMAND_IDS = [
   'ffb-diag',
   'ffb-diag-detail',
   'torque-diag',
+  'bus-peaks',
+  'reset-peaks',
+  'axis-params',
   'save-stat',
   'eeprom-dump',
+  'eeprom-test',
   'enc-raw',
   'magnet-diag',
+  'ping',
+  'fxtest',
 ] as const;
 
 export function MaintainWorkspace() {

@@ -39,6 +39,7 @@ export interface AppState {
   activeTab: TabId;
   locale: Locale;
   connected: boolean;
+  connecting: boolean;
   serialSupported: boolean;
   hidSupported: boolean;
   usbSupported: boolean;
@@ -61,9 +62,11 @@ export type AppAction =
   | { type: 'set-tab'; tab: TabId }
   | { type: 'set-locale'; locale: Locale }
   | { type: 'set-connected'; connected: boolean }
+  | { type: 'set-connecting'; connecting: boolean }
   | { type: 'set-busy'; busy: boolean }
   | { type: 'set-auto-reconnect'; autoReconnect: boolean }
   | { type: 'set-reconnecting'; reconnecting: boolean }
+  | { type: 'set-capabilities'; serialSupported?: boolean; hidSupported?: boolean; usbSupported?: boolean }
   | { type: 'mark-refreshed' }
   | { type: 'set-field'; path: string; value: string; dirty?: boolean }
   | { type: 'clear-dirty' }

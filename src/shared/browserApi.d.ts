@@ -27,9 +27,15 @@ interface SerialRequestOptions {
   }>;
 }
 
-interface Serial {
+interface SerialConnectionEvent extends Event {
+  readonly port: SerialPort;
+}
+
+interface Serial extends EventTarget {
   requestPort(options?: SerialRequestOptions): Promise<SerialPort>;
   getPorts(): Promise<SerialPort[]>;
+  addEventListener(type: 'connect' | 'disconnect', listener: (event: SerialConnectionEvent) => void, options?: AddEventListenerOptions): void;
+  removeEventListener(type: 'connect' | 'disconnect', listener: (event: SerialConnectionEvent) => void, options?: EventListenerOptions): void;
 }
 
 interface HIDDevice {

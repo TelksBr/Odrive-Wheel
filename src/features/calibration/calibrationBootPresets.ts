@@ -61,7 +61,7 @@ export const BOOT_FLAG_DEFS: BootFlagDef[] = [
     path: 'axis0.config.startup_closed_loop_control',
     labelKey: 'calBootStartupClosedLoop',
     group: 'startup',
-    persistReady: false,
+    persistReady: true,
     autoCalEveryBoot: true,
   },
   {
@@ -116,6 +116,12 @@ export function bootPresetEntries(
     };
   });
 }
+
+/** FFB needs torque passthrough after erase — catalog default is 1, NVM may not be. */
+export const FFB_CONTROLLER_MODE_WRITES: { path: string; value: string }[] = [
+  { path: 'axis0.controller.config.control_mode', value: '1' },
+  { path: 'axis0.controller.config.input_mode', value: '1' },
+];
 
 const POST_CAL_LIMITS: BootPersistEntry[] = [
   { path: 'axis0.controller.config.enable_vel_limit', labelKey: 'calBootDisableVelLimit', value: false },
@@ -172,7 +178,7 @@ export function allPostCalibrationBootPaths(): string[] {
   return [...paths];
 }
 
-/** Recommended after cal + Save (BootFlags panel — closed loop off until user opts in). */
+/** Recommended after successful cal + Save (closed-loop on boot; skipped if encoder is not ready). */
 export const persistReadyBoot: BootPersistEntry[] = bootPresetEntries('persistReady');
 
 /** Advanced: re-run calibrations on every boot (legacy HTML step 9). */

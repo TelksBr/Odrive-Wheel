@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
 import { Card } from '../../shared/ui';
@@ -38,6 +38,8 @@ export function CalibrationFinalizeCard({ index, onStatusChange, refreshToken = 
   const locale = state.locale;
   const [running, setRunning] = useState(false);
   const [live, setLive] = useState<CalibrationLiveStatus | null>(null);
+  const busyRef = useRef(state.busy);
+  busyRef.current = state.busy;
 
   const fv = state.fieldValues;
   const preset = getPostCalibrationPreset(fv);
@@ -84,12 +86,11 @@ export function CalibrationFinalizeCard({ index, onStatusChange, refreshToken = 
       return undefined;
     }
     const timer = window.setTimeout(() => {
-      if (!state.busy) {
+      if (!busyRef.current) {
         void refreshLive();
       }
     }, refreshToken > 0 ? 200 : 600);
     return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh on connect or post-cal
   }, [state.connected, refreshToken]);
 
   async function handleFinalize() {

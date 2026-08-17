@@ -1,14 +1,9 @@
-import { isOdriveErrorReply } from '../board/BoardProtocol';
+import { isOdriveErrorReply } from './odriveErrors';
+import { sleep } from '../../shared/sleep';
 
-/** OpenFFBoard / Odrive-Wheel control CDC (not game-facing interfaces). */
-export const OPENFFBOARD_USB_VENDOR_ID = 0x1209;
-
-const PROBE_COMMAND = 'sys.swver?';
-const PROBE_TIMEOUT_MS = 1500;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
+/** OpenFFBoard / Odrive-Wheel control CDC handshake. */
+export const HANDSHAKE_COMMAND = 'sys.swver?';
+export const HANDSHAKE_TIMEOUT_MS = 1500;
 
 async function readAsciiLine(
   reader: ReadableStreamDefaultReader<Uint8Array>,
@@ -38,14 +33,25 @@ async function readAsciiLine(
   return '';
 }
 
+/** Strip OpenFFBoard `[class.cmd?|value]` wrappers. */
+export function unwrapControlReply(line: string): string {
+  const token = line.trim();
+  const match = token.match(/^\[[^|]*\|(.*)\]$/);
+  return (match ? (match[1] ?? '') : token).trim();
+}
+
 /** True when the line looks like an OpenFFBoard control CDC reply. */
 export function isControlPortReply(line: string): boolean {
   const token = line.trim();
   if (!token || isOdriveErrorReply(token)) {
     return false;
   }
+  const value = unwrapControlReply(token);
+  if (!value || isOdriveErrorReply(value)) {
+    return false;
+  }
   // Firmware version, hw type, or ODrive-style numeric ack — not binary HID garbage.
-  return /^[\w.+\-/:() ]{2,}$/u.test(token);
+  return /^[\w.+\-/:() ]{2,}$/u.test(value);
 }
 
 /**
@@ -72,9 +78,9 @@ export async function probeControlSerialPort(port: SerialPort): Promise<boolean>
     }
     reader = readable.getReader();
     writer = writable.getWriter();
-    await writer.write(encoder.encode(`${PROBE_COMMAND}\n`));
+    await writer.write(encoder.encode(`${HANDSHAKE_COMMAND}\n`));
     const activeReader = reader;
-    const line = await readAsciiLine(activeReader, decoder, PROBE_TIMEOUT_MS);
+    const line = await readAsciiLine(activeReader, decoder, HANDSHAKE_TIMEOUT_MS);
     return isControlPortReply(line);
   } catch {
     return false;

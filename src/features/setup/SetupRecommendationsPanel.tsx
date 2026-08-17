@@ -63,7 +63,9 @@ export function SetupRecommendationsPanel({
       {Object.keys(recommendations.values).length > 0 ? (
         <div className="toolbar setup-rec-actions">
           <button type="button" className="ok" disabled={applyDisabled || applied} onClick={onApply}>
-            {applied ? translate(locale, 'setupRecApplied') : translate(locale, 'setupRecApply')}
+            {applied
+              ? translate(locale, 'setupRecApplied')
+              : translate(locale, recommendations.applyLabelKey ?? 'setupRecApply')}
           </button>
         </div>
       ) : null}

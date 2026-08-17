@@ -3,6 +3,7 @@ import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
 import { Card } from '../../shared/ui';
 import { applyAs5047Preset, zeroWheel } from './calibrationPresets';
+import { detectEncoderProfile } from './calibrationTargets';
 import { NtcCalculatorModal } from './NtcCalculatorModal';
 import { As5047DiagnosticsPanel } from './As5047DiagnosticsPanel';
 
@@ -10,13 +11,21 @@ export function EncoderToolsPanel() {
   const { state, dispatch } = useAppState();
   const locale = state.locale;
   const [ntcOpen, setNtcOpen] = useState(false);
+  const incremental =
+    detectEncoderProfile(state.fieldValues['axis0.encoder.config.mode']) === 'incremental';
 
   return (
     <>
       <Card title={translate(locale, 'encoderToolsTitle')} description={translate(locale, 'encoderToolsDescription')}>
+        {incremental ? (
         <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--muted)' }}>
           {translate(locale, 'encoderIncrementalWarn')}
         </p>
+        ) : (
+        <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--muted)' }}>
+          {translate(locale, 'calFfbCenterHint')}
+        </p>
+        )}
         <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600 }}>{translate(locale, 'encoderAs5047WorkflowTitle')}</p>
         <ol className="cal-nvm-steps" style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--muted)' }}>
           <li>{translate(locale, 'encoderAs5047Step1')}</li>

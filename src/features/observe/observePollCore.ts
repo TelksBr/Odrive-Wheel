@@ -3,6 +3,7 @@ import { decodeErr, ERROR_REGISTERS, type DecodedError } from '../live/errorDeco
 import { LIVE_MONITOR_FIELDS } from '../live/liveMonitorCatalog';
 import { parseLiveRaw } from '../live/liveMonitorFormat';
 import { serialService } from '../serial/SerialService';
+import { parseTorqueReply } from '../inputs/parseTorque';
 import type { TelemetrySample } from '../telemetry/types';
 
 export type LiveMap = Record<string, string>;
@@ -29,17 +30,6 @@ export function parseMonitorNumber(raw: string | undefined): number | undefined 
   return Number.isFinite(value) ? value : undefined;
 }
 
-export function parseTorqueReply(raw: string | undefined, maxTorqueNm?: number): number | undefined {
-  if (!raw) return undefined;
-  const ltMatch = raw.match(/lt=(-?\d+(?:\.\d+)?)/);
-  if (ltMatch && maxTorqueNm !== undefined && maxTorqueNm > 0) {
-    const lt = Number(ltMatch[1]);
-    return Number.isFinite(lt) ? (lt / 32767) * maxTorqueNm : undefined;
-  }
-  const nmMatch = raw.match(/nm=(-?\d+(?:\.\d+)?)/);
-  return nmMatch ? Number(nmMatch[1]) : undefined;
-}
-
 export function telemetrySampleFromLive(
   live: LiveMap,
   torqueRaw: string | undefined,
@@ -52,7 +42,7 @@ export function telemetrySampleFromLive(
     ibus: parseMonitorNumber(live.ibus),
     iq: parseMonitorNumber(live.iq_meas),
     ibrake: parseMonitorNumber(live.ibrake),
-    torqueNm: parseTorqueReply(torqueRaw, maxTorqueNm),
+    torqueNm: parseTorqueReply(torqueRaw, maxTorqueNm) ?? undefined,
     positionDeg: parseMonitorNumber(live.ffb_pos),
     velocityDegS: parseMonitorNumber(live.ffb_spd),
   };

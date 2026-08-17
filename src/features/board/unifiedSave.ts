@@ -1,8 +1,9 @@
 import { HIGH_SIGNAL_PATHS } from '../../app/refreshPolicy';
-import { flatFields, type ConfigField } from '../config/fieldCatalog';
+import { flatFields, getFieldByPath, type ConfigField } from '../config/fieldCatalog';
 import { normalizeReply, readCommandFor, readField, writeFieldNow } from './BoardProtocol';
 import { persistFfbEeprom } from './fieldApply';
 import { serialService } from '../serial/SerialService';
+import { sleep } from '../../shared/sleep';
 
 export type SaveProgress =
   | 'writing_changes'
@@ -13,7 +14,7 @@ export type SaveProgress =
   | 'reconnecting'
   | 'reading_back';
 
-export type SaveOutcome = 'full';
+export type SaveOutcome = 'full' | 'ffb_only';
 
 export class SaveSequenceError extends Error {
   code: 'ffb_failed' | 'write_failed';
@@ -31,8 +32,6 @@ export interface UnifiedSaveResult {
   ffbSaved: boolean;
   values?: Record<string, string>;
 }
-
-const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
 const POST_SAVE_READ_TIMEOUT_MS = 1200;
 
@@ -56,7 +55,7 @@ function editableDirtyFields(paths: string[]): ConfigField[] {
   for (const path of paths) {
     if (seen.has(path)) continue;
     seen.add(path);
-    const field = flatFields.find((item) => item.path === path);
+    const field = getFieldByPath(path);
     if (field && !field.readonly) {
       fields.push(field);
     }
@@ -72,7 +71,7 @@ function pathsForPostSaveRead(extraPaths: string[]): string[] {
 export async function readFieldsAfterSave(extraPaths: string[] = []): Promise<Record<string, string>> {
   const values: Record<string, string> = {};
   for (const path of pathsForPostSaveRead(extraPaths)) {
-    const field = flatFields.find((item) => item.path === path);
+    const field = getFieldByPath(path);
     if (!field) continue;
     try {
       const raw = await serialService.sendCommand(
@@ -81,7 +80,7 @@ export async function readFieldsAfterSave(extraPaths: string[] = []): Promise<Re
         POST_SAVE_READ_TIMEOUT_MS,
         false,
       );
-      values[path] = normalizeReply(raw);
+      values[path] = normalizeReply(raw, field);
     } catch {
       // Skip unreadable fields — do not block save completion
     }
@@ -99,12 +98,12 @@ export async function readAllFields(): Promise<Record<string, string>> {
 }
 
 /**
- * Unified save sequence (matches odrive-wheel.html, with safer ordering):
- * 1. Disarm motor (IDLE) — before encoder/motor config writes
- * 2. Write dirty fields to device RAM (skipped when none pending)
- * 3. Persist FFB EEPROM (sys.save!) — warn on failure, continue
- * 4. ODrive NVM (ss + reboot) — always
- * 5. Auto-reconnect + read back high-signal fields
+ * Unified save:
+ * 1. Disarm motor (IDLE) when writing anything
+ * 2. Write dirty fields to device RAM
+ * 3. Persist FFB EEPROM (sys.save!) when OpenFFBoard fields changed — abort on failure
+ * 4. ODrive NVM (ss + reboot) only when ODrive paths are pending
+ * 5. Auto-reconnect + read back after NVM reboot; stay connected for FFB-only
  */
 export async function unifiedSave({
   dirtyPaths,
@@ -119,7 +118,15 @@ export async function unifiedSave({
 }): Promise<UnifiedSaveResult> {
   const pathsToWrite = [...new Set([...dirtyPaths, ...nvmPendingPaths])];
   const pending = editableDirtyFields(pathsToWrite);
-  let ffbSaved = false;
+  const hasOdriveWrites =
+    pending.some((field) => field.protocol === 'odrive') || nvmPendingPaths.length > 0;
+  const hasFfbWrites = pending.some((field) => field.protocol === 'openffboard');
+
+  if (pending.length === 0 && !hasOdriveWrites) {
+    return { outcome: 'ffb_only', reconnected: true, ffbSaved: true, values: {} };
+  }
+
+  let ffbSaved = !hasFfbWrites;
 
   await serialService.runAtomic(async () => {
     onProgress?.('disarming');
@@ -138,17 +145,31 @@ export async function unifiedSave({
       }
     }
 
-    onProgress?.('persisting_ffb');
-    ffbSaved = await persistFfbEeprom({ now: true });
+    if (hasFfbWrites) {
+      onProgress?.('persisting_ffb');
+      ffbSaved = await persistFfbEeprom({ now: true });
+      if (!ffbSaved) {
+        throw new SaveSequenceError('sys.save! (FFB EEPROM) failed', 'ffb_failed');
+      }
+    }
+
+    if (!hasOdriveWrites) {
+      return;
+    }
 
     onProgress?.('persisting_odrive');
     await serialService.commandNow('ss', false);
-    // Let the UART flush ss before closing the port — otherwise the board never reboots.
     await sleep(500);
 
     onProgress?.('rebooting');
     await serialService.disconnect().catch(() => undefined);
   });
+
+  if (!hasOdriveWrites) {
+    onProgress?.('reading_back');
+    const values = await readFieldsAfterSave(pathsToWrite);
+    return { outcome: 'ffb_only', reconnected: true, ffbSaved, values };
+  }
 
   await sleep(5000);
 

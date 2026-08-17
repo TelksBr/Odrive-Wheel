@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
+import { connectionPhase, connectionStatusMessageKey, connectionStatusTone } from '../serial/connectionStatus';
 import { SectionHeader } from '../../shared/ui';
 import { QuickActions } from '../board/QuickActions';
 import { zeroWheel } from '../calibration/calibrationPresets';
@@ -19,6 +20,8 @@ const WheelViewer = lazy(() =>
 export function DashboardPage() {
   const { state, dispatch } = useAppState();
   const live = useDashboardLivePoll(state.connected, state.fieldValues, state.busy);
+  const phase = connectionPhase(state);
+  const statusTone = connectionStatusTone(phase);
 
   async function centerWheel() {
     dispatch({ type: 'set-busy', busy: true });
@@ -103,16 +106,14 @@ export function DashboardPage() {
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: state.connected ? 'var(--ok)' : 'var(--muted-2)',
+                  background:
+                    statusTone === 'ok' ? 'var(--ok)' : statusTone === 'warn' ? 'var(--warn)' : 'var(--muted-2)',
                   flexShrink: 0,
                 }}
               />
               <strong style={{ fontSize: 14 }}>
-                {translate(state.locale, state.connected ? 'connected' : 'disconnected')}
+                {translate(state.locale, connectionStatusMessageKey(phase))}
               </strong>
-              {state.reconnecting && (
-                <span style={{ color: 'var(--warn)', fontSize: 12 }}>{translate(state.locale, 'reconnectingEllipsis')}</span>
-              )}
             </div>
           </div>
 

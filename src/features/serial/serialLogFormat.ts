@@ -34,10 +34,14 @@ function formatOpenFFBoardValue(command: string, value: string): string {
     }
   }
 
-  if (command.startsWith('axis.curpos') || command.startsWith('axis.curspd')) {
+  if (command.startsWith('axis.curpos') || command.startsWith('axis.curspd') || command.startsWith('axis.curaccel')) {
     const num = Number(value);
     if (Number.isFinite(num)) {
-      const unit = command.startsWith('axis.curspd') ? ' deg/s' : '°';
+      const unit = command.startsWith('axis.curaccel')
+        ? ' deg/s²'
+        : command.startsWith('axis.curspd')
+          ? ' deg/s'
+          : '°';
       return `${num.toFixed(2)}${unit}`;
     }
   }

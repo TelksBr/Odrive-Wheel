@@ -44,6 +44,9 @@ const highSignalPaths = new Set([
   'axis0.controller.input_torque',
   'sys.swver',
   'sys.hwtype',
+  'sys.uid',
+  'sys.devid',
+  'sys.uptime',
   'sys.heap',
   'sys.vbusdiv',
   'axis.curpos',
@@ -52,7 +55,6 @@ const highSignalPaths = new Set([
   'axis.maxtorque',
   'axis.range',
   'odrv.vbus',
-  'odrv.maxtorque',
   'gpio.1.mode',
   'gpio.1.amin',
   'gpio.1.amax',
@@ -65,10 +67,12 @@ const highSignalPaths = new Set([
   'gpio.4.mode',
   'gpio.4.amin',
   'gpio.4.amax',
+  'gpio.6.mode',
   'gpio.1.cur',
   'gpio.2.cur',
   'gpio.3.cur',
   'gpio.4.cur',
+  'gpio.6.cur',
 ]);
 
 /** Paths re-read after save/reboot — avoids scanning the full catalog. */

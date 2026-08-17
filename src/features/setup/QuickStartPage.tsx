@@ -5,18 +5,23 @@ import { Card } from '../../shared/ui';
 import { serialService } from '../serial/SerialService';
 import { useBoardSave } from '../board/useBoardSave';
 import { countSavePending } from '../board/persistPending';
+import { applyConfigField, persistFfbEeprom } from '../board/fieldApply';
 import { HidConnectionToolbar } from '../hid/HidConnectionToolbar';
 import { useHidConnection } from '../hid/useHidConnection';
 import {
   applyAs5047Preset,
   eraseAndReconnect,
-  markPrecalibrated,
+  fieldByPath,
   writePaths,
 } from '../calibration/calibrationPresets';
+import { getPostCalibrationPreset, isIncrementalEncoderWithoutIndex, isPresetSynced } from '../calibration/calibrationBootPresets';
+import { applyPostCalibrationPresetAndSave } from '../calibration/calibrationFinalize';
 import { readMotorCalResults, runAxisState } from '../calibration/calibrationRunner';
 import { CalErrorPanel } from '../calibration/CalErrorPanel';
 import { encoderCalErrorFields, motorCalErrorFields } from '../calibration/calibrationActions';
 import { SetupParamForm, specsToWrites } from '../calibration/SetupParamForm';
+import { toast, toastSticky, toastStickyClose } from '../../shared/toastActions';
+import type { SaveProgress } from '../board/unifiedSave';
 import { SetupStepCard } from './SetupStepCard';
 import { SetupWizardNav } from './SetupWizardNav';
 import { VbusCalPanel } from './VbusCalPanel';
@@ -39,6 +44,26 @@ import {
   mergeRecommendedIntoForm,
   type StepRecommendations,
 } from './setupContext';
+import { isSetupBootSaveDone, isSetupCalStepDone, setupNextBlockedReason } from './setupGating';
+
+const BOOT_SAVE_STICKY_ID = 'setup-boot-save-progress';
+
+const saveProgressKey: Record<SaveProgress, string> = {
+  writing_changes: 'saveWritingChanges',
+  disarming: 'saveDisarming',
+  persisting_ffb: 'savePersistingFfb',
+  persisting_odrive: 'savePersistingOdrive',
+  rebooting: 'saveRebooting',
+  reconnecting: 'saveReconnecting',
+  reading_back: 'saveReadingBack',
+};
+
+const AS5047_FORM_PATCH: Record<string, string> = {
+  'axis0.encoder.config.mode': '257',
+  'axis0.encoder.config.cpr': '16384',
+  'axis0.encoder.config.abs_spi_cs_gpio_pin': '7',
+  'axis0.encoder.config.use_index': 'false',
+};
 
 function parseBool(raw: string | undefined): boolean {
   const v = (raw ?? '').trim().toLowerCase();
@@ -59,6 +84,8 @@ export function QuickStartPage() {
   const [ffbValues, setFfbValues] = useState(() => mergeFormValues(FFB_SPECS, state.fieldValues));
   const [motorCalDone, setMotorCalDone] = useState(false);
   const [encCalDone, setEncCalDone] = useState(false);
+  const [motorCalAttempted, setMotorCalAttempted] = useState(false);
+  const [encCalAttempted, setEncCalAttempted] = useState(false);
   const [motorErrorRefreshKey, setMotorErrorRefreshKey] = useState(0);
   const [encErrorRefreshKey, setEncErrorRefreshKey] = useState(0);
   const [motorResults, setMotorResults] = useState<{ resistance: string | null; inductance: string | null } | null>(
@@ -103,6 +130,23 @@ export function QuickStartPage() {
     [activeStep, setupCtx],
   );
 
+  const motorCalStepDone = isSetupCalStepDone({
+    sessionOk: motorCalDone,
+    sessionAttempted: motorCalAttempted,
+    boardFlag: parseBool(fv['axis0.motor.is_calibrated']),
+  });
+  const encoderCalStepDone = isSetupCalStepDone({
+    sessionOk: encCalDone,
+    sessionAttempted: encCalAttempted,
+    boardFlag: parseBool(fv['axis0.encoder.is_ready']),
+  });
+  const bootPresetSynced = isPresetSynced(getPostCalibrationPreset(fv), fv);
+  const bootSaveStepDone = isSetupBootSaveDone({
+    presetSynced: bootPresetSynced,
+    pendingSave,
+    applied: Boolean(appliedFlags.bootSave),
+  });
+
   const doneSteps = useMemo(() => {
     const done = new Set<SetupStepId>();
     if (Object.keys(probeResults).length > 0 || parseBool(fv['sys.swver'])) {
@@ -117,22 +161,16 @@ export function QuickStartPage() {
     if (appliedFlags.encoder) {
       done.add('encoder');
     }
-    if (parseBool(fv['axis0.motor.is_calibrated']) || motorCalDone) {
+    if (motorCalStepDone) {
       done.add('motorCal');
     }
-    if (parseBool(fv['axis0.encoder.is_ready']) || encCalDone) {
+    if (encoderCalStepDone) {
       done.add('encoderCal');
     }
-    if (
-      parseBool(fv['axis0.motor.config.pre_calibrated']) &&
-      parseBool(fv['axis0.encoder.config.pre_calibrated']) &&
-      !parseBool(fv['axis0.config.startup_motor_calibration']) &&
-      pendingSave === 0 &&
-      appliedFlags.bootSave
-    ) {
+    if (bootSaveStepDone) {
       done.add('bootSave');
-      done.add('saveNvm1');
-    } else if (pendingSave === 0 && appliedFlags.saveNvm1) {
+    }
+    if (pendingSave === 0 && appliedFlags.saveNvm1) {
       done.add('saveNvm1');
     }
     if (appliedFlags.ffb) {
@@ -142,7 +180,16 @@ export function QuickStartPage() {
       done.add('hidTest');
     }
     return done;
-  }, [appliedFlags, encCalDone, fv, hid.connected, motorCalDone, pendingSave, probeResults]);
+  }, [
+    appliedFlags,
+    bootSaveStepDone,
+    encoderCalStepDone,
+    fv,
+    hid.connected,
+    motorCalStepDone,
+    pendingSave,
+    probeResults,
+  ]);
 
   const checklist = useMemo(
     () => ['setupReq1', 'setupReq2', 'setupReq3', 'setupReq4', 'setupReq5', 'setupReq6'],
@@ -186,6 +233,16 @@ export function QuickStartPage() {
   }
 
   function goNext(from: SetupStepId) {
+    const blocked = setupNextBlockedReason(from, {
+      pendingSave,
+      saveNvm1Applied: Boolean(appliedFlags.saveNvm1),
+      motorCalDone: motorCalStepDone,
+      encoderCalDone: encoderCalStepDone,
+      bootSaveDone: bootSaveStepDone,
+    });
+    if (blocked) {
+      return;
+    }
     const idx = setupStepIndex(from);
     if (idx < 0 || idx >= SETUP_STEPS.length - 1) {
       return;
@@ -209,9 +266,77 @@ export function QuickStartPage() {
         direction: result.fail === 0 ? 'info' : 'error',
         message: translate(locale, 'setupToastWritten', { ok: result.ok, fail: result.fail }),
       });
-      if (result.fail === 0) {
-        setAppliedFlags((prev) => ({ ...prev, [stepId]: true }));
+      if (result.fail !== 0) {
+        return;
       }
+      if (stepId === 'ffb') {
+        const persisted = await persistFfbEeprom();
+        dispatch({
+          type: 'append-log',
+          direction: persisted ? 'info' : 'error',
+          message: translate(locale, persisted ? 'setupToastFfbSaved' : 'setupToastFfbSaveFail'),
+        });
+        if (!persisted) {
+          toast(dispatch, translate(locale, 'setupToastFfbSaveFail'), 'error');
+          return;
+        }
+        toast(dispatch, translate(locale, 'setupToastFfbSaved'), 'ok');
+      }
+      setAppliedFlags((prev) => ({ ...prev, [stepId]: true }));
+    } finally {
+      dispatch({ type: 'set-busy', busy: false });
+    }
+  }
+
+  async function applyVbusSuggestion(value: string) {
+    const field = fieldByPath('sys.vbusdiv');
+    if (!field || !state.connected) {
+      return;
+    }
+    try {
+      const result = await applyConfigField(field, value);
+      const applied = result.applied['sys.vbusdiv'] ?? value;
+      dispatch({ type: 'set-field', path: 'sys.vbusdiv', value: applied, dirty: false });
+      dispatch({
+        type: 'append-log',
+        direction: 'info',
+        message: translate(locale, 'setupRecApplied'),
+      });
+    } catch (error) {
+      dispatch({
+        type: 'append-log',
+        direction: 'error',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  async function applyBootAndSave() {
+    if (!state.connected || state.busy) {
+      return;
+    }
+    dispatch({ type: 'set-busy', busy: true });
+    try {
+      await applyPostCalibrationPresetAndSave(dispatch, state.fieldValues, (step) => {
+        toastSticky(dispatch, BOOT_SAVE_STICKY_ID, translate(locale, saveProgressKey[step]), { kind: 'info' });
+      });
+      toastStickyClose(dispatch, BOOT_SAVE_STICKY_ID);
+      setAppliedFlags((prev) => ({ ...prev, bootSave: true, saveNvm1: true }));
+      const incrementalNoZ = isIncrementalEncoderWithoutIndex(state.fieldValues);
+      const msg = translate(locale, incrementalNoZ ? 'calFinalizeOkIncremental' : 'calFinalizeOk');
+      dispatch({ type: 'append-log', direction: 'info', message: msg });
+      toast(dispatch, msg, 'ok');
+    } catch (error) {
+      toastStickyClose(dispatch, BOOT_SAVE_STICKY_ID);
+      const raw = error instanceof Error ? error.message : 'calFinalizePresetFailed';
+      const [key, detail] = raw.split('|', 2);
+      const msg = key.startsWith('calFinalize')
+        ? detail
+          ? `${translate(locale, key)} (${detail})`
+          : translate(locale, key)
+        : raw;
+      dispatch({ type: 'append-log', direction: 'error', message: msg });
+      toast(dispatch, msg, 'error');
     } finally {
       dispatch({ type: 'set-busy', busy: false });
     }
@@ -276,6 +401,8 @@ export function QuickStartPage() {
     try {
       dispatch({ type: 'append-log', direction: 'info', message: translate(locale, 'setupToastStateRunning') });
       const result = await runAxisState(4, 30000);
+      setMotorCalAttempted(true);
+      setMotorCalDone(result.ok);
       if (result.ok) {
         setMotorResults(await readMotorCalResults());
         dispatch({ type: 'append-log', direction: 'info', message: translate(locale, 'setupToastStateDone') });
@@ -283,7 +410,6 @@ export function QuickStartPage() {
       } else {
         dispatch({ type: 'append-log', direction: 'error', message: translate(locale, 'setupToastStateFail') });
       }
-      setMotorCalDone(true);
       setMotorErrorRefreshKey((key) => key + 1);
     } finally {
       dispatch({ type: 'set-busy', busy: false });
@@ -295,6 +421,8 @@ export function QuickStartPage() {
     try {
       dispatch({ type: 'append-log', direction: 'info', message: translate(locale, 'setupToastStateRunning') });
       const result = await runAxisState(7, 60000);
+      setEncCalAttempted(true);
+      setEncCalDone(result.ok);
       dispatch({
         type: 'append-log',
         direction: result.ok ? 'info' : 'error',
@@ -303,7 +431,6 @@ export function QuickStartPage() {
       if (result.ok) {
         dispatch({ type: 'set-nvm-pending', pending: true });
       }
-      setEncCalDone(true);
       setEncErrorRefreshKey((key) => key + 1);
     } finally {
       dispatch({ type: 'set-busy', busy: false });
@@ -314,11 +441,18 @@ export function QuickStartPage() {
     const def = SETUP_STEPS.find((s) => s.id === id);
     const skipped = isSkipped(id);
     const isLast = id === 'finish';
+    const blocked = setupNextBlockedReason(id, {
+      pendingSave,
+      saveNvm1Applied: Boolean(appliedFlags.saveNvm1),
+      motorCalDone: motorCalStepDone,
+      encoderCalDone: encoderCalStepDone,
+      bootSaveDone: bootSaveStepDone,
+    });
     return (
       <>
         {actions}
         {!isLast ? (
-          <button type="button" className="ghost" onClick={() => goNext(id)}>
+          <button type="button" className="ghost" disabled={Boolean(blocked)} onClick={() => goNext(id)}>
             {translate(locale, 'setupStepNext')}
           </button>
         ) : null}
@@ -327,6 +461,7 @@ export function QuickStartPage() {
             {translate(locale, 'setupStepSkip')}
           </button>
         ) : null}
+        {blocked ? <p className="setup-checkpoint-hint">{translate(locale, blocked)}</p> : null}
       </>
     );
   }
@@ -432,7 +567,12 @@ export function QuickStartPage() {
             onVbusReading={setLiveVbusV}
             onMultimeterV={setMultimeterVbusV}
           />
-          {renderRecommendations(stepRecommendations, {}, () => {})}
+          {renderRecommendations(stepRecommendations, { 'sys.vbusdiv': fv['sys.vbusdiv'] ?? '' }, () => {
+            const div = stepRecommendations?.values['sys.vbusdiv'];
+            if (div) {
+              void applyVbusSuggestion(div);
+            }
+          })}
         </SetupStepCard>
       )}
 
@@ -498,6 +638,7 @@ export function QuickStartPage() {
                 disabled={!state.connected || state.busy}
                 onClick={() => {
                   applyAs5047Preset(dispatch);
+                  setEncValues((current) => ({ ...current, ...AS5047_FORM_PATCH }));
                   dispatch({ type: 'append-log', direction: 'info', message: translate(locale, 'setupAs5047Staged') });
                 }}
               >
@@ -514,6 +655,7 @@ export function QuickStartPage() {
               applyRecommendationsToForm(stepRecommendations, setEncValues);
             }
           })}
+          <p className="setup-checkpoint-hint">{translate(locale, 'setupAs5047Hint')}</p>
           <p className="setup-checkpoint-hint">{translate(locale, 'setupEncoderPreCalHint')}</p>
           <SetupParamForm specs={ENC_SPECS} values={encValues} onChange={(path, value) => setEncValues((c) => ({ ...c, [path]: value }))} />
         </SetupStepCard>
@@ -529,7 +671,11 @@ export function QuickStartPage() {
               className="ok"
               disabled={!state.connected || state.busy}
               onClick={() => {
-                void saveAll().then(() => setAppliedFlags((p) => ({ ...p, saveNvm1: true })));
+                void saveAll().then((ok) => {
+                  if (ok) {
+                    setAppliedFlags((p) => ({ ...p, saveNvm1: true }));
+                  }
+                });
               }}
             >
               {translate(locale, 'save')}
@@ -571,7 +717,7 @@ export function QuickStartPage() {
               </div>
             </div>
           ) : null}
-          <CalErrorPanel fields={motorCalErrorFields} visible={motorCalDone} refreshKey={motorErrorRefreshKey} />
+          <CalErrorPanel fields={motorCalErrorFields} visible={motorCalAttempted} refreshKey={motorErrorRefreshKey} />
         </SetupStepCard>
       )}
 
@@ -590,7 +736,7 @@ export function QuickStartPage() {
             </>,
           )}
         >
-          <CalErrorPanel fields={encoderCalErrorFields} visible={encCalDone} refreshKey={encErrorRefreshKey} />
+          <CalErrorPanel fields={encoderCalErrorFields} visible={encCalAttempted} refreshKey={encErrorRefreshKey} />
         </SetupStepCard>
       )}
 
@@ -599,39 +745,18 @@ export function QuickStartPage() {
           {...stepProps('bootSave')}
           actions={renderStepActions(
             'bootSave',
-            <>
-              <button
-                type="button"
-                className="ok"
-                disabled={!state.connected || state.busy}
-                onClick={() =>
-                  void markPrecalibrated(dispatch, state.fieldValues).then((r) => {
-                    dispatch({
-                      type: 'append-log',
-                      direction: r.fail === 0 ? 'info' : 'error',
-                      message: translate(locale, 'setupToastWritten', { ok: r.ok, fail: r.fail }),
-                    });
-                    if (r.fail === 0) {
-                      dispatch({ type: 'set-nvm-pending', pending: true });
-                    }
-                  })
-                }
-              >
-                {translate(locale, 'setupStep9Apply')}
-              </button>
-              <button
-                type="button"
-                disabled={!state.connected || state.busy}
-                onClick={() => {
-                  void saveAll().then(() => setAppliedFlags((p) => ({ ...p, bootSave: true })));
-                }}
-              >
-                {translate(locale, 'setupStep9Save')}
-                {saveBadge}
-              </button>
-            </>,
+            <button
+              type="button"
+              className="ok"
+              disabled={!state.connected || state.busy}
+              onClick={() => void applyBootAndSave()}
+            >
+              {translate(locale, 'setupStep9ApplySave')}
+            </button>,
           )}
-        />
+        >
+          <p className="setup-checkpoint-hint">{translate(locale, 'setupStep9UnifiedHint')}</p>
+        </SetupStepCard>
       )}
 
       {activeStep === 'ffb' && (
@@ -641,7 +766,7 @@ export function QuickStartPage() {
             'ffb',
             <>
               <button type="button" className="ok" disabled={!state.connected || state.busy} onClick={() => void applySpecs('ffb', FFB_SPECS, ffbValues)}>
-                {translate(locale, 'setupStep10Apply')}
+                {translate(locale, 'setupStep10ApplySave')}
               </button>
               <button type="button" onClick={() => goTab('tune')}>
                 {translate(locale, 'setupStep10Open')}
@@ -686,6 +811,16 @@ export function QuickStartPage() {
           actions={renderStepActions(
             'finish',
             <>
+              {!bootSaveStepDone ? (
+                <>
+                  <button type="button" className="ok" onClick={() => setActiveStep('bootSave')}>
+                    {translate(locale, 'setupFinishGoBootSave')}
+                  </button>
+                  <button type="button" onClick={() => goTab('calibration')}>
+                    {translate(locale, 'setupFinishGoFinalize')}
+                  </button>
+                </>
+              ) : null}
               <button type="button" onClick={() => goTab('inputs')}>
                 {translate(locale, 'setupStep12OpenInputs')}
               </button>
@@ -694,7 +829,11 @@ export function QuickStartPage() {
               </button>
             </>,
           )}
-        />
+        >
+          {!bootSaveStepDone ? (
+            <p className="setup-checkpoint-hint">{translate(locale, 'setupFinishNeedBootSave')}</p>
+          ) : null}
+        </SetupStepCard>
       )}
     </div>
   );

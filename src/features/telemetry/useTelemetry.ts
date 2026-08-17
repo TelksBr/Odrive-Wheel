@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { readField } from '../board/BoardProtocol';
-import { flatFields } from '../config/fieldCatalog';
+import { getFieldByPath } from '../config/fieldCatalog';
 import { serialService } from '../serial/SerialService';
 import { computeStats } from './types';
 import { allSeriesKeys } from './series';
@@ -17,10 +17,8 @@ import { useHidTelemetryListener } from './useHidTelemetryListener';
 import { hidFfbService } from '../hid/HidFfbService';
 import type { BrakePowerState, TelemetrySample, TelemetryStats } from './types';
 
-const fieldByPath = new Map(flatFields.map((field) => [field.path, field]));
-
 function odriveField(path: string) {
-  const field = fieldByPath.get(path);
+  const field = getFieldByPath(path);
   if (!field) {
     throw new Error(`Telemetry field not found: ${path}`);
   }
@@ -91,9 +89,9 @@ export function useTelemetry({
   useEffect(() => {
     pausedRef.current = paused;
     if (paused) {
-      setFrozenSamples(samples.filter((s) => s.t >= (samples.at(-1)?.t ?? 0) - windowMs));
+      const latest = samplesRef.current;
+      setFrozenSamples(latest.filter((s) => s.t >= (latest.at(-1)?.t ?? 0) - windowMsRef.current));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused]);
 
   const readBrakeResistance = useCallback(async () => {

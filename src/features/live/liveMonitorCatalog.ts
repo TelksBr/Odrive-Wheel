@@ -15,7 +15,8 @@ export type LiveFieldFormat =
   | 'velocity'
   | 'position'
   | 'degrees'
-  | 'degPerSec';
+  | 'degPerSec'
+  | 'degPerSec2';
 
 export interface LiveMonitorField {
   id: string;
@@ -59,13 +60,16 @@ export const LIVE_MONITOR_FIELDS: LiveMonitorField[] = [
   { id: 'ffb_spd', labelKey: 'liveFieldVelocity', cmd: 'axis.curspd?', group: 'ffb', format: 'degPerSec' },
   { id: 'ffb_torque', labelKey: 'liveFieldFfbTorque', cmd: 'axis.curtorque?', group: 'ffb', format: 'raw' },
   { id: 'ffb_maxtorque', labelKey: 'liveFieldMaxTorque', cmd: 'axis.maxtorque?', group: 'ffb', format: 'torque' },
-  { id: 'ffb_accel', labelKey: 'liveFieldWheelAccel', cmd: 'axis.curaccel?', group: 'ffb', format: 'degPerSec' },
+  { id: 'ffb_accel', labelKey: 'liveFieldWheelAccel', cmd: 'axis.curaccel?', group: 'ffb', format: 'degPerSec2' },
   { id: 'ffb_active', labelKey: 'liveFieldFfbActive', cmd: 'main.ffbactive?', group: 'ffb', format: 'bool' },
   { id: 'enc_zhits', labelKey: 'liveFieldZHits', cmd: 'axis.zhits?', group: 'encoder', format: 'raw' },
   { id: 'enc_zglitch', labelKey: 'liveFieldZGlitch', cmd: 'axis.zglitch?', group: 'encoder', format: 'raw' },
 
   { id: 'sys_fw', labelKey: 'liveFieldFirmware', cmd: 'sys.swver?', group: 'system', format: 'raw' },
   { id: 'sys_hw', labelKey: 'liveFieldHardware', cmd: 'sys.hwtype?', group: 'system', format: 'raw' },
+  { id: 'sys_uid', labelKey: 'liveFieldUid', cmd: 'sys.uid?', group: 'system', format: 'raw' },
+  { id: 'sys_devid', labelKey: 'liveFieldDevid', cmd: 'sys.devid?', group: 'system', format: 'raw' },
+  { id: 'sys_uptime', labelKey: 'liveFieldUptime', cmd: 'sys.uptime?', group: 'system', format: 'raw' },
   { id: 'sys_heap', labelKey: 'liveFieldFreeHeap', cmd: 'sys.heap?', group: 'system', format: 'raw' },
 ];
 
@@ -86,4 +90,4 @@ export const DEVICE_INFO_FIELDS = [
   { id: 'ucl', labelKey: 'liveDeviceConfigLoaded', paths: ['user_config_loaded'] as const },
 ] as const;
 
-export const DIAG_CMDS = ['d', 'D', 'C', 'T', 'E', 'I'] as const;
+export const DIAG_CMDS = ['d', 'D', 'C', 'T', 'E', 'I', 'R', 'M'] as const;

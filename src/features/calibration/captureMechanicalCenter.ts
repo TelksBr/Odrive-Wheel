@@ -4,8 +4,7 @@ import { persistFfbEeprom } from '../board/fieldApply';
 import { serialService } from '../serial/SerialService';
 import { persistWorkflowPaths } from './calibrationPersist';
 import { writePath } from './calibrationPresets';
-
-const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+import { sleep } from '../../shared/sleep';
 
 const INDEX_OFFSET_PATH = 'axis0.encoder.config.index_offset';
 

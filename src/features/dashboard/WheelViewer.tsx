@@ -4,12 +4,21 @@ import { PerspectiveCamera } from '@react-three/drei';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
 import * as THREE from 'three';
 import { useAppState } from '../../app/AppState';
 import { translate } from '../../i18n/messages';
 import { usePageVisible } from '../../shared/usePageVisible';
 import { configureWheelMaterials } from './wheelMaterials';
-import { WHEEL_RENDER_SETTINGS, type WheelRenderSettings } from './wheelRenderQuality';
+import {
+  WHEEL_RENDER_SETTINGS,
+  wheelCanvasDpr,
+  wheelComposerDpr,
+  type WheelRenderSettings,
+} from './wheelRenderQuality';
 
 const WHEEL_MODEL = '/models/wheel.fbx';
 const WHEEL_TEXTURES = '/models/wheel/textures/';
@@ -27,6 +36,7 @@ function prepareWheelMesh(fbx: THREE.Group): number {
     if (child.geometry instanceof THREE.BufferGeometry) {
       const merged = mergeVertices(child.geometry);
       merged.computeVertexNormals();
+      merged.normalizeNormals();
       child.geometry.dispose();
       child.geometry = merged;
     }
@@ -80,11 +90,49 @@ function WheelRendererSetup({ settings }: { settings: WheelRenderSettings }) {
   const { gl } = useThree();
 
   useEffect(() => {
-    const dpr = Math.min(window.devicePixelRatio, settings.maxDpr);
-    gl.setPixelRatio(dpr);
-    gl.setSize(gl.domElement.clientWidth, gl.domElement.clientHeight, false);
+    gl.setPixelRatio(wheelCanvasDpr(settings));
     gl.toneMappingExposure = settings.toneMappingExposure;
   }, [gl, settings]);
+
+  return null;
+}
+
+function WheelPostProcessing({ settings }: { settings: WheelRenderSettings }) {
+  const { gl, scene, camera, size } = useThree();
+  const composerRef = useRef<EffectComposer | null>(null);
+
+  useEffect(() => {
+    if (!settings.smaa) {
+      return;
+    }
+
+    const composer = new EffectComposer(gl);
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(new SMAAPass());
+    composer.addPass(new OutputPass());
+    composer.setPixelRatio(wheelComposerDpr(settings));
+    composer.setSize(size.width, size.height);
+    composerRef.current = composer;
+
+    return () => {
+      composer.dispose();
+      composerRef.current = null;
+    };
+  }, [settings.smaa, gl, scene, camera, settings]);
+
+  useEffect(() => {
+    const composer = composerRef.current;
+    if (!composer || !settings.smaa) {
+      return;
+    }
+
+    composer.setPixelRatio(wheelComposerDpr(settings));
+    composer.setSize(size.width, size.height);
+  }, [settings, settings.smaa, size.width, size.height]);
+
+  useFrame(() => {
+    composerRef.current?.render();
+  }, settings.smaa ? 1 : 0);
 
   return null;
 }
@@ -178,6 +226,7 @@ const WheelScene = memo(function WheelScene({
     <>
       <PerspectiveCamera makeDefault position={[0, 0, 2.65]} fov={36} />
       <WheelRendererSetup settings={settings} />
+      <WheelPostProcessing settings={settings} />
       {modelReady && <WheelEnvironment settings={settings} />}
 
       <Suspense fallback={null}>
@@ -202,7 +251,7 @@ export const WheelViewer = memo(function WheelViewer({
   const { state } = useAppState();
   const pageVisible = usePageVisible();
   const [modelReady, setModelReady] = useState(false);
-  const renderActive = pageVisible && connected;
+  const renderActive = pageVisible;
 
   useEffect(() => {
     preloadWheelModel();
@@ -219,17 +268,18 @@ export const WheelViewer = memo(function WheelViewer({
     >
       <Canvas
         frameloop={renderActive ? 'always' : 'never'}
-        dpr={[1, WHEEL_RENDER_SETTINGS.maxDpr]}
+        dpr={wheelCanvasDpr(WHEEL_RENDER_SETTINGS)}
+        resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
         gl={{
           antialias: WHEEL_RENDER_SETTINGS.antialias,
-          alpha: false,
+          alpha: true,
           powerPreference: 'high-performance',
           stencil: false,
           depth: true,
           failIfMajorPerformanceCaveat: false,
         }}
         onCreated={({ gl }) => {
-          gl.setPixelRatio(Math.min(window.devicePixelRatio, WHEEL_RENDER_SETTINGS.maxDpr));
+          gl.setPixelRatio(wheelCanvasDpr(WHEEL_RENDER_SETTINGS));
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = WHEEL_RENDER_SETTINGS.toneMappingExposure;
